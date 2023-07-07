@@ -1,0 +1,15 @@
+{
+  "service": {
+    "Name": "template-service",
+    "Port": 8080,
+    "Tags": ["openlmis-service"]
+  },
+  "raml": "src/main/resources/api-definition.yaml",
+  "path": [
+    "template-service",
+    "template-service/docs",
+    "template-service/docs/<all>",
+    "template-service/webjars",
+    "template-service/webjars/<all>"
+  ]
+}

@@ -1,0 +1,17 @@
+version: "2"
+services:
+  template-service:
+    image: openlmis/template-service
+    links:
+      - db
+      - log
+    ports:
+      - "8080"
+    env_file: .env
+  db:
+    image: openlmis/postgres:9.6-debezium
+    env_file: .env
+  log:
+    image: openlmis/rsyslog:1
+    volumes:
+      - '../logs/template-service:/var/log'
