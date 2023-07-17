@@ -87,7 +87,7 @@ flyway {
     url = "$System.env.DATABASE_URL"
     user = "$System.env.POSTGRES_USER"
     password = "$System.env.POSTGRES_PASSWORD"
-    schemas = ['template']
+    schemas = ['buq']
     sqlMigrationPrefix = ''
     placeholderPrefix = '#['
     placeholderSuffix = ']'
@@ -170,7 +170,7 @@ checkstyle {
     toolVersion = "8.32"
 }
 
-//Usage: gradle sonarqube
+// Usage: gradle sonarqube
 sonarqube {
     properties {
         def branch = System.getenv("SONAR_BRANCH")
@@ -212,12 +212,15 @@ tasks.withType(Pmd){
     }
 }
 
-
 test {
     testLogging {
         events 'started', 'passed'
         exceptionFormat = 'full'
     }
+    dependsOn checkstyleMain
+    dependsOn checkstyleTest
+    dependsOn pmdMain
+    dependsOn pmdTest
 }
 
 apply from: "documentation.gradle"

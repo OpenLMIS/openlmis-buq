@@ -1,6 +1,6 @@
-version: "2"
+version: "3.3"
 services:
-  template-service:
+  buq:
     image: openlmis/dev:6
     ports:
       - "5005:5005"

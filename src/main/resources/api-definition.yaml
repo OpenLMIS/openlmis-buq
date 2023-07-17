@@ -1,13 +1,13 @@
 #%RAML 0.8
 ---
-title: OpenLMIS Template API
+title: OpenLMIS Bottom-Up Quantification
 version: "@version@"
 baseUri: "@baseUrl@"
 protocols: [ HTTP, HTTPS ]
 
 documentation:
 - title: Getting Started
-  content: Welcome to the OpenLMIS template-service documentation. This minimal API is intended for illustrative purposes.
+  content: Welcome to the OpenLMIS Bottom-Up Quantification documentation.
 
 schemas:
 - auditLogEntry: !include schemas/auditLogEntry.json
@@ -17,7 +17,6 @@ schemas:
         "type": "array",
         "items": { "type": "object", "$ref": "schemas/auditLogEntry.json" }
     }
-
 
 - localizedErrorResponse: !include schemas/localizedErrorResponse.json
 
@@ -131,7 +130,7 @@ resourceTypes:
         type: string
         required: true
         repeat: false
-/template:
+/buq:
   displayName: Version
   get:
     description: Get version
@@ -161,6 +160,10 @@ resourceTypes:
             Keep-Alive:
           body:
             application/json:
+        403:
+          body:
+            application/json:
+              schema: localizedErrorResponse
     post:
       is: [ secured ]
       description: Creates given widget if possible.
@@ -174,11 +177,19 @@ resourceTypes:
           body:
             application/json:
               schema: widget
+        400:
+          body:
+            application/json:
+              schema: localizedErrorResponse
         401:
           headers:
             Keep-Alive:
           body:
             application/json:
+        403:
+          body:
+            application/json:
+              schema: localizedErrorResponse
     /{id}:
       uriParameters:
         id:
@@ -207,6 +218,10 @@ resourceTypes:
               Keep-Alive:
             body:
               application/json:
+          403:
+            body:
+              application/json:
+                schema: localizedErrorResponse
       put:
         is: [ secured ]
         description: Update existing widget.
@@ -229,16 +244,22 @@ resourceTypes:
               Keep-Alive:
             body:
               application/json:
+          403:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            body:
+              application/json:
+                schema: localizedErrorResponse
       delete:
         is: [ secured ]
-        description: "[AVOID USING] Completely removes widget. This action is not recoverable."
+        description: "Completely removes widget. This action is not recoverable."
         responses:
           204:
             headers:
               Keep-Alive:
-          404:
-            headers:
-              Keep-Alive:
+          400:
             body:
               application/json:
                 schema: localizedErrorResponse
@@ -247,5 +268,68 @@ resourceTypes:
               Keep-Alive:
             body:
               application/json:
-    /{id}/auditLog:
-      type: instanceAuditLog
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      /auditLog:
+        description: This represents the audit log for all <<resourcePathName|!singularize>> resources.
+        get:
+          description: Returns all or part of the resource's audit log
+          # Although /auditLog endpoints support "page" and "number" query parameters for pagination,
+          # they don’t return the response body and set of pagination-related values expected to be
+          # returned for core domain resources.
+          is: [ paginated ]
+          queryParameters:
+            author:
+              displayName: author
+              description: Name of the author of changes which should be returned. By default, all changes are returned regardless of author.
+              type: string
+              required: false
+              repeat: false
+            changedPropertyName:
+              displayName: changedPropertyName
+              description: The name of the property about which changes should be returned. If null or empty, changes associated with any and all properties are returned.
+              type: string
+              required: false
+              repeat: false
+          responses:
+            200:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: auditLogEntryArray
+                  example: |
+                    [
+                      {
+                        "changeType": "ValueChange",
+                        "globalId": {
+                          "entity": "org.openlmis.SomeClass",
+                          "cdoId": 1
+                        },
+                        "commitMetadata": {
+                          "author": "SomeUserName",
+                          "properties": [],
+                          "commitDate": "2016-12-17T19:39:57.621",
+                          "id": 3
+                        },
+                        "property": "PropertyName",
+                        "left": "OldValue",
+                        "right": "NewValue"
+                      }
+                    ]
+            404:
+              description: The specified <<resourcePathName|!singularize>> does not exist.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedErrorResponse
+            401:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
