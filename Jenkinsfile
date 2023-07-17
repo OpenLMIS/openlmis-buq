@@ -22,7 +22,10 @@ pipeline {
         skipStagesAfterUnstable()
     }
     environment {
-        COMPOSE_PROJECT_NAME = "template${BRANCH_NAME}"
+        COMPOSE_PROJECT_NAME = "buq${BRANCH_NAME}"
+    }
+    parameters {
+        string(name: 'contractTestsBranch', defaultValue: 'master', description: 'The branch of contract tests to checkout')
     }
     stages {
         stage('Preparation') {
@@ -65,10 +68,20 @@ pipeline {
                 STAGING_VERSION = "${STAGING_VERSION}"
             }
             steps {
-                withCredentials([file(credentialsId: '8da5ba56-8ebb-4a6a-bdb5-43c9d0efb120', variable: 'ENV_FILE')]) {
+                withCredentials([file(credentialsId: '8da5ba56-8ebb-4a6a-bdb5-43c9d0efb120', variable: 'ENV_FILE'),
+                                 file(credentialsId: 'b35ad1bd-ccca-437f-a2cd-3578c10da7bf', variable: 'SECRING_FILE'),
+                                 usernamePassword(
+                                         credentialsId: "70dd29d6-7990-4598-a2f8-aa3e1f038ac1",
+                                         usernameVariable: "SIGNING_KEYID",
+                                         passwordVariable: "SIGNING_PASSWORD"),
+                                 usernamePassword(
+                                         credentialsId: "79aa4a36-2c52-486f-bbca-1ed06b314a96",
+                                         usernameVariable: "OSSRH_USERNAME",
+                                         passwordVariable: "OSSRH_PASSWORD"
+                                 )]) {
                     script {
                         try {
-                            sh( script: "./ci-buildImage.sh" )
+                            sh(script: "./ci-buildImage.sh")
                             currentBuild.result = processTestResults('SUCCESS')
                         }
                         catch (exc) {
@@ -101,46 +114,139 @@ pipeline {
                 }
             }
         }
-        stage('Sonar analysis') {
-            agent any
-            environment {
-                PATH = "/usr/local/bin/:$PATH"
+        stage('Build demo-data') {
+            when {
+                expression {
+                    return CURRENT_BRANCH == 'master'
+                }
             }
             steps {
-                withSonarQubeEnv('Sonar OpenLMIS') {
-                    withCredentials([string(credentialsId: 'SONAR_LOGIN', variable: 'SONAR_LOGIN'), string(credentialsId: 'SONAR_PASSWORD', variable: 'SONAR_PASSWORD')]) {
-                        script {
-                            sh(script: "./ci-sonarAnalysis.sh")
-
-                            // workaround: Sonar plugin retrieves the path directly from the output
-                            sh 'echo "Working dir: ${WORKSPACE}/build/sonar"'
-                        }
-                    }
-                }
-                timeout(time: 1, unit: 'HOURS') {
-                    script {
-                        def gate = waitForQualityGate()
-                        if (gate.status != 'OK') {
-                            echo 'Quality Gate FAILED'
-                            currentBuild.result = 'UNSTABLE'
-                        }
-                    }
-                }
+                build job: "OpenLMIS-3.x-build-demo-data-pipeline"
             }
             post {
-                unstable {
-                    script {
-                        notifyAfterFailure()
-                    }
-                }
                 failure {
                     script {
                         notifyAfterFailure()
                     }
                 }
-                cleanup {
+            }
+        }
+        stage('Deploy to test') {
+            when {
+                expression {
+                    return CURRENT_BRANCH == 'master' && VERSION.endsWith("SNAPSHOT")
+                }
+            }
+            steps {
+                build job: 'OpenLMIS-buq-deploy-to-test', wait: false
+            }
+            post {
+                failure {
                     script {
-                        sh "sudo rm -rf ${WORKSPACE}/{*,.*} || true"
+                        notifyAfterFailure()
+                    }
+                }
+            }
+        }
+        stage('Parallel: Sonar analysis and contract tests') {
+            when {
+                expression {
+                    return VERSION.endsWith("SNAPSHOT")
+                }
+            }
+            parallel {
+                stage('Sonar analysis') {
+                    agent any
+                    environment {
+                        PATH = "/usr/local/bin/:$PATH"
+                    }
+                    steps {
+                        withSonarQubeEnv('Sonar OpenLMIS') {
+                            withCredentials([string(credentialsId: 'SONAR_LOGIN', variable: 'SONAR_LOGIN'), string(credentialsId: 'SONAR_PASSWORD', variable: 'SONAR_PASSWORD')]) {
+                                script {
+                                    sh(script: "./ci-sonarAnalysis.sh")
+
+                                    // workaround: Sonar plugin retrieves the path directly from the output
+                                    sh 'echo "Working dir: ${WORKSPACE}/build/sonar"'
+                                }
+                            }
+                        }
+                        timeout(time: 1, unit: 'HOURS') {
+                            script {
+                                def gate = waitForQualityGate()
+                                if (gate.status != 'OK') {
+                                    echo 'Quality Gate FAILED'
+                                    currentBuild.result = 'UNSTABLE'
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        unstable {
+                            script {
+                                notifyAfterFailure()
+                            }
+                        }
+                        failure {
+                            script {
+                                notifyAfterFailure()
+                            }
+                        }
+                        cleanup {
+                            script {
+                                sh "sudo rm -rf ${WORKSPACE}/{*,.*} || true"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('ERD generation') {
+            agent {
+                node {
+                    label 'master'
+                }
+            }
+            environment {
+                PATH = "/usr/local/bin/:$PATH"
+            }
+            steps {
+                dir('erd') {
+                    sh(script: "../ci-erdGeneration.sh")
+                    archiveArtifacts artifacts: 'erd-buq.zip'
+                }
+            }
+            post {
+                failure {
+                    script {
+                        notifyAfterFailure()
+                    }
+                }
+            }
+        }
+        stage('Push image') {
+            agent any
+            when {
+                expression {
+                    env.GIT_BRANCH =~ /rel-.+/ || (env.GIT_BRANCH == 'master' && !VERSION.endsWith("SNAPSHOT"))
+                }
+            }
+            steps {
+                sh "docker pull openlmis/buq:${STAGING_VERSION}"
+                sh "docker tag openlmis/buq:${STAGING_VERSION} openlmis/buq:${VERSION}"
+                sh "docker push openlmis/buq:${VERSION}"
+            }
+            post {
+                success {
+                    script {
+                        if (!VERSION.endsWith("SNAPSHOT")) {
+                            currentBuild.setKeepLog(true)
+                        }
+                    }
+                }
+                failure {
+                    script {
+                        notifyAfterFailure()
                     }
                 }
             }
@@ -149,7 +255,7 @@ pipeline {
     post {
         fixed {
             script {
-                BRANCH = "${env.GIT_BRANCH}".trim()
+                BRANCH = "${BRANCH_NAME}"
                 if (BRANCH.equals("master") || BRANCH.startsWith("rel-")) {
                     slackSend color: 'good', message: "${env.JOB_NAME} - #${env.BUILD_NUMBER} Back to normal"
                 }
@@ -163,7 +269,7 @@ def notifyAfterFailure() {
     if (currentBuild.result == 'UNSTABLE') {
         messageColor = 'warning'
     }
-    BRANCH = "${env.GIT_BRANCH}".trim()
+    BRANCH = "${BRANCH_NAME}"
     if (BRANCH.equals("master") || BRANCH.startsWith("rel-")) {
         slackSend color: "${messageColor}", message: "${env.JOB_NAME} - #${env.BUILD_NUMBER} ${env.STAGE_NAME} ${currentBuild.result} (<${env.BUILD_URL}|Open>)"
     }

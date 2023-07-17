@@ -177,8 +177,8 @@ sonarqube {
         if (branch && branch != 'master') {
             property "sonar.branch", branch
         }
-        property "sonar.projectName", "OpenLMIS Template Service"
-        property "sonar.projectKey", "org.sonarqube:$rootProject.name"
+        property "sonar.projectName", "OpenLMIS Bottom-Up Quantification"
+        property "sonar.projectKey", "org.sonarqube:openlmis-buq"
         property "sonar.host.url", "http://sonar.openlmis.org"
         property "sonar.login", System.getenv("SONAR_LOGIN")
         property "sonar.password", System.getenv("SONAR_PASSWORD")
