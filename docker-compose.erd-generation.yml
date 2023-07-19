@@ -1,20 +1,22 @@
 version: "2"
 services:
 
-  template-service:
-    image: openlmis/template-service
+  buq:
+    image: openlmis/buq
     links:
       - db
       - log
     env_file: .env
+    environment:
+      JAVA_OPTS: '-server -Xmx1536m'
 
   db:
-    image: openlmis/postgres:9.6-debezium
+    image: openlmis/postgres:12-debezium
     ports:
-      - "8765:5432"
+      - "5432"
     env_file: .env
 
   log:
     image: openlmis/rsyslog:1
     volumes:
-      - '../logs/template-service:/var/log'
+      - '../logs/buq:/var/log'
