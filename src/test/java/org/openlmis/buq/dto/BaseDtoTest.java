@@ -19,8 +19,7 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.junit.Test;
 import org.openlmis.buq.ToStringTestUtils;
-import org.openlmis.buq.dto.BaseDto;
-import org.openlmis.buq.dto.widget.WidgetDto;
+import org.openlmis.buq.dto.sourceoffund.SourceOfFundDto;
 
 public class BaseDtoTest {
 
@@ -28,7 +27,7 @@ public class BaseDtoTest {
   public void equalsContract() {
     EqualsVerifier
         .forClass(BaseDto.class)
-        .withRedefinedSubclass(WidgetDto.class)
+        .withRedefinedSubclass(SourceOfFundDto.class)
         .suppress(Warning.NONFINAL_FIELDS)
         .verify();
   }
