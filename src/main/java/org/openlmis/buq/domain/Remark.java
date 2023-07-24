@@ -40,11 +40,11 @@ public class Remark extends BaseEntity {
    * Creates new instance based on data from the importer.
    */
   public static Remark newInstance(Remark.Importer importer) {
-    Remark widget = new Remark();
-    widget.setId(importer.getId());
-    widget.updateFrom(importer);
+    Remark remark = new Remark();
+    remark.setId(importer.getId());
+    remark.updateFrom(importer);
 
-    return widget;
+    return remark;
   }
 
   public void updateFrom(Remark.Importer importer) {
