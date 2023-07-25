@@ -51,9 +51,11 @@ public class RemarkController {
     this.remarkService = remarkService;
   }
 
+  /**
+   * Fetch all remarks.
+   */
   @GetMapping
-  @ResponseStatus(HttpStatus.OK)
-  ResponseEntity<List<RemarkDto>> findAllRemarks() {
+  public ResponseEntity<List<RemarkDto>> findAllRemarks() {
     List<RemarkDto> remarkList = remarkService
             .findAll()
             .stream()
@@ -62,15 +64,20 @@ public class RemarkController {
     return ResponseEntity.ok(remarkList);
   }
 
+  /**
+   * Fetch one remark.
+   */
   @GetMapping("/{id}")
-  @ResponseStatus(HttpStatus.OK)
-  ResponseEntity<RemarkDto> findOne(@PathVariable UUID id) {
+  public ResponseEntity<RemarkDto> findOne(@PathVariable UUID id) {
     Remark remark = remarkService.findOne(id);
     return ResponseEntity.ok(RemarkDto.newInstance(remark));
   }
 
+  /**
+   * Create a new remark.
+   */
   @PostMapping
-  ResponseEntity<RemarkDto> createRemark(@RequestBody @Valid RemarkDto remark) {
+  public ResponseEntity<RemarkDto> createRemark(@RequestBody @Valid RemarkDto remark) {
     Remark newRemark = Remark.newInstance(remark);
     Remark persistedRemark = remarkService.save(newRemark);
     return ResponseEntity
@@ -78,18 +85,23 @@ public class RemarkController {
             .body(RemarkDto.newInstance(persistedRemark));
   }
 
+  /**
+   * Delete a remark of given id.
+   */
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  void deleteRemark(@PathVariable UUID id) {
+  public void deleteRemark(@PathVariable UUID id) {
     remarkService.deleteById(id);
   }
 
+  /**
+   * Edit a remark of given id.
+   */
   @PutMapping("/{id}")
-  ResponseEntity<RemarkDto> updateRemark(
+  public ResponseEntity<RemarkDto> updateRemark(
           @PathVariable UUID id,
-          @RequestBody @Valid RemarkDto remark) {
-    Remark updatedRemark = Remark.newInstance(remark);
-    Remark persistedRemark = remarkService.update(id, updatedRemark);
+          @RequestBody @Valid RemarkDto remarkDto) {
+    Remark persistedRemark = remarkService.update(id, remarkDto);
     return ResponseEntity.ok(RemarkDto.newInstance(persistedRemark));
   }
 }

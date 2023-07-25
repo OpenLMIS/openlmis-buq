@@ -29,5 +29,5 @@ public interface RemarkService {
 
   void deleteById(UUID id);
 
-  Remark update(UUID id, Remark updatedRemark);
+  Remark update(UUID id, Remark.Importer updated);
 }

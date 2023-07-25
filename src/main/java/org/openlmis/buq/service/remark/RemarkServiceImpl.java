@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.UUID;
 import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.exception.NotFoundException;
+import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.RemarkRepository;
+import org.openlmis.buq.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,8 +45,9 @@ public class RemarkServiceImpl implements RemarkService {
 
   @Override
   public Remark findOne(UUID id) {
+    Message errorMessage = new Message(MessageKeys.ERROR_REMARK_NOT_FOUND);
     return remarkRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException("siema"));
+            .orElseThrow(() -> new NotFoundException(errorMessage));
   }
 
   @Override
@@ -58,10 +61,9 @@ public class RemarkServiceImpl implements RemarkService {
   }
 
   @Override
-  public Remark update(UUID id, Remark updatedRemark) {
-    Remark existingRemark = findOne(id);
-    existingRemark.setName(updatedRemark.getName());
-    existingRemark.setDescription(updatedRemark.getDescription());
-    return save(existingRemark);
+  public Remark update(UUID id, Remark.Importer updated) {
+    Remark remark = findOne(id);
+    remark.updateFrom(updated);
+    return remark;
   }
 }

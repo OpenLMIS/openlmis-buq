@@ -26,6 +26,8 @@ public abstract class MessageKeys {
   private static final String WIDGET = "widget";
   private static final String JAVERS = "javers";
 
+  private static final String REMARK = "remark";
+
   private static final String ID = "id";
   private static final String CODE = "code";
 
@@ -36,6 +38,8 @@ public abstract class MessageKeys {
   private static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
 
   public static final String ERROR_WIDGET_NOT_FOUND = join(ERROR_PREFIX, WIDGET, NOT_FOUND);
+
+  public static final String ERROR_REMARK_NOT_FOUND = join(ERROR_PREFIX, REMARK, NOT_FOUND);
   public static final String ERROR_WIDGET_ID_MISMATCH = join(ERROR_PREFIX, WIDGET, ID, MISMATCH);
   public static final String ERROR_WIDGET_CODE_DUPLICATED =
       join(ERROR_PREFIX, WIDGET, CODE, DUPLICATED);

@@ -24,8 +24,6 @@ import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.util.Message;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -92,15 +90,10 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
    */
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<Map<String, String>> handleValidationExceptions(
+  @ResponseBody
+  public Message.LocalizedMessage handleValidationExceptions(
           MethodArgumentNotValidException ex) {
-    Map<String, String> errors = new HashMap<>();
-    ex.getBindingResult().getAllErrors().forEach(error -> {
-      String fieldName = ((FieldError) error).getField();
-      String errorMessage = error.getDefaultMessage();
-      errors.put(fieldName, errorMessage);
-    });
-    return ResponseEntity.badRequest().body(errors);
+    return getLocalizedMessage(new Message(ex.getMessage()));
   }
 
 }

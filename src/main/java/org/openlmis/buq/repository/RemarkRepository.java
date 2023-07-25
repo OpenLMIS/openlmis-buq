@@ -15,11 +15,9 @@
 
 package org.openlmis.buq.repository;
 
-import java.util.List;
 import java.util.UUID;
 import org.openlmis.buq.domain.Remark;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RemarkRepository extends CrudRepository<Remark, UUID> {
-  List<Remark> findAll();
+public interface RemarkRepository extends JpaRepository<Remark, UUID> {
 }
