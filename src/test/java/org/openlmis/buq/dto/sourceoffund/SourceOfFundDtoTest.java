@@ -13,29 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.domain;
+package org.openlmis.buq.dto.sourceoffund;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.junit.Test;
 import org.openlmis.buq.ToStringTestUtils;
-import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 
-public class BaseEntityTest {
+public class SourceOfFundDtoTest {
 
   @Test
   public void equalsContract() {
     EqualsVerifier
-        .forClass(BaseEntity.class)
-        .withRedefinedSubclass(SourceOfFund.class)
+        .forClass(SourceOfFundDto.class)
+        .withRedefinedSuperclass()
         .suppress(Warning.NONFINAL_FIELDS)
         .verify();
   }
 
   @Test
   public void shouldImplementToString() {
-    BaseEntity base = new BaseEntity() {};
-    ToStringTestUtils.verify(BaseEntity.class, base, "UUID_TYPE");
+    SourceOfFundDto sourceOfFundDto = new SourceOfFundDto();
+    ToStringTestUtils.verify(SourceOfFundDto.class, sourceOfFundDto);
   }
 
 }

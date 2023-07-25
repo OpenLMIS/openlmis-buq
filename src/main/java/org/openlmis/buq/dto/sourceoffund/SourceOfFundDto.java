@@ -13,29 +13,37 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.domain;
+package org.openlmis.buq.dto.sourceoffund;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import nl.jqno.equalsverifier.Warning;
-import org.junit.Test;
-import org.openlmis.buq.ToStringTestUtils;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
+import org.openlmis.buq.dto.BaseDto;
 
-public class BaseEntityTest {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public final class SourceOfFundDto extends BaseDto implements SourceOfFund.Importer,
+        SourceOfFund.Exporter {
 
-  @Test
-  public void equalsContract() {
-    EqualsVerifier
-        .forClass(BaseEntity.class)
-        .withRedefinedSubclass(SourceOfFund.class)
-        .suppress(Warning.NONFINAL_FIELDS)
-        .verify();
-  }
+  private String name;
+  private String description;
 
-  @Test
-  public void shouldImplementToString() {
-    BaseEntity base = new BaseEntity() {};
-    ToStringTestUtils.verify(BaseEntity.class, base, "UUID_TYPE");
+  /**
+   * Creates new instance based on domain object.
+   */
+  public static SourceOfFundDto newInstance(SourceOfFund sourceOfFund) {
+    SourceOfFundDto dto = new SourceOfFundDto();
+    sourceOfFund.export(dto);
+
+    return dto;
   }
 
 }
