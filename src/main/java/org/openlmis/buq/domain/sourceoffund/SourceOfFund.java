@@ -18,6 +18,7 @@ package org.openlmis.buq.domain.sourceoffund;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,11 +35,13 @@ import org.openlmis.buq.domain.BaseEntity;
 @ToString(callSuper = true)
 public class SourceOfFund extends BaseEntity {
 
-  @Column(nullable = false, unique = true)
+  @NotBlank
+  @Column(unique = true)
   @Getter
   @Setter
   private String name;
 
+  @NotBlank
   @Getter
   @Setter
   private String description;
