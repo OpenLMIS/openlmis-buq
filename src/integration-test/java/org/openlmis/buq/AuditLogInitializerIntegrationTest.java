@@ -33,7 +33,7 @@ import org.javers.core.metamodel.object.InstanceId;
 import org.javers.repository.jql.QueryBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.openlmis.buq.domain.widget.Widget;
+import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -48,14 +48,14 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class AuditLogInitializerIntegrationTest {
 
-  private static final String[] WIDGET_FIELDS = {
-      "id", "name"
+  private static final String[] SOURCE_OF_FUND_FIELDS = {
+      "id", "name", "description"
   };
 
-  private static final String INSERT_WIDGET_SQL = String.format(
-      "INSERT INTO buq.widget (%s) VALUES (%s) ",
-      StringUtils.join(WIDGET_FIELDS, ", "),
-      StringUtils.repeat("?", ", ", WIDGET_FIELDS.length)
+  private static final String INSERT_SOURCE_OF_FUND_SQL = String.format(
+      "INSERT INTO buq.sources_of_funds (%s) VALUES (%s) ",
+      StringUtils.join(SOURCE_OF_FUND_FIELDS, ", "),
+      StringUtils.repeat("?", ", ", SOURCE_OF_FUND_FIELDS.length)
   );
 
   @Autowired
@@ -68,13 +68,13 @@ public class AuditLogInitializerIntegrationTest {
   private EntityManager entityManager;
 
   @Test
-  public void shouldCreateSnapshotForWidget() {
+  public void shouldCreateSnapshotForSourceOfFund() {
     // given
-    UUID widgetId = UUID.randomUUID();
-    addWidget(widgetId);
+    UUID sourceOfFundId = UUID.randomUUID();
+    addSourceOfFund(sourceOfFundId);
 
     // when
-    QueryBuilder jqlQuery = QueryBuilder.byInstanceId(widgetId, Widget.class);
+    QueryBuilder jqlQuery = QueryBuilder.byInstanceId(sourceOfFundId, SourceOfFund.class);
     List<CdoSnapshot> snapshots = javers.findSnapshots(jqlQuery.build());
 
     assertThat(snapshots, hasSize(0));
@@ -94,16 +94,17 @@ public class AuditLogInitializerIntegrationTest {
     assertThat(globalId, instanceOf(InstanceId.class));
 
     InstanceId instanceId = (InstanceId) globalId;
-    assertThat(instanceId.getCdoId(), is(widgetId));
-    assertThat(instanceId.getTypeName(), is("Widget"));
+    assertThat(instanceId.getCdoId(), is(sourceOfFundId));
+    assertThat(instanceId.getTypeName(), is("SourceOfFund"));
   }
 
-  private void addWidget(UUID id) {
+  private void addSourceOfFund(UUID id) {
     entityManager.flush();
     entityManager
-        .createNativeQuery(INSERT_WIDGET_SQL)
+        .createNativeQuery(INSERT_SOURCE_OF_FUND_SQL)
         .setParameter(1, id)
         .setParameter(2, "name")
+        .setParameter(3, "description")
         .executeUpdate();
   }
 

@@ -13,19 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.web.widget;
+package org.openlmis.buq.web.sourceoffund;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.openlmis.buq.domain.widget.Widget;
-import org.openlmis.buq.dto.widget.WidgetDto;
+import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
+import org.openlmis.buq.dto.sourceoffund.SourceOfFundDto;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
-import org.openlmis.buq.repository.WidgetRepository;
+import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.util.Pagination;
 import org.openlmis.buq.web.BaseController;
 import org.slf4j.Logger;
@@ -49,107 +49,108 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Controller used to expose Widgets via HTTP.
+ * Controller used to expose Sources of funds via HTTP.
  */
 @Controller
-@RequestMapping(WidgetController.RESOURCE_PATH)
+@RequestMapping(SourceOfFundController.RESOURCE_PATH)
 @Transactional
-public class WidgetController extends BaseController {
+public class SourceOfFundController extends BaseController {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(WidgetController.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SourceOfFundController.class);
 
-  public static final String RESOURCE_PATH = API_PATH + "/widgets";
+  public static final String RESOURCE_PATH = API_PATH + "/sourcesOfFunds";
 
   @Autowired
-  private WidgetRepository widgetRepository;
+  private SourceOfFundRepository sourceOfFundRepository;
 
   /**
-   * Allows the creation of a new widget. If the id is specified, it will be ignored.
+   * Allows the creation of a new source of fund. If the id is specified, it will be ignored.
    */
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
-  public WidgetDto createWidget(@RequestBody WidgetDto widget) {
-    LOGGER.debug("Creating new widget");
-    Widget newWidget = Widget.newInstance(widget);
-    newWidget.setId(null);
-    newWidget = widgetRepository.saveAndFlush(newWidget);
+  public SourceOfFundDto createSourceOfFund(@RequestBody SourceOfFundDto sourceOfFund) {
+    LOGGER.debug("Creating new source of fund");
+    SourceOfFund newSourceOfFund = SourceOfFund.newInstance(sourceOfFund);
+    newSourceOfFund.setId(null);
+    newSourceOfFund = sourceOfFundRepository.saveAndFlush(newSourceOfFund);
 
-    return WidgetDto.newInstance(newWidget);
+    return SourceOfFundDto.newInstance(newSourceOfFund);
   }
 
   /**
-   * Updates the specified widget.
+   * Updates the specified source of fund.
    */
   @PutMapping(value = "/{id}")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public WidgetDto saveWidget(@PathVariable("id") UUID id, @RequestBody WidgetDto widget) {
-    if (null != widget.getId() && !Objects.equals(widget.getId(), id)) {
-      throw new ValidationMessageException(MessageKeys.ERROR_WIDGET_ID_MISMATCH);
+  public SourceOfFundDto saveSourceOfFund(@PathVariable("id") UUID id,
+      @RequestBody SourceOfFundDto sourceOfFund) {
+    if (null != sourceOfFund.getId() && !Objects.equals(sourceOfFund.getId(), id)) {
+      throw new ValidationMessageException(MessageKeys.ERROR_SOURCE_OF_FUND_ID_MISMATCH);
     }
 
-    LOGGER.debug("Updating widget");
-    Widget db;
-    Optional<Widget> widgetOptional = widgetRepository.findById(id);
-    if (widgetOptional.isPresent()) {
-      db = widgetOptional.get();
-      db.updateFrom(widget);
+    LOGGER.debug("Updating source of fund");
+    SourceOfFund db;
+    Optional<SourceOfFund> sourceOfFundOptional = sourceOfFundRepository.findById(id);
+    if (sourceOfFundOptional.isPresent()) {
+      db = sourceOfFundOptional.get();
+      db.updateFrom(sourceOfFund);
     } else {
-      db = Widget.newInstance(widget);
+      db = SourceOfFund.newInstance(sourceOfFund);
       db.setId(id);
     }
 
-    widgetRepository.saveAndFlush(db);
+    sourceOfFundRepository.saveAndFlush(db);
 
-    return WidgetDto.newInstance(db);
+    return SourceOfFundDto.newInstance(db);
   }
 
   /**
-   * Deletes the specified widget.
+   * Deletes the specified source of fund.
    */
   @DeleteMapping(value = "/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void deleteWidget(@PathVariable("id") UUID id) {
-    if (!widgetRepository.existsById(id)) {
-      throw new NotFoundException(MessageKeys.ERROR_WIDGET_NOT_FOUND);
+  public void deleteSourceOfFund(@PathVariable("id") UUID id) {
+    if (!sourceOfFundRepository.existsById(id)) {
+      throw new NotFoundException(MessageKeys.ERROR_SOURCE_OF_FUND_NOT_FOUND);
     }
 
-    widgetRepository.deleteById(id);
+    sourceOfFundRepository.deleteById(id);
   }
 
   /**
-   * Retrieves all widgets. Note that an empty collection rather than a 404 should be
-   * returned if no widgets exist.
+   * Retrieves all sources of funds. Note that an empty collection rather than a 404 should be
+   * returned if no sources of funds exist.
    */
   @GetMapping
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public Page<WidgetDto> getAllWidgets(Pageable pageable) {
-    Page<Widget> page = widgetRepository.findAll(pageable);
-    List<WidgetDto> content = page
+  public Page<SourceOfFundDto> getAllSourcesOfFunds(Pageable pageable) {
+    Page<SourceOfFund> page = sourceOfFundRepository.findAll(pageable);
+    List<SourceOfFundDto> content = page
         .getContent()
         .stream()
-        .map(WidgetDto::newInstance)
+        .map(SourceOfFundDto::newInstance)
         .collect(Collectors.toList());
     return Pagination.getPage(content, pageable, page.getTotalElements());
   }
 
   /**
-   * Retrieves the specified widget.
+   * Retrieves the specified source of fund.
    */
   @GetMapping(value = "/{id}")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public WidgetDto getSpecifiedWidget(@PathVariable("id") UUID id) {
-    Widget widget = widgetRepository.findById(id)
-        .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_WIDGET_NOT_FOUND));
+  public SourceOfFundDto getSpecifiedSourceOfFund(@PathVariable("id") UUID id) {
+    SourceOfFund sourceOfFund = sourceOfFundRepository.findById(id)
+        .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_SOURCE_OF_FUND_NOT_FOUND));
 
-    return WidgetDto.newInstance(widget);
+    return SourceOfFundDto.newInstance(sourceOfFund);
   }
 
   /**
-   * Retrieves audit information related to the specified widget.
+   * Retrieves audit information related to the specified source of fund.
    *
    * @param author The author of the changes which should be returned.
    *               If null or empty, changes are returned regardless of author.
@@ -161,17 +162,17 @@ public class WidgetController extends BaseController {
   @GetMapping(value = "/{id}/auditLog")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public ResponseEntity<String> getWidgetAuditLog(@PathVariable("id") UUID id,
+  public ResponseEntity<String> getSourceOfFundAuditLog(@PathVariable("id") UUID id,
       @RequestParam(name = "author", required = false, defaultValue = "") String author,
       @RequestParam(name = "changedPropertyName", required = false, defaultValue = "")
           String changedPropertyName, Pageable page) {
 
     // Return a 404 if the specified instance can't be found
-    if (!widgetRepository.existsById(id)) {
-      throw new NotFoundException(MessageKeys.ERROR_WIDGET_NOT_FOUND);
+    if (!sourceOfFundRepository.existsById(id)) {
+      throw new NotFoundException(MessageKeys.ERROR_SOURCE_OF_FUND_NOT_FOUND);
     }
 
-    return getAuditLogResponse(Widget.class, id, author, changedPropertyName, page);
+    return getAuditLogResponse(SourceOfFund.class, id, author, changedPropertyName, page);
   }
 
 }

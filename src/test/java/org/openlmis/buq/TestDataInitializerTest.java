@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.openlmis.buq.util.Resource2Db;
 import org.springframework.core.io.Resource;
 
@@ -30,7 +30,7 @@ import org.springframework.core.io.Resource;
 public class TestDataInitializerTest {
 
   @Mock
-  private Resource widgetResource;
+  private Resource sourceOfFundResource;
 
   @Mock
   private Resource2Db loader;
@@ -42,7 +42,7 @@ public class TestDataInitializerTest {
   public void shouldLoadData() throws IOException {
     initializer.run();
 
-    verify(loader).insertToDbFromCsv("buq.widget", widgetResource);
+    verify(loader).insertToDbFromCsv("buq.sources_of_funds", sourceOfFundResource);
   }
 
 }

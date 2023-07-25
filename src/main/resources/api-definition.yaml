@@ -6,130 +6,130 @@ baseUri: "@baseUrl@"
 protocols: [ HTTP, HTTPS ]
 
 documentation:
-- title: Getting Started
-  content: Welcome to the OpenLMIS Bottom-Up Quantification documentation.
+  - title: Getting Started
+    content: Welcome to the OpenLMIS Bottom-Up Quantification documentation.
 
 schemas:
-- auditLogEntry: !include schemas/auditLogEntry.json
+  - auditLogEntry: !include schemas/auditLogEntry.json
 
-- auditLogEntryArray: |
-    {
-        "type": "array",
-        "items": { "type": "object", "$ref": "schemas/auditLogEntry.json" }
-    }
+  - auditLogEntryArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/auditLogEntry.json" }
+      }
 
-- localizedErrorResponse: !include schemas/localizedErrorResponse.json
+  - localizedErrorResponse: !include schemas/localizedErrorResponse.json
 
-- version: !include schemas/version.json
+  - version: !include schemas/version.json
 
-- widget: !include schemas/widget.json
-- widgetPage: !include schemas/widgetPage.json
+  - sourceOfFund: !include schemas/sourceOfFund.json
+  - sourceOfFundPage: !include schemas/sourceOfFundPage.json
 
 traits:
-- secured:
-    queryParameters:
-      access_token:
-        displayName: access_token
-        description: OAuth2 access token
-        type: string
-        required: false
-        repeat: false
-    headers:
-      Authorization:
-        displayName: Authorization
-        description: OAuth2 authorization token header. Takes the form of 'Bearer <token>'.
-        type: string
-        required: false
-        repeat: false
-
-- paginated:
-    queryParameters:
-      page:
-        description: The page number which should be displayed. Note that the first page is numbered zero rather than one. Additionally, negative and undefined values are interpreted as zero.
-        type: integer
-        required: false
-        repeat: false
-      size:
-        description: The desired size of each page. This specifies the maximum number of values that should be returned by the server. Zero, undefined, and negative values should result in all possible values being returned.
-        type: integer
-        required: false
-        repeat: false
-- sorted:
-    queryParameters:
-      sort:
-        description: Sorting criteria in the format "property(,asc|desc)". Default sort order is ascending. Multiple sort criteria are supported.
-        type: string
-        required: false
-        repeat: true
-resourceTypes:
-- auditLog:
-    description: This represents the audit log for all <<resourcePathName|!singularize>> resources.
-    get:
-      description: Returns all or part of the resource's audit log
-      # Although /auditLog endpoints support "page" and "number" query parameters for pagination,
-      # they don’t return the response body and set of pagination-related values expected to be
-      # returned for core domain resources.
-      is: [ paginated ]
+  - secured:
       queryParameters:
-        author:
-          displayName: author
-          description: Name of the author of changes which should be returned. By default, all changes are returned regardless of author.
+        access_token:
+          displayName: access_token
+          description: OAuth2 access token
           type: string
           required: false
           repeat: false
-        changedPropertyName:
-          displayName: changedPropertyName
-          description: The name of the property about which changes should be returned. If null or empty, changes associated with any and all properties are returned.
+      headers:
+        Authorization:
+          displayName: Authorization
+          description: OAuth2 authorization token header. Takes the form of 'Bearer <token>'.
           type: string
           required: false
           repeat: false
-      responses:
-        200:
-          headers:
-            Keep-Alive:
-          body:
-            application/json:
-              schema: auditLogEntryArray
-              example: |
-                [
-                  {
-                    "changeType": "ValueChange",
-                    "globalId": {
-                      "entity": "org.openlmis.SomeClass",
-                      "cdoId": 1
-                    },
-                    "commitMetadata": {
-                      "author": "SomeUserName",
-                      "properties": [],
-                      "commitDate": "2016-12-17T19:39:57.621",
-                      "id": 3
-                    },
-                    "property": "PropertyName",
-                    "left": "OldValue",
-                    "right": "NewValue"
-                  }
-                ]
-        404:
-          description: The specified <<resourcePathName|!singularize>> does not exist.
-          headers:
-            Keep-Alive:
-          body:
-            application/json:
-              schema: localizedErrorResponse
-        401:
-          headers:
-            Keep-Alive:
-          body:
-            application/json:
 
-- instanceAuditLog:
-    description: This represents the audit log for a specified instance of the <<resourcePathName|!singularize>> resource.
-    type: auditLog
-    uriParameters:
-      id:
-        type: string
-        required: true
-        repeat: false
+  - paginated:
+      queryParameters:
+        page:
+          description: The page number which should be displayed. Note that the first page is numbered zero rather than one. Additionally, negative and undefined values are interpreted as zero.
+          type: integer
+          required: false
+          repeat: false
+        size:
+          description: The desired size of each page. This specifies the maximum number of values that should be returned by the server. Zero, undefined, and negative values should result in all possible values being returned.
+          type: integer
+          required: false
+          repeat: false
+  - sorted:
+      queryParameters:
+        sort:
+          description: Sorting criteria in the format "property(,asc|desc)". Default sort order is ascending. Multiple sort criteria are supported.
+          type: string
+          required: false
+          repeat: true
+resourceTypes:
+  - auditLog:
+      description: This represents the audit log for all <<resourcePathName|!singularize>> resources.
+      get:
+        description: Returns all or part of the resource's audit log
+        # Although /auditLog endpoints support "page" and "number" query parameters for pagination,
+        # they don’t return the response body and set of pagination-related values expected to be
+        # returned for core domain resources.
+        is: [ paginated ]
+        queryParameters:
+          author:
+            displayName: author
+            description: Name of the author of changes which should be returned. By default, all changes are returned regardless of author.
+            type: string
+            required: false
+            repeat: false
+          changedPropertyName:
+            displayName: changedPropertyName
+            description: The name of the property about which changes should be returned. If null or empty, changes associated with any and all properties are returned.
+            type: string
+            required: false
+            repeat: false
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: auditLogEntryArray
+                example: |
+                  [
+                    {
+                      "changeType": "ValueChange",
+                      "globalId": {
+                        "entity": "org.openlmis.SomeClass",
+                        "cdoId": 1
+                      },
+                      "commitMetadata": {
+                        "author": "SomeUserName",
+                        "properties": [],
+                        "commitDate": "2016-12-17T19:39:57.621",
+                        "id": 3
+                      },
+                      "property": "PropertyName",
+                      "left": "OldValue",
+                      "right": "NewValue"
+                    }
+                  ]
+          404:
+            description: The specified <<resourcePathName|!singularize>> does not exist.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+
+  - instanceAuditLog:
+      description: This represents the audit log for a specified instance of the <<resourcePathName|!singularize>> resource.
+      type: auditLog
+      uriParameters:
+        id:
+          type: string
+          required: true
+          repeat: false
 /buq:
   displayName: Version
   get:
@@ -143,18 +143,18 @@ resourceTypes:
             schema: version
 
 /api:
-  /widgets:
-    displayName: widgets
+  /sourcesOfFunds:
+    displayName: sourcesOfFunds
     get:
       is: [ secured, paginated, sorted ]
-      description: Get all widgets that match the given parameters.
+      description: Get all sources of funds that match the given parameters.
       responses:
         200:
           headers:
             Keep-Alive:
           body:
             application/json:
-              schema: widgetPage
+              schema: sourceOfFundPage
         401:
           headers:
             Keep-Alive:
@@ -166,17 +166,17 @@ resourceTypes:
               schema: localizedErrorResponse
     post:
       is: [ secured ]
-      description: Creates given widget if possible.
+      description: Creates given source of fund if possible.
       body:
         application/json:
-          schema: widget
+          schema: sourceOfFund
       responses:
         201:
           headers:
             Keep-Alive:
           body:
             application/json:
-              schema: widget
+              schema: sourceOfFund
         400:
           body:
             application/json:
@@ -199,14 +199,14 @@ resourceTypes:
           repeat: false
       get:
         is: [ secured ]
-        description: Get chosen widget.
+        description: Get chosen source of fund.
         responses:
           200:
             headers:
               Keep-Alive:
             body:
               application/json:
-                schema: widget
+                schema: sourceOfFund
           404:
             headers:
               Keep-Alive:
@@ -224,17 +224,17 @@ resourceTypes:
                 schema: localizedErrorResponse
       put:
         is: [ secured ]
-        description: Update existing widget.
+        description: Update existing source of fund.
         body:
           application/json:
-            schema: widget
+            schema: sourceOfFund
         responses:
           200:
             headers:
               Keep-Alive:
             body:
               application/json:
-                schema: widget
+                schema: sourceOfFund
           400:
             body:
               application/json:
@@ -254,7 +254,7 @@ resourceTypes:
                 schema: localizedErrorResponse
       delete:
         is: [ secured ]
-        description: "Completely removes widget. This action is not recoverable."
+        description: "Completely removes source of fund. This action is not recoverable."
         responses:
           204:
             headers:

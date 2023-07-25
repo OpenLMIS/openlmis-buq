@@ -36,11 +36,11 @@ public class TestDataInitializer implements CommandLineRunner {
   private static final XLogger XLOGGER = XLoggerFactory.getXLogger(TestDataInitializer.class);
   private static final String DEMO_DATA_PATH = "classpath:db/demo-data/";
 
-  @Value(value = DEMO_DATA_PATH + "buq.widget.csv")
-  private Resource widgetResource;
+  @Value(value = DEMO_DATA_PATH + "buq.source_of_fund.csv")
+  private Resource sourceOfFundResource;
 
   private Resource2Db loader;
-  
+
   @Autowired
   public TestDataInitializer(JdbcTemplate template) {
     this(new Resource2Db(template));
@@ -57,7 +57,7 @@ public class TestDataInitializer implements CommandLineRunner {
   public void run(String... args) throws IOException {
     XLOGGER.entry();
 
-    loader.insertToDbFromCsv("buq.widget", widgetResource);
+    loader.insertToDbFromCsv("buq.sources_of_funds", sourceOfFundResource);
 
     XLOGGER.exit();
   }

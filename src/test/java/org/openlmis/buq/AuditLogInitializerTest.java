@@ -37,8 +37,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.openlmis.buq.domain.widget.Widget;
-import org.openlmis.buq.repository.WidgetRepository;
+import org.openlmis.buq.builder.SourceOfFundDataBuilder;
+import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
+import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.context.ApplicationContext;
@@ -58,7 +59,7 @@ public class AuditLogInitializerTest {
   private Javers javers;
 
   @Mock
-  private WidgetRepository tradeItemRepository;
+  private SourceOfFundRepository sourceOfFundRepository;
 
   @Mock
   private CdoSnapshot snapshot;
@@ -89,12 +90,12 @@ public class AuditLogInitializerTest {
 
   @Test
   public void shouldNotCreateSecondSnapshot() {
-    repositoryMap.put("tradeItemRepository", tradeItemRepository);
+    repositoryMap.put("sourceOfFundRepository", sourceOfFundRepository);
 
-    ArrayList<Widget> content = Lists.newArrayList(new WidgetDataBuilder().build());
-    Page<Widget> page = new PageImpl<>(content);
+    ArrayList<SourceOfFund> content = Lists.newArrayList(new SourceOfFundDataBuilder().build());
+    Page<SourceOfFund> page = new PageImpl<>(content);
 
-    when(tradeItemRepository.findAllWithoutSnapshots(any(Pageable.class)))
+    when(sourceOfFundRepository.findAllWithoutSnapshots(any(Pageable.class)))
         .thenReturn(page)
         .thenReturn(new PageImpl<>(Lists.newArrayList()));
 

@@ -13,35 +13,36 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.repository;
+package org.openlmis.buq.repository.sourceoffund;
 
 import java.util.UUID;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
-import org.openlmis.buq.domain.widget.Widget;
+import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
+import org.openlmis.buq.repository.BaseAuditableRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 @JaversSpringDataAuditable
-public interface WidgetRepository extends PagingAndSortingRepository<Widget, UUID>,
-      BaseAuditableRepository<Widget,  UUID> {
+public interface SourceOfFundRepository extends PagingAndSortingRepository<SourceOfFund, UUID>,
+        BaseAuditableRepository<SourceOfFund,  UUID> {
 
   @Query(value = "SELECT\n"
-      + "    w.*\n"
-      + "FROM\n"
-      + "    buq.widget w\n"
-      + "WHERE\n"
-      + "    id NOT IN (\n"
-      + "        SELECT\n"
-      + "            id\n"
-      + "        FROM\n"
-      + "            buq.widget w\n"
-      + "            INNER JOIN buq.jv_global_id g "
-      + "ON CAST(w.id AS varchar) = SUBSTRING(g.local_id, 2, 36)\n"
-      + "            INNER JOIN buq.jv_snapshot s  ON g.global_id_pk = s.global_id_fk\n"
-      + "    )\n",
-      nativeQuery = true)
-  Page<Widget> findAllWithoutSnapshots(Pageable pageable);
+          + "    sof.*\n"
+          + "FROM\n"
+          + "    buq.sources_of_funds sof\n"
+          + "WHERE\n"
+          + "    id NOT IN (\n"
+          + "        SELECT\n"
+          + "            id\n"
+          + "        FROM\n"
+          + "            buq.sources_of_funds sof\n"
+          + "            INNER JOIN buq.jv_global_id g "
+          + "ON CAST(sof.id AS varchar) = SUBSTRING(g.local_id, 2, 36)\n"
+          + "            INNER JOIN buq.jv_snapshot s  ON g.global_id_pk = s.global_id_fk\n"
+          + "    )\n",
+          nativeQuery = true)
+  Page<SourceOfFund> findAllWithoutSnapshots(Pageable pageable);
 
 }
