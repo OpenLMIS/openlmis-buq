@@ -13,69 +13,38 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.domain;
+package org.openlmis.buq.dto.remark;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.openlmis.buq.domain.Remark;
+import org.openlmis.buq.dto.BaseDto;
 
-@Entity
-@Table(name = "remarks")
+
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @EqualsAndHashCode(callSuper = true)
-public class Remark extends BaseEntity {
+@ToString(callSuper = true)
+public class RemarkDto extends BaseDto implements Remark.Importer, Remark.Exporter {
 
   @NotBlank
   private String name;
-
   private String description;
 
   /**
-   * Creates new instance based on data from the importer.
+   * Creates new instance based on domain object.
    */
-  public static Remark newInstance(Remark.Importer importer) {
-    Remark remark = new Remark();
-    remark.setId(importer.getId());
-    remark.updateFrom(importer);
+  public static RemarkDto newInstance(Remark remark) {
+    RemarkDto dto = new RemarkDto();
+    remark.export(dto);
 
-    return remark;
+    return dto;
   }
-
-  public void updateFrom(Remark.Importer importer) {
-    name = importer.getName();
-    description = importer.getDescription();
-  }
-
-  /**
-   * Exports data to the exporter.
-   */
-  public void export(Remark.Exporter exporter) {
-    exporter.setId(getId());
-    exporter.setName(name);
-    exporter.setDescription(description);
-  }
-
-
-  public interface Exporter extends BaseExporter {
-
-    void setName(String name);
-
-    void setDescription(String description);
-
-  }
-
-  public interface Importer extends BaseImporter {
-
-    String getName();
-
-    String getDescription();
-
-  }
-
 }
