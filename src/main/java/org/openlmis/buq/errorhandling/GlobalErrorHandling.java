@@ -24,6 +24,7 @@ import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.util.Message;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -79,6 +80,19 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
       }
     }
 
+    return getLocalizedMessage(new Message(ex.getMessage()));
+  }
+
+  /**
+   * Handles validation exceptions.
+   * @param ex the validation exception.
+   * @return the user-oriented error message.
+   */
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  @ResponseBody
+  public Message.LocalizedMessage handleValidationExceptions(
+          MethodArgumentNotValidException ex) {
     return getLocalizedMessage(new Message(ex.getMessage()));
   }
 

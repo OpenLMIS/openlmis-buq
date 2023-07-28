@@ -26,6 +26,8 @@ public abstract class MessageKeys {
   private static final String SOURCE_OF_FUND = "sourceOfFund";
   private static final String JAVERS = "javers";
 
+  private static final String REMARK = "remark";
+
   private static final String ID = "id";
   private static final String NAME = "name";
 
@@ -42,8 +44,10 @@ public abstract class MessageKeys {
   public static final String ERROR_SOURCE_OF_FUND_NAME_DUPLICATED =
           join(ERROR_PREFIX, SOURCE_OF_FUND, NAME, DUPLICATED);
 
+  public static final String ERROR_REMARK_NOT_FOUND = join(ERROR_PREFIX, REMARK, NOT_FOUND);
+
   public static final String ERROR_JAVERS_EXISTING_ENTRY =
-          join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
+      join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
 
   private MessageKeys() {
     throw new UnsupportedOperationException();
