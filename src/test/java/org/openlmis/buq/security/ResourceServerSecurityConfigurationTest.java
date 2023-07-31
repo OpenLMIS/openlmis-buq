@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -32,7 +32,7 @@ public class ResourceServerSecurityConfigurationTest {
   private static final String[] ALLOWED_ORIGINS = new String[]{"http://test.openlmis.org"};
   private static final String[] ALLOWED_METHODS = new String[]{"GET"};
 
-  private ResourceServerSecurityConfiguration configuration =
+  private final ResourceServerSecurityConfiguration configuration =
       new ResourceServerSecurityConfiguration();
 
   @Test

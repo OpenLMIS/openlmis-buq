@@ -1,13 +1,4 @@
 --
--- Name: widget; Type: TABLE; Schema: template; Owner: postgres; Tablespace:
---
-
-CREATE TABLE widget (
-    id uuid NOT NULL,
-    name text NOT NULL
-);
-
---
 -- Name: sources_of_funds; Type: TABLE; Schema: buq; Owner: postgres; Tablespace:
 --
 

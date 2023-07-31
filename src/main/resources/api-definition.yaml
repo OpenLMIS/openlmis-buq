@@ -22,8 +22,8 @@ schemas:
 
 - version: !include schemas/version.json
 
-- widget: !include schemas/widget.json
-- widgetPage: !include schemas/widgetPage.json
+- sourceOfFund: !include schemas/sourceOfFund.json
+- sourceOfFundPage: !include schemas/sourceOfFundPage.json
 - remark: !include schemas/remark.json
 
 - remarkArray: |
@@ -150,18 +150,18 @@ resourceTypes:
             schema: version
 
 /api:
-  /widgets:
-    displayName: widgets
+  /sourcesOfFunds:
+    displayName: sourcesOfFunds
     get:
       is: [ secured, paginated, sorted ]
-      description: Get all widgets that match the given parameters.
+      description: Get all sources of funds that match the given parameters.
       responses:
         200:
           headers:
             Keep-Alive:
           body:
             application/json:
-              schema: widgetPage
+              schema: sourceOfFundPage
         401:
           headers:
             Keep-Alive:
@@ -173,17 +173,17 @@ resourceTypes:
               schema: localizedErrorResponse
     post:
       is: [ secured ]
-      description: Creates given widget if possible.
+      description: Creates given source of fund if possible.
       body:
         application/json:
-          schema: widget
+          schema: sourceOfFund
       responses:
         201:
           headers:
             Keep-Alive:
           body:
             application/json:
-              schema: widget
+              schema: sourceOfFund
         400:
           body:
             application/json:
@@ -206,14 +206,14 @@ resourceTypes:
           repeat: false
       get:
         is: [ secured ]
-        description: Get chosen widget.
+        description: Get chosen source of fund.
         responses:
           200:
             headers:
               Keep-Alive:
             body:
               application/json:
-                schema: widget
+                schema: sourceOfFund
           404:
             headers:
               Keep-Alive:
@@ -231,17 +231,17 @@ resourceTypes:
                 schema: localizedErrorResponse
       put:
         is: [ secured ]
-        description: Update existing widget.
+        description: Update existing source of fund.
         body:
           application/json:
-            schema: widget
+            schema: sourceOfFund
         responses:
           200:
             headers:
               Keep-Alive:
             body:
               application/json:
-                schema: widget
+                schema: sourceOfFund
           400:
             body:
               application/json:
@@ -261,7 +261,7 @@ resourceTypes:
                 schema: localizedErrorResponse
       delete:
         is: [ secured ]
-        description: "Completely removes widget. This action is not recoverable."
+        description: "Completely removes source of fund. This action is not recoverable."
         responses:
           204:
             headers:

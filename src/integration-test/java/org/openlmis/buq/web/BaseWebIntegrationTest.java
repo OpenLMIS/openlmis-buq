@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openlmis.buq.domain.BaseEntity;
-import org.openlmis.buq.repository.WidgetRepository;
+import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.util.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -112,7 +112,7 @@ public abstract class BaseWebIntegrationTest {
   public Javers javers;
 
   @MockBean
-  public WidgetRepository widgetRepository;
+  public SourceOfFundRepository sourceOfFundRepository;
 
   /**
    * Constructor for test.

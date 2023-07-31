@@ -8,7 +8,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "widget.json"
+        "$ref": "sourceOfFund.json"
       }
     },
     "totalPages": {

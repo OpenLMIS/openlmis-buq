@@ -1,8 +1,8 @@
 {
   "type": "object",
   "$schema": "http://json-schema.org/draft-04/schema",
-  "title": "Widget",
-  "description": "Single widget instance",
+  "title": "SourceOfFund",
+  "description": "Single source of fund instance",
   "properties": {
     "id": {
       "type": "string",
@@ -11,9 +11,14 @@
     "name": {
       "type": "string",
       "title": "name"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
     }
   },
   "required": [
-    "name"
+    "name",
+    "description"
   ]
 }

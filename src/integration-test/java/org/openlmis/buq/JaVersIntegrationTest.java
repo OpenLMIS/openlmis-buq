@@ -31,7 +31,7 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.openlmis.buq.domain.widget.Widget;
+import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -63,21 +63,21 @@ public class JaVersIntegrationTest {
   public void shouldAlwaysCommitWithUtcTimeZone() {
 
     // given
-    Widget widget = new Widget();
-    widget.setId(UUID.randomUUID());
-    widget.setName("name_1");
+    SourceOfFund sourceOfFund = new SourceOfFund();
+    sourceOfFund.setId(UUID.randomUUID());
+    sourceOfFund.setName("name_1");
 
     // when
     DateTimeZone.setDefault(DateTimeZone.forID("UTC"));
-    javers.commit(COMMIT_AUTHOR, widget);
+    javers.commit(COMMIT_AUTHOR, sourceOfFund);
 
     DateTimeZone.setDefault(DateTimeZone.forID("Africa/Johannesburg"));
-    widget.setName("name_2");
-    javers.commit(COMMIT_AUTHOR, widget);
+    sourceOfFund.setName("name_2");
+    javers.commit(COMMIT_AUTHOR, sourceOfFund);
 
     // then
     List<CdoSnapshot> snapshots = javers.findSnapshots(
-        QueryBuilder.byClass(Widget.class).build());
+        QueryBuilder.byClass(SourceOfFund.class).build());
     assertEquals(2, snapshots.size());
 
     LocalDateTime commitTime1 = snapshots.get(0).getCommitMetadata().getCommitDate();

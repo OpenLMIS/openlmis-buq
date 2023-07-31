@@ -63,24 +63,24 @@ public class GlobalErrorHandlingTest {
   @Test
   public void shouldHandleDataIntegrityViolation() {
     // given
-    String constraintName = "unq_widget_code";
+    String constraintName = "unq_source_of_fund_name";
     ConstraintViolationException constraintViolation = new ConstraintViolationException(
         null, null, constraintName);
     DataIntegrityViolationException exp = new DataIntegrityViolationException(
         null, constraintViolation);
 
     // when
-    mockMessage(MessageKeys.ERROR_WIDGET_CODE_DUPLICATED);
+    mockMessage(MessageKeys.ERROR_SOURCE_OF_FUND_NAME_DUPLICATED);
     LocalizedMessage message = errorHandler.handleDataIntegrityViolation(exp);
 
     // then
-    assertMessage(message, MessageKeys.ERROR_WIDGET_CODE_DUPLICATED);
+    assertMessage(message, MessageKeys.ERROR_SOURCE_OF_FUND_NAME_DUPLICATED);
   }
 
   @Test
   public void shouldHandleDataIntegrityViolationEvenIfMessageKeyNotExist() {
     // given
-    String constraintName = "unq_widget_code_def";
+    String constraintName = "unq_source_of_fund_name_def";
     ConstraintViolationException constraintViolation = new ConstraintViolationException(
         null, null, constraintName);
     DataIntegrityViolationException exp = new DataIntegrityViolationException(
