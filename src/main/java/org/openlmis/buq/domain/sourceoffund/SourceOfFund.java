@@ -41,7 +41,6 @@ public class SourceOfFund extends BaseEntity {
   @Setter
   private String name;
 
-  @NotBlank
   @Getter
   @Setter
   private String description;
