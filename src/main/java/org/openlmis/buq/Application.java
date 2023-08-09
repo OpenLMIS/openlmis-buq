@@ -15,6 +15,8 @@
 
 package org.openlmis.buq;
 
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.Locale;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.callback.Callback;
@@ -61,6 +63,8 @@ public class Application {
   @Value("${spring.jpa.properties.hibernate.default_schema}")
   private String preferredSchema;
 
+  @Value("${time.zoneId}")
+  private String timeZoneId;
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -98,6 +102,11 @@ public class Application {
   @Bean
   public Callback flywayCallback() {
     return new ExportSchemaFlywayCallback();
+  }
+
+  @Bean
+  public Clock clock() {
+    return Clock.system(ZoneId.of(timeZoneId));
   }
 
   /**
