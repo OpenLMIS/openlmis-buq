@@ -22,6 +22,8 @@ schemas:
 
 - version: !include schemas/version.json
 
+- bottomUpQuantification: !include schemas/bottomUpQuantification.json
+- bottomUpQuantificationPage: !include schemas/bottomUpQuantificationPage.json
 - sourceOfFund: !include schemas/sourceOfFund.json
 - sourceOfFundPage: !include schemas/sourceOfFundPage.json
 - remark: !include schemas/remark.json
@@ -150,6 +152,233 @@ resourceTypes:
             schema: version
 
 /api:
+  /bottomUpQuantifications:
+    displayName: bottomUpQuantifications
+    get:
+      is: [ secured, paginated, sorted ]
+      description: Get all bottom-up quantifications that match the given parameters.
+      responses:
+        200:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: bottomUpQuantificationPage
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+    /{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get chosen bottom-up quantification.
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: bottomUpQuantification
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      delete:
+        is: [ secured ]
+        description: "Completely removes bottom-up quantification. This action is not recoverable."
+        responses:
+          204:
+            headers:
+              Keep-Alive:
+          400:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      put:
+        is: [ secured ]
+        description: Update existing bottom-up quantification. Do not change invariants – id, createdDate, facilityId, programId, processingPeriodId, orderableId of line item, such attempts will be ignored.
+        body:
+          application/json:
+            schema: bottomUpQuantification
+        responses:
+          200:
+            description: The request is valid and the given bottom-up quantification will be updated and returned.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: bottomUpQuantification
+          400:
+            description: The request's body is invalid
+            body:
+              application/json:
+                schema: localizedMessageMap
+          401:
+            headers:
+              Keep-Alive:
+            description: The request does not contain a token or the token might be invalid.
+            body:
+              application/json:
+          403:
+            description: The server understood the request but refuses to authorize it.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            description: The server understood the request but can not find the bottom-up quantification.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+          409:
+            description: There is a conflict while the request is handled.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+      /auditLog:
+        description: This represents the audit log for all <<resourcePathName|!singularize>> resources.
+        get:
+          description: Returns all or part of the resource's audit log
+          # Although /auditLog endpoints support "page" and "number" query parameters for pagination,
+          # they don’t return the response body and set of pagination-related values expected to be
+          # returned for core domain resources.
+          is: [ paginated ]
+          queryParameters:
+            author:
+              displayName: author
+              description: Name of the author of changes which should be returned. By default, all changes are returned regardless of author.
+              type: string
+              required: false
+              repeat: false
+            changedPropertyName:
+              displayName: changedPropertyName
+              description: The name of the property about which changes should be returned. If null or empty, changes associated with any and all properties are returned.
+              type: string
+              required: false
+              repeat: false
+          responses:
+            200:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: auditLogEntryArray
+                  example: |
+                    [
+                      {
+                        "changeType": "ValueChange",
+                        "globalId": {
+                          "entity": "org.openlmis.SomeClass",
+                          "cdoId": 1
+                        },
+                        "commitMetadata": {
+                          "author": "SomeUserName",
+                          "properties": [],
+                          "commitDate": "2016-12-17T19:39:57.621",
+                          "id": 3
+                        },
+                        "property": "PropertyName",
+                        "left": "OldValue",
+                        "right": "NewValue"
+                      }
+                    ]
+            404:
+              description: The specified <<resourcePathName|!singularize>> does not exist.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedErrorResponse
+            401:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+    /prepare:
+      post:
+        is: [ secured ]
+        description: Prepare bottom-up quantification.
+        queryParameters:
+          programId:
+            displayName: programId
+            type: string
+            required: true
+            repeat: false
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+          processingPeriodId:
+            displayName: processingPeriodId
+            type: string
+            required: true
+            repeat: false
+        responses:
+          "201":
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          "403":
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
   /sourcesOfFunds:
     displayName: sourcesOfFunds
     get:

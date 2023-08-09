@@ -1,0 +1,61 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Bottom-Up Quantification",
+  "description": "Single bottom-up quantification instance",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "createdDate": {
+      "type": "string",
+      "title": "createdDate"
+    },
+    "modifiedDate": {
+      "type": "string",
+      "title": "modifiedDate"
+    },
+    "facilityId": {
+      "type": "string",
+      "title": "facilityId"
+    },
+    "programId": {
+      "type": "string",
+      "title": "programId"
+    },
+    "processingPeriodId": {
+      "type": "string",
+      "title": "processingPeriodId"
+    },
+    "targetYear": {
+      "type": "integer",
+      "title": "targetYear"
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "SUBMITTED",
+        "AUTHORIZED",
+        "APPROVED_BY_DP",
+        "APPROVED_BY_RP",
+        "APPROVED_BY_NQT"
+      ],
+      "title": "status"
+    },
+    "bottomUpQuantificationLineItems": {
+      "type": "array",
+      "title": "bottomUpQuantificationLineItems",
+      "items": {
+        "type": "object",
+        "$ref": "bottomUpQuantificationLineItem.json"
+      },
+      "uniqueItems": false
+    }
+  },
+  "required": [
+    "facilityId",
+    "programId",
+    "processingPeriodId"
+  ]
+}
