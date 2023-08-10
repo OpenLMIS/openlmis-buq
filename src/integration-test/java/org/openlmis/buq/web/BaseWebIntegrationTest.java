@@ -37,7 +37,9 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openlmis.buq.domain.BaseEntity;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
+import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 import org.openlmis.buq.util.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -113,6 +115,12 @@ public abstract class BaseWebIntegrationTest {
 
   @MockBean
   public SourceOfFundRepository sourceOfFundRepository;
+
+  @MockBean
+  public BottomUpQuantificationRepository bottomUpQuantificationRepository;
+
+  @MockBean
+  public BottomUpQuantificationService bottomUpQuantificationService;
 
   /**
    * Constructor for test.

@@ -18,9 +18,12 @@ package org.openlmis.buq.errorhandling;
 import java.util.HashMap;
 import java.util.Map;
 import org.hibernate.exception.ConstraintViolationException;
+import org.openlmis.buq.exception.AuthenticationMessageException;
+import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
+import org.openlmis.buq.service.DataRetrievalException;
 import org.openlmis.buq.util.Message;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -81,6 +84,34 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
     }
 
     return getLocalizedMessage(new Message(ex.getMessage()));
+  }
+
+  @ExceptionHandler(AuthenticationMessageException.class)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  @ResponseBody
+  public Message.LocalizedMessage handleAuthenticationException(AuthenticationMessageException ex) {
+    return getLocalizedMessage(ex);
+  }
+
+  /**
+   * Handles Message exceptions and returns status 500.
+   *
+   * @param ex the DataRetrievalException to handle
+   * @return the error response for the user
+   */
+  @ExceptionHandler(DataRetrievalException.class)
+  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  @ResponseBody
+  public Message.LocalizedMessage handleDataRetrievalException(DataRetrievalException ex) {
+    return getLocalizedMessage(ex);
+  }
+
+  @ExceptionHandler(ContentNotFoundMessageException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  @ResponseBody
+  public Message.LocalizedMessage handleContentNotFoundMessageException(
+      ContentNotFoundMessageException ex) {
+    return getLocalizedMessage(ex);
   }
 
   /**

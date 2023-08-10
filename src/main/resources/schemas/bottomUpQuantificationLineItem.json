@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Bottom-Up Quantification Line Item",
+  "description": "Single bottom-up quantification line item instance",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "orderableId": {
+      "type": "string",
+      "title": "orderableId"
+    },
+    "annualAdjustedConsumption": {
+      "type": "integer",
+      "title": "annualAdjustedConsumption"
+    },
+    "verifiedAnnualAdjustedConsumption": {
+      "type": "integer",
+      "title": "verifiedAnnualAdjustedConsumption"
+    },
+    "forecastedDemand": {
+      "type": "integer",
+      "title": "forecastedDemand"
+    }
+  },
+  "required": [
+    "orderableId"
+  ]
+}
