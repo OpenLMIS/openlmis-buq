@@ -35,6 +35,7 @@ public final class SourceOfFundDto extends BaseDto implements SourceOfFund.Impor
 
   private String name;
   private String description;
+  private boolean editable;
 
   /**
    * Creates new instance based on domain object.
