@@ -581,6 +581,21 @@ resourceTypes:
           body:
             application/json:
               schema: remarkArray
+        404:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          body:
+            application/json:
+              schema: localizedErrorResponse
     post:
       is: [ secured ]
       description: Create a remark
@@ -594,6 +609,19 @@ resourceTypes:
           body:
             application/json:
               schema: remark
+        400:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          body:
+            application/json:
+              schema: localizedErrorResponse
     /{id}:
       uriParameters:
         id:
@@ -611,22 +639,40 @@ resourceTypes:
             body:
               application/json:
                 schema: remark
-          "404":
-      delete:
-        is: [ secured ]
-        description: Delete remark
-        responses:
-          "204":
+          404:
             headers:
               Keep-Alive:
             body:
               application/json:
+                schema: localizedErrorResponse
           401:
             headers:
               Keep-Alive:
             body:
               application/json:
-          "404":
+          403:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      delete:
+        is: [ secured ]
+        description: Delete remark
+        responses:
+          204:
+            headers:
+              Keep-Alive:
+          400:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          404:
+            headers:
+              Keep-Alive:
             body:
               application/json:
                 schema: localizedErrorResponse
@@ -652,3 +698,62 @@ resourceTypes:
               Keep-Alive:
             body:
               application/json:
+      /auditLog:
+        description: This represents the audit log for all <<resourcePathName|!singularize>> resources.
+        get:
+          description: Returns all or part of the resource's audit log
+          # Although /auditLog endpoints support "page" and "number" query parameters for pagination,
+          # they don’t return the response body and set of pagination-related values expected to be
+          # returned for core domain resources.
+          is: [ paginated ]
+          queryParameters:
+            author:
+              displayName: author
+              description: Name of the author of changes which should be returned. By default, all changes are returned regardless of author.
+              type: string
+              required: false
+              repeat: false
+            changedPropertyName:
+              displayName: changedPropertyName
+              description: The name of the property about which changes should be returned. If null or empty, changes associated with any and all properties are returned.
+              type: string
+              required: false
+              repeat: false
+          responses:
+            200:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: auditLogEntryArray
+                  example: |
+                    [
+                      {
+                        "changeType": "ValueChange",
+                        "globalId": {
+                          "entity": "org.openlmis.SomeClass",
+                          "cdoId": 1
+                        },
+                        "commitMetadata": {
+                          "author": "SomeUserName",
+                          "properties": [],
+                          "commitDate": "2016-12-17T19:39:57.621",
+                          "id": 3
+                        },
+                        "property": "PropertyName",
+                        "left": "OldValue",
+                        "right": "NewValue"
+                      }
+                    ]
+            404:
+              description: The specified <<resourcePathName|!singularize>> does not exist.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedErrorResponse
+            401:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:

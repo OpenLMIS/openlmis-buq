@@ -36,6 +36,13 @@ public class Remark extends BaseEntity {
 
   private String description;
 
+  private boolean editable = true;
+
+  public Remark(String name, String description) {
+    this.name = name;
+    this.description = description;
+  }
+
   /**
    * Creates new instance based on data from the importer.
    */
@@ -59,6 +66,7 @@ public class Remark extends BaseEntity {
     exporter.setId(getId());
     exporter.setName(name);
     exporter.setDescription(description);
+    exporter.setEditable(editable);
   }
 
 
@@ -68,6 +76,8 @@ public class Remark extends BaseEntity {
 
     void setDescription(String description);
 
+    void setEditable(boolean editable);
+
   }
 
   public interface Importer extends BaseImporter {
@@ -76,6 +86,7 @@ public class Remark extends BaseEntity {
 
     String getDescription();
 
+    boolean isEditable();
   }
 
 }

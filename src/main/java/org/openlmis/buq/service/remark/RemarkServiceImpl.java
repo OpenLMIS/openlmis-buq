@@ -66,4 +66,9 @@ public class RemarkServiceImpl implements RemarkService {
     remark.updateFrom(updated);
     return remark;
   }
+
+  @Override
+  public boolean existsById(UUID id) {
+    return remarkRepository.existsById(id);
+  }
 }

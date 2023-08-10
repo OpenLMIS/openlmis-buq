@@ -15,6 +15,10 @@
     "description": {
       "type": "string",
       "title": "description"
+    },
+    "editable": {
+      "type": "boolean",
+      "title": "editable"
     }
   },
   "required": [

@@ -30,4 +30,6 @@ public interface RemarkService {
   void deleteById(UUID id);
 
   Remark update(UUID id, Remark.Importer updated);
+
+  boolean existsById(UUID id);
 }

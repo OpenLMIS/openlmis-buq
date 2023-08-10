@@ -32,11 +32,14 @@ import org.openlmis.buq.dto.BaseDto;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class RemarkDto extends BaseDto implements Remark.Importer, Remark.Exporter {
+public final class RemarkDto extends BaseDto implements Remark.Importer, Remark.Exporter {
 
   @NotBlank
   private String name;
+
   private String description;
+
+  private boolean editable;
 
   /**
    * Creates new instance based on domain object.
