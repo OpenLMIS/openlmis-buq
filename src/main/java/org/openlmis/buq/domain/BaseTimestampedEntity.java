@@ -19,6 +19,7 @@ import java.time.ZonedDateTime;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -42,6 +43,12 @@ public abstract class BaseTimestampedEntity extends BaseEntity {
   @PrePersist
   private void prePersist() {
     this.createdDate = ZonedDateTime.now();
+    this.modifiedDate = this.createdDate;
+  }
+
+  @PreUpdate
+  private void preUpdate() {
+    this.modifiedDate = ZonedDateTime.now();
   }
 
   public interface BaseTimestampedExporter extends BaseExporter {

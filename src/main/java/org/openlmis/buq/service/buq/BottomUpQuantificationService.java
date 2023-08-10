@@ -21,13 +21,17 @@ import static org.openlmis.buq.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROCESSING_PERIOD_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROGRAM_NOT_FOUND;
 
+import java.time.ZonedDateTime;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
@@ -86,10 +90,7 @@ public class BottomUpQuantificationService {
    */
   public BottomUpQuantification prepare(UUID facilityId, UUID programId,
        UUID processingPeriodId) {
-    if (null == facilityId || null == programId || null == processingPeriodId) {
-      throw new ValidationMessageException(
-          new Message(MessageKeys.ERROR_PREPARE_MISSING_PARAMETERS));
-    }
+    validatePreparationParams(facilityId, programId, processingPeriodId);
 
     FacilityDto facility = findFacility(facilityId);
     ProgramDto program = findProgram(programId);
@@ -106,7 +107,6 @@ public class BottomUpQuantificationService {
 
     return newBottomUpQuantification;
   }
-
 
   /**
    * Saves new data for bottom-up quantification.
@@ -162,6 +162,7 @@ public class BottomUpQuantificationService {
             authenticationHelper.getCurrentUser().getId(),
             bottomUpQuantification.getStatus())
     );
+    bottomUpQuantification.setModifiedDate(ZonedDateTime.now());
   }
 
   private BottomUpQuantification updateBottomUpQuantification(
@@ -219,14 +220,28 @@ public class BottomUpQuantificationService {
   }
 
   BottomUpQuantification findBottomUpQuantification(UUID bottomUpQuantificationId) {
-    BottomUpQuantification bottomUpQuantification = bottomUpQuantificationRepository
-        .findById(bottomUpQuantificationId).orElse(null);
-    if (null == bottomUpQuantification) {
-      throw new ContentNotFoundMessageException(ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND,
-          bottomUpQuantificationId);
-    }
+    return bottomUpQuantificationRepository
+        .findById(bottomUpQuantificationId)
+        .orElseThrow(() -> new ContentNotFoundMessageException(
+            ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND, bottomUpQuantificationId)
+        );
+  }
 
-    return bottomUpQuantification;
+  private void validatePreparationParams(UUID facilityId, UUID programId,
+       UUID processingPeriodId) {
+    List<String> missingParamsList = Stream.of(
+            new AbstractMap.SimpleEntry<>(facilityId, "facility ID"),
+            new AbstractMap.SimpleEntry<>(programId, "program ID"),
+            new AbstractMap.SimpleEntry<>(processingPeriodId, "processing period ID"))
+        .filter(entry -> entry.getKey() == null)
+        .map(Map.Entry::getValue)
+        .collect(Collectors.toList());
+
+    if (!missingParamsList.isEmpty()) {
+      String missingParams = String.join(", ", missingParamsList);
+      throw new ValidationMessageException(
+          new Message(MessageKeys.ERROR_PREPARE_MISSING_PARAMETERS, missingParams));
+    }
   }
 
 }

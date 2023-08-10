@@ -19,14 +19,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
-import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
-import org.openlmis.buq.dto.buq.BottomUpQuantificationStatusChangeDto;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
+import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 import org.openlmis.buq.util.Pagination;
 import org.openlmis.buq.web.BaseController;
@@ -64,6 +61,9 @@ public class BottomUpQuantificationController extends BaseController {
   @Autowired
   private BottomUpQuantificationService bottomUpQuantificationService;
 
+  @Autowired
+  private BottomUpQuantificationDtoBuilder bottomUpQuantificationDtoBuilder;
+
   /**
    * Retrieves all bottom-up quantifications. Note that an empty collection rather than a 404
    * should be returned if no bottom-up quantifications exist.
@@ -76,7 +76,7 @@ public class BottomUpQuantificationController extends BaseController {
     List<BottomUpQuantificationDto> content = page
         .getContent()
         .stream()
-        .map(this::buildDto)
+        .map(bottomUpQuantificationDtoBuilder::buildDto)
         .collect(Collectors.toList());
     return Pagination.getPage(content, pageable, page.getTotalElements());
   }
@@ -92,7 +92,7 @@ public class BottomUpQuantificationController extends BaseController {
     BottomUpQuantification buq = bottomUpQuantificationRepository.findById(id).orElseThrow(
         () -> new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
 
-    return buildDto(buq);
+    return bottomUpQuantificationDtoBuilder.buildDto(buq);
   }
 
   /**
@@ -126,7 +126,7 @@ public class BottomUpQuantificationController extends BaseController {
     BottomUpQuantification bottomUpQuantification = bottomUpQuantificationService
         .prepare(facilityId, programId, processingPeriodId);
 
-    return buildDto(bottomUpQuantification);
+    return bottomUpQuantificationDtoBuilder.buildDto(bottomUpQuantification);
   }
 
   /**
@@ -148,7 +148,7 @@ public class BottomUpQuantificationController extends BaseController {
     BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
         .save(bottomUpQuantificationDto, bottomUpQuantificationId);
 
-    return buildDto(updatedBottomUpQuantification);
+    return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
   }
 
 
@@ -177,40 +177,6 @@ public class BottomUpQuantificationController extends BaseController {
 
     return getAuditLogResponse(BottomUpQuantification.class, id, author, changedPropertyName,
         page);
-  }
-
-  private BottomUpQuantificationDto buildDto(BottomUpQuantification bottomUpQuantification) {
-    BottomUpQuantificationDto dto = new BottomUpQuantificationDto();
-    bottomUpQuantification.export(dto);
-
-    List<BottomUpQuantificationLineItem> bottomUpQuantificationLineItems =
-        bottomUpQuantification.getBottomUpQuantificationLineItems();
-    List<BottomUpQuantificationLineItemDto> lineItemDtoList = bottomUpQuantificationLineItems
-        .stream()
-        .map(lineItem -> {
-          BottomUpQuantificationLineItemDto lineItemDto = new BottomUpQuantificationLineItemDto();
-          lineItem.export(lineItemDto);
-
-          return lineItemDto;
-        })
-        .collect(Collectors.toList());
-    dto.setBottomUpQuantificationLineItems(lineItemDtoList);
-
-    List<BottomUpQuantificationStatusChange> statusChanges =
-        bottomUpQuantification.getStatusChanges();
-    List<BottomUpQuantificationStatusChangeDto> statusChangeDtos = statusChanges
-        .stream()
-        .map(statusChange -> {
-          BottomUpQuantificationStatusChangeDto statusChangeDto =
-              new BottomUpQuantificationStatusChangeDto();
-          statusChange.export(statusChangeDto);
-
-          return statusChangeDto;
-        })
-        .collect(Collectors.toList());
-    dto.setStatusChanges(statusChangeDtos);
-
-    return dto;
   }
 
 }

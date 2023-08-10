@@ -23,9 +23,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
-import javax.persistence.PrePersist;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -75,8 +73,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
 
   @OneToMany(
       mappedBy = "bottomUpQuantification",
-      cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.REMOVE},
-      fetch = FetchType.LAZY,
+      cascade = CascadeType.ALL,
       orphanRemoval = true)
   @Getter
   @Setter
@@ -84,7 +81,8 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
 
   @OneToMany(
       mappedBy = "bottomUpQuantification",
-      cascade = CascadeType.ALL)
+      cascade = CascadeType.ALL,
+      orphanRemoval = true)
   @Getter
   @Setter
   private List<BottomUpQuantificationStatusChange> statusChanges = new ArrayList<>();
@@ -127,9 +125,6 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
    */
   public void updateFrom(BottomUpQuantification original,
       List<BottomUpQuantificationLineItem> lineItems) {
-    setModifiedDate(ZonedDateTime.now());
-    setCreatedDate(original.getCreatedDate());
-
     facilityId = original.getFacilityId();
     programId = original.getProgramId();
     processingPeriodId = original.getProcessingPeriodId();
@@ -139,6 +134,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     if (lineItems != null) {
       bottomUpQuantificationLineItems.clear();
       bottomUpQuantificationLineItems.addAll(lineItems);
+      setModifiedDate(ZonedDateTime.now());
     }
   }
 
@@ -156,11 +152,6 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     exporter.setProcessingPeriodId(processingPeriodId);
     exporter.setTargetYear(targetYear);
     exporter.setStatus(status);
-  }
-
-  @PrePersist
-  private void initModifiedDate() {
-    this.setModifiedDate(this.getCreatedDate());
   }
 
   public interface Exporter extends BaseTimestampedExporter {

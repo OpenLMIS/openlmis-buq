@@ -37,4 +37,15 @@ public class BottomUpQuantificationStatusChangeDto implements
   private UUID authorId;
   private ZonedDateTime occurredDate;
 
+  /**
+   * Creates new instance based on domain object.
+   */
+  public static BottomUpQuantificationStatusChangeDto newInstance(
+      BottomUpQuantificationStatusChange statusChange) {
+    BottomUpQuantificationStatusChangeDto dto = new BottomUpQuantificationStatusChangeDto();
+    statusChange.export(dto);
+
+    return dto;
+  }
+
 }

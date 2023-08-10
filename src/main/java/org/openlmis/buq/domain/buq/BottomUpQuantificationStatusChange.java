@@ -40,7 +40,7 @@ import org.openlmis.buq.domain.BaseEntity;
 public class BottomUpQuantificationStatusChange extends BaseEntity {
 
   @ManyToOne(cascade = {CascadeType.REFRESH})
-  @JoinColumn(name = "bottomupquantificationId", nullable = false)
+  @JoinColumn(name = "bottomUpQuantificationId", nullable = false)
   @Getter
   @Setter
   private BottomUpQuantification bottomUpQuantification;

@@ -4,12 +4,12 @@
 
 CREATE TABLE bottom_up_quantifications (
     id uuid NOT NULL,
-    createddate timestamptz,
-    modifieddate timestamptz,
-    facilityid uuid NOT NULL,
-    programid uuid NOT NULL,
-    processingperiodid uuid NOT NULL,
-    targetyear integer NOT NULL,
+    createdDate timestamptz,
+    modifiedDate timestamptz,
+    facilityId uuid NOT NULL,
+    programId uuid NOT NULL,
+    processingPeriodId uuid NOT NULL,
+    targetYear integer NOT NULL,
     status character varying(255) NOT NULL,
 
     CONSTRAINT bottom_up_quantifications_pkey PRIMARY KEY (id)
@@ -22,14 +22,14 @@ CREATE TABLE bottom_up_quantifications (
 
 CREATE TABLE bottom_up_quantification_line_items (
     id uuid NOT NULL,
-    orderableid uuid NOT NULL,
+    orderableId uuid NOT NULL,
     annualAdjustedConsumption integer,
     verifiedAnnualAdjustedConsumption integer,
     forecastedDemand integer,
-    bottomupquantificationid uuid NOT NULL,
+    bottomUpQuantificationId uuid NOT NULL,
 
     CONSTRAINT bottom_up_quantification_line_items_pkey PRIMARY KEY (id),
-    CONSTRAINT fkey_bottom_up_quantifications FOREIGN KEY (bottomupquantificationid) REFERENCES bottom_up_quantifications(id)
+    CONSTRAINT fkey_bottom_up_quantifications FOREIGN KEY (bottomUpQuantificationId) REFERENCES bottom_up_quantifications(id)
 );
 
 
@@ -40,10 +40,10 @@ CREATE TABLE bottom_up_quantification_line_items (
 CREATE TABLE bottom_up_quantification_status_changes (
     id uuid NOT NULL,
     occurredDate timestamptz,
-    authorid uuid NOT NULL,
+    authorId uuid NOT NULL,
     status character varying(255) NOT NULL,
-    bottomupquantificationid uuid NOT NULL,
+    bottomUpQuantificationId uuid NOT NULL,
 
     CONSTRAINT bottom_up_quantification_status_changes_pkey PRIMARY KEY (id),
-    CONSTRAINT fkey_bottom_up_quantifications FOREIGN KEY (bottomupquantificationid) REFERENCES bottom_up_quantifications(id)
+    CONSTRAINT fkey_bottom_up_quantifications FOREIGN KEY (bottomUpQuantificationId) REFERENCES bottom_up_quantifications(id)
 );

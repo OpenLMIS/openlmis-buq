@@ -39,7 +39,7 @@ import org.openlmis.buq.domain.BaseEntity;
 public class BottomUpQuantificationLineItem extends BaseEntity {
 
   @ManyToOne(cascade = CascadeType.REFRESH)
-  @JoinColumn(name = "bottomupquantificationId")
+  @JoinColumn(name = "bottomUpQuantificationId")
   @Getter
   @Setter
   private BottomUpQuantification bottomUpQuantification;
