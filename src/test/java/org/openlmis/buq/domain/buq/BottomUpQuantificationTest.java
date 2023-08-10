@@ -17,7 +17,6 @@ package org.openlmis.buq.domain.buq;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
@@ -68,7 +67,6 @@ public class BottomUpQuantificationTest {
         .withProcessingPeriodId(UUID.fromString("1c327620-a434-4c5c-a6ff-a79cf93eb43d"))
         .withStatus(BottomUpQuantificationStatus.AUTHORIZED)
         .withTargetYear(1999)
-        .withCreatedDate(ZonedDateTime.parse("2011-12-03T10:15:30+01:00"))
         .build();
 
     buq.updateFrom(original, null);
@@ -81,7 +79,6 @@ public class BottomUpQuantificationTest {
         .isEqualTo(UUID.fromString("1c327620-a434-4c5c-a6ff-a79cf93eb43d"));
     assertThat(buq.getStatus()).isEqualTo(BottomUpQuantificationStatus.AUTHORIZED);
     assertThat(buq.getTargetYear()).isEqualTo(1999);
-    assertThat(buq.getCreatedDate()).isEqualTo(ZonedDateTime.parse("2011-12-03T10:15:30+01:00"));
   }
 
   @Test

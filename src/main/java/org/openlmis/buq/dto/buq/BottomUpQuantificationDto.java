@@ -96,4 +96,5 @@ public final class BottomUpQuantificationDto extends BaseDto
     return Lists.newArrayList(Optional.ofNullable(statusChanges)
         .orElse(Collections.emptyList()));
   }
+
 }
