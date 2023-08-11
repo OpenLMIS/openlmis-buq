@@ -45,6 +45,10 @@ public class SourceOfFund extends BaseEntity {
   @Setter
   private String description;
 
+  @Getter
+  @Setter
+  private boolean editable;
+
   /**
    * Creates new instance based on data from the importer.
    */
@@ -68,6 +72,7 @@ public class SourceOfFund extends BaseEntity {
     exporter.setId(getId());
     exporter.setName(name);
     exporter.setDescription(description);
+    exporter.setEditable(editable);
   }
 
 
@@ -77,6 +82,8 @@ public class SourceOfFund extends BaseEntity {
 
     void setDescription(String description);
 
+    void setEditable(boolean editable);
+
   }
 
   public interface Importer extends BaseImporter {
@@ -84,6 +91,8 @@ public class SourceOfFund extends BaseEntity {
     String getName();
 
     String getDescription();
+
+    boolean isEditable();
 
   }
 

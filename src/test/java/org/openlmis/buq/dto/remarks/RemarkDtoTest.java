@@ -13,38 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.dto.sourceoffund;
+package org.openlmis.buq.dto.remarks;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
-import org.openlmis.buq.dto.BaseDto;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
+import org.junit.Test;
+import org.openlmis.buq.ToStringTestUtils;
+import org.openlmis.buq.dto.remark.RemarkDto;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
-public final class SourceOfFundDto extends BaseDto implements SourceOfFund.Importer,
-        SourceOfFund.Exporter {
+public class RemarkDtoTest {
 
-  private String name;
-  private String description;
-  private boolean editable;
-
-  /**
-   * Creates new instance based on domain object.
-   */
-  public static SourceOfFundDto newInstance(SourceOfFund sourceOfFund) {
-    SourceOfFundDto dto = new SourceOfFundDto();
-    sourceOfFund.export(dto);
-
-    return dto;
+  @Test
+  public void equalsContract() {
+    EqualsVerifier
+            .forClass(RemarkDto.class)
+            .withRedefinedSuperclass()
+            .suppress(Warning.NONFINAL_FIELDS)
+            .verify();
   }
 
+  @Test
+  public void shouldImplementToString() {
+    RemarkDto remarkDto = new RemarkDto();
+    ToStringTestUtils.verify(RemarkDto.class, remarkDto);
+  }
 }

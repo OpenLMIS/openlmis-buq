@@ -13,23 +13,45 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.service.remark;
+package org.openlmis.buq.builder;
 
-import java.util.List;
 import java.util.UUID;
 import org.openlmis.buq.domain.Remark;
 
-public interface RemarkService {
+public class RemarkDataBuilder {
 
-  List<Remark> findAll();
+  private final UUID id = UUID.randomUUID();
+  private String name = "name";
+  private String description = "remark-description";
 
-  Remark findOne(UUID id);
+  public RemarkDataBuilder withName(String name) {
+    this.name = name;
+    return this;
+  }
 
-  Remark save(Remark remark);
+  public RemarkDataBuilder withDescription(String description) {
+    this.description = description;
+    return this;
+  }
 
-  void deleteById(UUID id);
+  /**
+   * Builds new instance of SourceOfFund (with id field).
+   */
+  public Remark build() {
+    Remark remark = buildAsNew();
+    remark.setId(id);
 
-  Remark update(UUID id, Remark.Importer updated);
+    return remark;
+  }
 
-  boolean existsById(UUID id);
+  /**
+   * Builds new instance of SourceOfFund as a new object (without id field).
+   */
+  public Remark buildAsNew() {
+    Remark remark = new Remark();
+    remark.setName(name);
+    remark.setDescription(description);
+
+    return remark;
+  }
 }

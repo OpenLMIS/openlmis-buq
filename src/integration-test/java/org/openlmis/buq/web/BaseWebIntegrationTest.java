@@ -37,6 +37,7 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openlmis.buq.domain.BaseEntity;
+import org.openlmis.buq.repository.RemarkRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
@@ -121,6 +122,9 @@ public abstract class BaseWebIntegrationTest {
 
   @MockBean
   public BottomUpQuantificationService bottomUpQuantificationService;
+
+  @MockBean
+  public RemarkRepository remarkRepository;
 
   /**
    * Constructor for test.
