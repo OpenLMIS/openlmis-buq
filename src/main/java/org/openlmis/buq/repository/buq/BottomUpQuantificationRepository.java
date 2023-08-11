@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 
 @JaversSpringDataAuditable
 public interface BottomUpQuantificationRepository extends
@@ -46,4 +47,11 @@ public interface BottomUpQuantificationRepository extends
       nativeQuery = true)
   Page<BottomUpQuantification> findAllWithoutSnapshots(Pageable pageable);
 
+  @Query(value = "SELECT SUM(COALESCE(rli.adjustedconsumption, 0)) AS total_adjusted_consumption "
+          + "FROM requisition.requisition_line_items rli "
+          + "INNER JOIN requisition.requisitions rr ON rr.id = rli.requisitionid "
+          + "WHERE rr.status IN ('APPROVED', 'RELEASED') "
+          + "AND rr.emergency = false "
+          + "AND rr.facilityid = :facilityid", nativeQuery = true)
+  Integer calculateBuq(@Param("facilityid") UUID facilityid);
 }

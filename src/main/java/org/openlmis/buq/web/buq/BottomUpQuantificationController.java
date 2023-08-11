@@ -204,4 +204,13 @@ public class BottomUpQuantificationController extends BaseController {
         page);
   }
 
+  @GetMapping("/calculate")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public ResponseEntity<Integer> getBuqCalculation(
+          @RequestParam(name = "facilityId") UUID facilityId) {
+    Integer result = bottomUpQuantificationRepository.calculateBuq(facilityId);
+    return ResponseEntity.ok(result);
+  }
+
 }
