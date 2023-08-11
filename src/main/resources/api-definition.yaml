@@ -332,6 +332,33 @@ resourceTypes:
                 Keep-Alive:
               body:
                 application/json:
+      /download:
+        displayName: Bottom-up quantification
+        get:
+          is: [ secured ]
+          description: Downloads csv file with bottom-up quantification data.
+          responses:
+            200:
+              headers:
+                Keep-Alive:
+              body:
+                text/csv:
+            400:
+              body:
+                application/json:
+                  schema: localizedErrorResponse
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedErrorResponse
+            404:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedErrorResponse
     /prepare:
       post:
         is: [ secured ]

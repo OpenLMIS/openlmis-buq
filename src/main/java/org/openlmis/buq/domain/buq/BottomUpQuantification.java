@@ -94,10 +94,12 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
    * @param programId          id of the Program
    * @param processingPeriodId id of the ProcessingPeriod
    */
-  public BottomUpQuantification(UUID facilityId, UUID programId, UUID processingPeriodId) {
+  public BottomUpQuantification(UUID facilityId, UUID programId, UUID processingPeriodId,
+       Integer targetYear) {
     this.facilityId = facilityId;
     this.programId = programId;
     this.processingPeriodId = processingPeriodId;
+    this.targetYear = targetYear;
   }
 
   /**

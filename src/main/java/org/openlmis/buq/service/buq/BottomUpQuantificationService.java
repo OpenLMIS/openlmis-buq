@@ -18,9 +18,11 @@ package org.openlmis.buq.service.buq;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_ID_MISMATCH;
+import static org.openlmis.buq.i18n.MessageKeys.ERROR_ORDERABLE_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROCESSING_PERIOD_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROGRAM_NOT_FOUND;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -37,7 +39,9 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
+import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.ApprovedProductDto;
+import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
@@ -45,8 +49,10 @@ import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
+import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.util.AuthenticationHelper;
@@ -76,6 +82,12 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private ApprovedProductReferenceDataService approvedProductReferenceDataService;
+
+  @Autowired
+  private OrderableReferenceDataService orderableReferenceDataService;
+
+  @Autowired
+  private CsvService csvService;
 
   @Autowired
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
@@ -124,14 +136,43 @@ public class BottomUpQuantificationService {
     return updatedBottomUpQuantification;
   }
 
+  /**
+   * Prepares data for downloading.
+   *
+   * @param bottomUpQuantification BottomUpQuantification containing data to be downloaded.
+   * @return byte array containing the data to be downloaded.
+   * @throws IOException I/O exception
+   */
+  public byte[] getPreparationFormData(BottomUpQuantification bottomUpQuantification)
+      throws IOException {
+    List<BottomUpQuantificationLineItemCsv> csvLineItems = bottomUpQuantification
+        .getBottomUpQuantificationLineItems()
+        .stream()
+        .map(lineItem -> {
+          BasicOrderableDto dto = findOrderable(lineItem.getOrderableId());
+          Integer annualAdjustedConsumption = Optional
+              .ofNullable(lineItem.getAnnualAdjustedConsumption()).orElse(0);
+          int adjustedConsumptionInPacks = Math.toIntExact(dto
+              .packsToOrder(annualAdjustedConsumption));
+          return new BottomUpQuantificationLineItemCsv(
+              dto.getProductCode(),
+              dto.getFullProductName(),
+              dto.getNetContent(),
+              adjustedConsumptionInPacks
+          );
+        })
+        .collect(Collectors.toList());
+
+    return csvService.generateCsv(csvLineItems, BottomUpQuantificationLineItemCsv.class);
+  }
+
   private BottomUpQuantification prepareBottomUpQuantification(FacilityDto facility,
       ProgramDto program, ProcessingPeriodDto processingPeriod,
       List<ApprovedProductDto> approvedProducts) {
-    BottomUpQuantification bottomUpQuantification = new BottomUpQuantification(facility.getId(),
-        program.getId(), processingPeriod.getId());
-
     int targetYear = processingPeriod.getEndDate().getYear();
-    bottomUpQuantification.setTargetYear(targetYear);
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantification(facility.getId(),
+        program.getId(), processingPeriod.getId(), targetYear);
+
 
     prepareLineItems(bottomUpQuantification, approvedProducts);
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
@@ -211,12 +252,16 @@ public class BottomUpQuantificationService {
         ERROR_PROCESSING_PERIOD_NOT_FOUND);
   }
 
+  private BasicOrderableDto findOrderable(UUID orderableId) {
+    return findResource(orderableId, orderableReferenceDataService::findOne,
+        ERROR_ORDERABLE_NOT_FOUND);
+  }
+
   private <R> R findResource(UUID id, Function<UUID, R> finder, String errorMessage) {
     return Optional
         .ofNullable(finder.apply(id))
-        .orElseThrow(() -> {
-          return new ContentNotFoundMessageException(errorMessage, id);
-        });
+        .orElseThrow(() -> new ContentNotFoundMessageException(errorMessage, id)
+        );
   }
 
   BottomUpQuantification findBottomUpQuantification(UUID bottomUpQuantificationId) {

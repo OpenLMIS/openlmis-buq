@@ -15,6 +15,7 @@
 
 package org.openlmis.buq.web.buq;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,7 +31,9 @@ import org.openlmis.buq.web.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +57,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class BottomUpQuantificationController extends BaseController {
 
   public static final String RESOURCE_PATH = API_PATH + "/bottomUpQuantifications";
+  public static final String TEXT_CSV_MEDIA_TYPE = "text/csv";
+  public static final String BUQ_FORM_CSV_FILENAME = "buq_quantification_preparation_report";
 
   @Autowired
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
@@ -151,6 +156,26 @@ public class BottomUpQuantificationController extends BaseController {
     return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
   }
 
+  /**
+   * Allows downloading csv file.
+   *
+   * @return bytes containing bottom-up quantification data in csv format.
+   * @throws IOException I/O exception
+   */
+  @GetMapping("/{id}/download")
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<byte[]> download(@PathVariable("id") UUID bottomUpQuantificationId)
+      throws IOException {
+    BottomUpQuantification buq = bottomUpQuantificationRepository
+        .findById(bottomUpQuantificationId).orElseThrow(
+          () -> new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
+
+    return ResponseEntity.ok()
+        .contentType(MediaType.valueOf(TEXT_CSV_MEDIA_TYPE))
+        .header(HttpHeaders.CONTENT_DISPOSITION,
+            "attachment;filename=" + BUQ_FORM_CSV_FILENAME + ".csv")
+        .body(bottomUpQuantificationService.getPreparationFormData(buq));
+  }
 
   /**
    * Retrieves audit information related to the specified bottom-up quantification.

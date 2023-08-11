@@ -16,16 +16,23 @@
 package org.openlmis.buq.web.buq;
 
 import static org.hamcrest.Matchers.hasItem;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
+import static org.openlmis.buq.web.buq.BottomUpQuantificationController.BUQ_FORM_CSV_FILENAME;
+import static org.openlmis.buq.web.buq.BottomUpQuantificationController.TEXT_CSV_MEDIA_TYPE;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.jayway.restassured.response.Response;
 import guru.nidi.ramltester.junit.RamlMatchers;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.javers.core.commit.CommitId;
@@ -42,6 +49,7 @@ import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.web.BaseWebIntegrationTest;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -53,6 +61,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String RESOURCE_URL = BottomUpQuantificationController.RESOURCE_PATH;
   private static final String ID_URL = RESOURCE_URL + "/{id}";
   private static final String PREPARE_URL = RESOURCE_URL + "/prepare";
+  private static final String DOWNLOAD_URL = ID_URL + "/download";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String STATUS = "status";
@@ -158,8 +167,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .post(PREPARE_URL)
         .then()
         .statusCode(HttpStatus.SC_CREATED)
-        .body("id", Matchers.is(bottomUpQuantification.getId().toString()))
-        .body("status", Matchers.is(bottomUpQuantification.getStatus().toString()));
+        .body(ID, Matchers.is(bottomUpQuantification.getId().toString()))
+        .body(STATUS, Matchers.is(bottomUpQuantification.getStatus().toString()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
@@ -254,6 +263,50 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .delete(ID_URL)
         .then()
         .statusCode(HttpStatus.SC_UNAUTHORIZED);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldDownload() throws IOException {
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+    ClassPathResource file = new ClassPathResource("csv/" + BUQ_FORM_CSV_FILENAME + ".csv");
+    byte[] buqDataBytes = FileUtils.readFileToByteArray(file.getFile());
+    given(bottomUpQuantificationService.getPreparationFormData(bottomUpQuantification))
+        .willReturn(buqDataBytes);
+
+    Response response = restAssured
+        .given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .contentType(TEXT_CSV_MEDIA_TYPE)
+        .pathParam(ID, bottomUpQuantificationDto.getId().toString())
+        .when()
+        .get(DOWNLOAD_URL)
+        .then()
+        .statusCode(200)
+        .extract().response();
+
+    verify(bottomUpQuantificationService).getPreparationFormData(bottomUpQuantification);
+    assertArrayEquals(response.getBody().asByteArray(), buqDataBytes);
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnNotFoundMessageIfBuqDoesNotExistForGivenBuqDownloadEndpoint() {
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
+        .willReturn(Optional.empty());
+
+    restAssured
+        .given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .contentType(TEXT_CSV_MEDIA_TYPE)
+        .pathParam(ID, bottomUpQuantificationDto.getId().toString())
+        .when()
+        .get(DOWNLOAD_URL)
+        .then()
+        .statusCode(HttpStatus.SC_NOT_FOUND)
+        .body(MESSAGE_KEY, Matchers.is(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }

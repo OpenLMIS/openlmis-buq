@@ -35,6 +35,7 @@ public abstract class MessageKeys {
   private static final String FACILITY = "facility";
   private static final String PROGRAM = "program";
   private static final String PROCESSING_PERIOD = "processingPeriod";
+  private static final String ORDERABLE = "orderable";
 
   private static final String MISMATCH = "mismatch";
   private static final String NOT_FOUND = "notFound";
@@ -66,6 +67,7 @@ public abstract class MessageKeys {
   public static final String ERROR_PROGRAM_NOT_FOUND = join(ERROR_PREFIX, PROGRAM, NOT_FOUND);
   public static final String ERROR_PROCESSING_PERIOD_NOT_FOUND = join(ERROR_PREFIX,
       PROCESSING_PERIOD, NOT_FOUND);
+  public static final String ERROR_ORDERABLE_NOT_FOUND = join(ERROR_PREFIX, ORDERABLE, NOT_FOUND);
   public static final String ERROR_ID_MISMATCH = join(ERROR_PREFIX, ID, MISMATCH);
 
   public static final String ERROR_JAVERS_EXISTING_ENTRY =
