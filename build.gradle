@@ -51,6 +51,8 @@ dependencies {
     compile 'org.openlmis:openlmis-service-util:3.1.0'
     compile 'org.webjars.npm:api-console:3.0.17'
 
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-csv', version: '2.11.1'
+
     testCompile "junit:junit"
     testCompile "org.springframework.boot:spring-boot-starter-test"
     testCompile "org.springframework:spring-test"
