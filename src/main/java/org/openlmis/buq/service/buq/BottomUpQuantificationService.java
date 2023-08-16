@@ -150,7 +150,7 @@ public class BottomUpQuantificationService {
         .stream()
         .map(lineItem -> {
           BasicOrderableDto dto = findOrderable(lineItem.getOrderableId());
-          Integer annualAdjustedConsumption = Optional
+          int annualAdjustedConsumption = Optional
               .ofNullable(lineItem.getAnnualAdjustedConsumption()).orElse(0);
           int adjustedConsumptionInPacks = Math.toIntExact(dto
               .packsToOrder(annualAdjustedConsumption));
