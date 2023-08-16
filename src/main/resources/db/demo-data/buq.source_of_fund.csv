@@ -1,4 +1,4 @@
-id,name,description
-08b2b579-8e08-45f2-a640-5f558713b374,Health Basket Fund Demo,Source of fund description 1
-4f441cfc-0556-46f5-b2ca-ad7988d8781a,Donor funding Demo,Source of fund description 2
-bb790da3-d1cc-4b33-af34-75abdb17e50f,Other insurance schemes Demo,Source of fund description 3
+id,name,description,editable
+08b2b579-8e08-45f2-a640-5f558713b374,Health Basket Fund Demo,Source of fund description 1,true
+4f441cfc-0556-46f5-b2ca-ad7988d8781a,Donor funding Demo,Source of fund description 2,true
+bb790da3-d1cc-4b33-af34-75abdb17e50f,Other insurance schemes Demo,Source of fund description 3,true

@@ -71,6 +71,7 @@ public class SourceOfFundTest {
 
     assertThat(dto.getId()).isEqualTo(sourceOfFund.getId());
     assertThat(dto.getName()).isEqualTo(sourceOfFund.getName());
+    assertThat(dto.isEditable()).isEqualTo(sourceOfFund.isEditable());
   }
 
 }
