@@ -22,6 +22,7 @@ public class SourceOfFundDataBuilder {
   private final UUID id = UUID.randomUUID();
   private String name = "name";
   private String description = "sof-description";
+  private boolean editable = true;
 
   public SourceOfFundDataBuilder withName(String name) {
     this.name = name;
@@ -30,6 +31,11 @@ public class SourceOfFundDataBuilder {
 
   public SourceOfFundDataBuilder withDescription(String description) {
     this.description = description;
+    return this;
+  }
+
+  public SourceOfFundDataBuilder withEditable(boolean editable) {
+    this.editable = editable;
     return this;
   }
 
@@ -50,6 +56,7 @@ public class SourceOfFundDataBuilder {
     SourceOfFund sourceOfFund = new SourceOfFund();
     sourceOfFund.setName(name);
     sourceOfFund.setDescription(description);
+    sourceOfFund.setEditable(editable);
 
     return sourceOfFund;
   }

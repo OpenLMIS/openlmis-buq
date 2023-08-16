@@ -47,7 +47,7 @@ public class SourceOfFund extends BaseEntity {
 
   @Getter
   @Setter
-  private boolean editable;
+  private boolean editable = true;
 
   /**
    * Creates new instance based on data from the importer.
