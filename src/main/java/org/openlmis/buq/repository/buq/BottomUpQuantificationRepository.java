@@ -15,9 +15,11 @@
 
 package org.openlmis.buq.repository.buq;
 
+import java.util.List;
 import java.util.UUID;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
 import org.openlmis.buq.repository.BaseAuditableRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +31,31 @@ import org.springframework.data.repository.query.Param;
 public interface BottomUpQuantificationRepository extends
     PagingAndSortingRepository<BottomUpQuantification, UUID>,
     BaseAuditableRepository<BottomUpQuantification, UUID> {
+
+  @Query(
+      value = "SELECT CAST(rli.id AS VARCHAR), CAST(rli.orderableid AS VARCHAR), "
+          + "rli.adjustedconsumption, "
+          + "pp_requisition.startdate, "
+          + "pp_requisition.enddate \n"
+          + "FROM requisition.requisition_line_items rli\n"
+          + "JOIN requisition.requisitions r ON rli.requisitionid = r.id\n"
+          + "JOIN referencedata.processing_periods pp_considered "
+          + "ON pp_considered.id = :processingPeriodId \n"
+          + "JOIN referencedata.processing_periods pp_requisition "
+          + "ON r.processingperiodid = pp_requisition.id\n"
+          + "WHERE rli.orderableid = :orderableId \n"
+          + "  AND r.facilityid = :facilityId \n"
+          + "  AND r.status IN ('APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')\n"
+          + "  AND NOT r.emergency\n"
+          + "  AND (\n"
+          + "    pp_requisition.startdate >= pp_considered.startdate "
+          + "    AND pp_requisition.enddate <= pp_considered.enddate\n"
+          + ");\n", nativeQuery = true
+  )
+  List<RequisitionLineItemDataProjection> getRequisitionLineItemsData(
+      @Param("orderableId") UUID orderableId,
+      @Param("facilityId") UUID facilityId,
+      @Param("processingPeriodId") UUID processingPeriodId);
 
   @Query(value = "SELECT\n"
       + "    bs.*\n"
