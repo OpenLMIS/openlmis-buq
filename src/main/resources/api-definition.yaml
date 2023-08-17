@@ -406,24 +406,6 @@ resourceTypes:
             body:
               application/json:
                 schema: localizedMessage
-    /calculate:
-      get:
-        is: [ secured ]
-        description: Get calculation of buq
-        responses:
-          200:
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: bottomUpQuantification
-          404:
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: localizedErrorResponse
-
   /sourcesOfFunds:
     displayName: sourcesOfFunds
     get:
