@@ -15,11 +15,10 @@
 
 package org.openlmis.buq.repository.buq;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
-import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
 import org.openlmis.buq.repository.BaseAuditableRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,10 +32,8 @@ public interface BottomUpQuantificationRepository extends
     BaseAuditableRepository<BottomUpQuantification, UUID> {
 
   @Query(
-      value = "SELECT CAST(rli.id AS VARCHAR), CAST(rli.orderableid AS VARCHAR), "
-          + "rli.adjustedconsumption, "
-          + "pp_requisition.startdate, "
-          + "pp_requisition.enddate \n"
+      value = "SELECT SUM(COALESCE(rli.adjustedconsumption, 0))"
+          + "AS annual_adjusted_consumption\n"
           + "FROM requisition.requisition_line_items rli\n"
           + "JOIN requisition.requisitions r ON rli.requisitionid = r.id\n"
           + "JOIN referencedata.processing_periods pp_considered "
@@ -52,10 +49,8 @@ public interface BottomUpQuantificationRepository extends
           + "    AND pp_requisition.enddate <= pp_considered.enddate\n"
           + ");\n", nativeQuery = true
   )
-  List<RequisitionLineItemDataProjection> getRequisitionLineItemsData(
-      @Param("orderableId") UUID orderableId,
-      @Param("facilityId") UUID facilityId,
-      @Param("processingPeriodId") UUID processingPeriodId);
+  Optional<Integer> getProductAnnualAdjustedConsumption(@Param("orderableId") UUID orderableId,
+      @Param("facilityId") UUID facilityId, @Param("processingPeriodId") UUID processingPeriodId);
 
   @Query(value = "SELECT\n"
       + "    bs.*\n"

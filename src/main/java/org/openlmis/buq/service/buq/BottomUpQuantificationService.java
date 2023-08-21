@@ -173,7 +173,7 @@ public class BottomUpQuantificationService {
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification(facility.getId(),
         program.getId(), processingPeriod.getId(), targetYear);
 
-    prepareLineItems(bottomUpQuantification, approvedProducts, processingPeriod);
+    prepareLineItems(bottomUpQuantification, approvedProducts);
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
     addNewStatusChange(bottomUpQuantification);
 
@@ -182,19 +182,18 @@ public class BottomUpQuantificationService {
 
   private void prepareLineItems(
       BottomUpQuantification bottomUpQuantification,
-      List<ApprovedProductDto> approvedProducts,
-      ProcessingPeriodDto processingPeriod) {
+      List<ApprovedProductDto> approvedProducts) {
     List<BottomUpQuantificationLineItem> bottomUpQuantificationLineItems = new ArrayList<>();
     for (ApprovedProductDto product : approvedProducts) {
       BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItem();
       lineItem.setBottomUpQuantification(bottomUpQuantification);
       lineItem.setOrderableId(product.getOrderable().getId());
 
-      Integer annualAdjustedConsumption = AnnualAdjustedConsumptionCalculator.calculate(
-          bottomUpQuantificationRepository.getRequisitionLineItemsData(
-              lineItem.getOrderableId(), bottomUpQuantification.getFacilityId(),
-              bottomUpQuantification.getProcessingPeriodId()), processingPeriod);
-      lineItem.setAnnualAdjustedConsumption(annualAdjustedConsumption);
+      lineItem.setAnnualAdjustedConsumption(bottomUpQuantificationRepository
+          .getProductAnnualAdjustedConsumption(lineItem.getOrderableId(),
+              bottomUpQuantification.getFacilityId(),
+              bottomUpQuantification.getProcessingPeriodId())
+          .orElse(0));
 
       bottomUpQuantificationLineItems.add(lineItem);
     }
