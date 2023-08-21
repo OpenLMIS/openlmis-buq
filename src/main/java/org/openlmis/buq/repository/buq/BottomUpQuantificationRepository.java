@@ -15,6 +15,7 @@
 
 package org.openlmis.buq.repository.buq;
 
+import java.util.Optional;
 import java.util.UUID;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
@@ -23,11 +24,33 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 
 @JaversSpringDataAuditable
 public interface BottomUpQuantificationRepository extends
     PagingAndSortingRepository<BottomUpQuantification, UUID>,
     BaseAuditableRepository<BottomUpQuantification, UUID> {
+
+  @Query(
+      value = "SELECT SUM(COALESCE(rli.adjustedconsumption, 0))"
+          + "AS annual_adjusted_consumption\n"
+          + "FROM requisition.requisition_line_items rli\n"
+          + "JOIN requisition.requisitions r ON rli.requisitionid = r.id\n"
+          + "JOIN referencedata.processing_periods pp_considered "
+          + "ON pp_considered.id = :processingPeriodId \n"
+          + "JOIN referencedata.processing_periods pp_requisition "
+          + "ON r.processingperiodid = pp_requisition.id\n"
+          + "WHERE rli.orderableid = :orderableId \n"
+          + "  AND r.facilityid = :facilityId \n"
+          + "  AND r.status IN ('APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')\n"
+          + "  AND NOT r.emergency\n"
+          + "  AND (\n"
+          + "    pp_requisition.startdate >= pp_considered.startdate "
+          + "    AND pp_requisition.enddate <= pp_considered.enddate\n"
+          + ");\n", nativeQuery = true
+  )
+  Optional<Integer> getProductAnnualAdjustedConsumption(@Param("orderableId") UUID orderableId,
+      @Param("facilityId") UUID facilityId, @Param("processingPeriodId") UUID processingPeriodId);
 
   @Query(value = "SELECT\n"
       + "    bs.*\n"

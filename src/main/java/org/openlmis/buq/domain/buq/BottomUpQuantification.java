@@ -100,6 +100,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     this.programId = programId;
     this.processingPeriodId = processingPeriodId;
     this.targetYear = targetYear;
+    this.status = BottomUpQuantificationStatus.DRAFT;
   }
 
   /**

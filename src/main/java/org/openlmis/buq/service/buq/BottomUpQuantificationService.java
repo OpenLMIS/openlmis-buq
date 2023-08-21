@@ -101,7 +101,7 @@ public class BottomUpQuantificationService {
    * @return Prepared bottom-up quantification.
    */
   public BottomUpQuantification prepare(UUID facilityId, UUID programId,
-       UUID processingPeriodId) {
+      UUID processingPeriodId) {
     validatePreparationParams(facilityId, programId, processingPeriodId);
 
     FacilityDto facility = findFacility(facilityId);
@@ -173,7 +173,6 @@ public class BottomUpQuantificationService {
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification(facility.getId(),
         program.getId(), processingPeriod.getId(), targetYear);
 
-
     prepareLineItems(bottomUpQuantification, approvedProducts);
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
     addNewStatusChange(bottomUpQuantification);
@@ -189,6 +188,12 @@ public class BottomUpQuantificationService {
       BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItem();
       lineItem.setBottomUpQuantification(bottomUpQuantification);
       lineItem.setOrderableId(product.getOrderable().getId());
+
+      lineItem.setAnnualAdjustedConsumption(bottomUpQuantificationRepository
+          .getProductAnnualAdjustedConsumption(lineItem.getOrderableId(),
+              bottomUpQuantification.getFacilityId(),
+              bottomUpQuantification.getProcessingPeriodId())
+          .orElse(0));
 
       bottomUpQuantificationLineItems.add(lineItem);
     }
@@ -273,7 +278,7 @@ public class BottomUpQuantificationService {
   }
 
   private void validatePreparationParams(UUID facilityId, UUID programId,
-       UUID processingPeriodId) {
+      UUID processingPeriodId) {
     List<String> missingParamsList = Stream.of(
             new AbstractMap.SimpleEntry<>(facilityId, "facility ID"),
             new AbstractMap.SimpleEntry<>(programId, "program ID"),
