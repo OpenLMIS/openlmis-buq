@@ -48,6 +48,7 @@ import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.i18n.MessageKeys;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
 import org.openlmis.buq.web.BaseWebIntegrationTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageImpl;
@@ -88,7 +89,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnPageOfBottomUpQuantifications() {
-    given(bottomUpQuantificationRepository.findAll(any(Pageable.class)))
+    given(bottomUpQuantificationRepository.search(
+        any(BottomUpQuantificationSearchParams.class),
+        any(Pageable.class)))
         .willReturn(new PageImpl<>(Collections.singletonList(bottomUpQuantification)));
 
     restAssured.given()

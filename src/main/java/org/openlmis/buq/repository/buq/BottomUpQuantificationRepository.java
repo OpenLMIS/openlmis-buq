@@ -19,6 +19,7 @@ import java.util.UUID;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.repository.BaseAuditableRepository;
+import org.openlmis.buq.repository.buq.custom.BottomUpQuantificationRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -27,6 +28,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 @JaversSpringDataAuditable
 public interface BottomUpQuantificationRepository extends
     PagingAndSortingRepository<BottomUpQuantification, UUID>,
+    BottomUpQuantificationRepositoryCustom,
     BaseAuditableRepository<BottomUpQuantification, UUID> {
 
   @Query(value = "SELECT\n"
