@@ -15,6 +15,7 @@
 
 package org.openlmis.buq.domain;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
@@ -32,6 +33,7 @@ import lombok.NoArgsConstructor;
 public class Remark extends BaseEntity {
 
   @NotBlank
+  @Column(unique = true)
   private String name;
 
   private String description;
