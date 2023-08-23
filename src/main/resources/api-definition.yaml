@@ -413,7 +413,7 @@ resourceTypes:
                 application/json:
                   schema: localizedMessage
       /submit:
-        put:
+        post:
           is: [ secured ]
           description: Submit bottomUpQuantification
           body:

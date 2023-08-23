@@ -65,6 +65,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String PREPARE_URL = RESOURCE_URL + "/prepare";
   private static final String DOWNLOAD_URL = ID_URL + "/download";
   private static final String AUTHORIZE_URL = ID_URL + "/authorize";
+  private static final String SUBMIT_URL = ID_URL + "/submit";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String STATUS = "status";
@@ -316,6 +317,31 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .statusCode(HttpStatus.SC_OK)
         .body(ID, Matchers.is(bottomUpQuantification.getId().toString()))
         .body(STATUS, Matchers.is(bottomUpQuantification.getStatus().toString()));
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldSubmitBottomUpQuantification() {
+    given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
+            .willReturn(true);
+    given(bottomUpQuantificationService
+            .submitBottomUpQuantification(any(BottomUpQuantificationDto.class),
+            eq(bottomUpQuantificationDto.getId())))
+            .willReturn(bottomUpQuantificationDto);
+
+    restAssured
+            .given()
+            .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .pathParam(ID, bottomUpQuantificationDto.getId().toString())
+            .body(bottomUpQuantificationDto)
+            .when()
+            .post(SUBMIT_URL)
+            .then()
+            .statusCode(HttpStatus.SC_OK)
+            .body(ID, Matchers.is(bottomUpQuantification.getId().toString()))
+            .body(STATUS, Matchers.is(bottomUpQuantification.getStatus().toString()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }

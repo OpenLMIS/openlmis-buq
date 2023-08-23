@@ -326,6 +326,7 @@ public class BottomUpQuantificationService {
       BottomUpQuantificationStatus status) {
     bottomUpQuantification.setStatus(status);
     addNewStatusChange(bottomUpQuantification);
+    bottomUpQuantificationRepository.save(bottomUpQuantification);
   }
 
   /**
