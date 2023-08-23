@@ -54,6 +54,9 @@ public abstract class MessageKeys {
           ID, MISMATCH);
   public static final String ERROR_SOURCE_OF_FUND_NAME_DUPLICATED =
           join(ERROR_PREFIX, SOURCE_OF_FUND, NAME, DUPLICATED);
+
+  public static final String ERROR_REMARK_NAME_DUPLICATED =
+          join(ERROR_PREFIX, REMARK, NAME, DUPLICATED);
   public static final String ERROR_REMARK_NOT_FOUND = join(ERROR_PREFIX, REMARK, NOT_FOUND);
   public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION,
       "userCanNotBeFound");
