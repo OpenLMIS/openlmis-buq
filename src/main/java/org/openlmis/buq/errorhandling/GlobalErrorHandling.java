@@ -44,6 +44,7 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
 
   static {
     CONSTRAINT_MAP.put("unq_source_of_fund_name", MessageKeys.ERROR_SOURCE_OF_FUND_NAME_DUPLICATED);
+    CONSTRAINT_MAP.put("remarks_unique_name", MessageKeys.ERROR_REMARK_NAME_DUPLICATED);
   }
 
   @ExceptionHandler(NotFoundException.class)
