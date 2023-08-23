@@ -178,6 +178,27 @@ public class BottomUpQuantificationController extends BaseController {
   }
 
   /**
+   * Authorize given bottom-up quantification.
+   *
+   * @param bottomUpQuantificationId UUID of BottomUpQuantification to authorize.
+   * @return authorized BottomUpQuantification.
+   */
+  @PostMapping("/{id}/authorize")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public BottomUpQuantificationDto authorize(@PathVariable("id") UUID bottomUpQuantificationId,
+      @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
+    if (!bottomUpQuantificationRepository.existsById(bottomUpQuantificationId)) {
+      throw new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND);
+    }
+
+    BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
+        .authorize(bottomUpQuantificationDto, bottomUpQuantificationId);
+
+    return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
+  }
+
+  /**
    * Retrieves audit information related to the specified bottom-up quantification.
    *
    * @param author The author of the changes which should be returned.
