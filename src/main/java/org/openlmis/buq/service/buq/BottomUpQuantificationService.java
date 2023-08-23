@@ -92,6 +92,9 @@ public class BottomUpQuantificationService {
   @Autowired
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
 
+  @Autowired
+  private BottomUpQuantificationDtoBuilder bottomUpQuantificationDtoBuilder;
+
   /**
    * Prepares given bottom-up quantification if possible.
    *
@@ -312,4 +315,32 @@ public class BottomUpQuantificationService {
     }
   }
 
+  /**
+   * Changes the status of bottomUpQuantification.
+   *
+   * @param bottomUpQuantification entity of bottomUpQuantification
+   * @param status status to be applied to bottomUpQuantification
+   */
+  private void changeStatus(
+      BottomUpQuantification bottomUpQuantification,
+      BottomUpQuantificationStatus status) {
+    bottomUpQuantification.setStatus(status);
+    addNewStatusChange(bottomUpQuantification);
+  }
+
+  /**
+   * Submits a bottomUpQuantification.
+   *
+   * @param bottomUpQuantificationDto DTO of bottomUpQuantification
+   * @param id id of bottomUpQuantification
+   * @return Bottom-up quantification dto with new data.
+   */
+  public BottomUpQuantificationDto submitBottomUpQuantification(
+      BottomUpQuantificationDto bottomUpQuantificationDto,
+      UUID id) {
+    BottomUpQuantification bottomUpQuantification = save(bottomUpQuantificationDto, id);
+    changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.SUBMITTED);
+    return bottomUpQuantificationDtoBuilder
+            .buildDto(bottomUpQuantification);
+  }
 }
