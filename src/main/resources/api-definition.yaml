@@ -157,6 +157,12 @@ resourceTypes:
     get:
       is: [ secured, paginated, sorted ]
       description: Get all bottom-up quantifications that match the given parameters.
+      queryParameters:
+        status:
+          displayName: status
+          type: string
+          required: false
+          repeat: true
       responses:
         200:
           headers:

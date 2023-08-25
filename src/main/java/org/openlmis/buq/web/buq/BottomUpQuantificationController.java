@@ -24,6 +24,7 @@ import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
 import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 import org.openlmis.buq.util.Pagination;
@@ -37,6 +38,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,19 +72,28 @@ public class BottomUpQuantificationController extends BaseController {
   private BottomUpQuantificationDtoBuilder bottomUpQuantificationDtoBuilder;
 
   /**
-   * Retrieves all bottom-up quantifications. Note that an empty collection rather than a 404
-   * should be returned if no bottom-up quantifications exist.
+   * Retrieves all BottomUpQuantifications that match the parameters passed.
+   *
+   * @param queryParams {@link BottomUpQuantificationSearchParams} request parameters.
+   * @param pageable object used to encapsulate the pagination related values: page, size and sort.
+   * @return List of wanted BottomUpQuantifications matching query parameters.
    */
   @GetMapping
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public Page<BottomUpQuantificationDto> getAllBottomUpQuantifications(Pageable pageable) {
-    Page<BottomUpQuantification> page = bottomUpQuantificationRepository.findAll(pageable);
+  public Page<BottomUpQuantificationDto> getAllBottomUpQuantifications(
+      @RequestParam(required = false) MultiValueMap<String, String> queryParams,
+      Pageable pageable) {
+    BottomUpQuantificationSearchParams params =
+        new QueryBottomUpQuantificationSearchParams(queryParams);
+
+    Page<BottomUpQuantification> page = bottomUpQuantificationRepository.search(params, pageable);
     List<BottomUpQuantificationDto> content = page
         .getContent()
         .stream()
         .map(bottomUpQuantificationDtoBuilder::buildDto)
         .collect(Collectors.toList());
+
     return Pagination.getPage(content, pageable, page.getTotalElements());
   }
 

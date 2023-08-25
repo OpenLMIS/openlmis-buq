@@ -24,6 +24,7 @@ public abstract class MessageKeys {
   private static final String ERROR = "error";
 
   private static final String BOTTOM_UP_QUANTIFICATION = "bottomUpQuantification";
+  private static final String BOTTOM_UP_QUANTIFICATION_STATUS = BOTTOM_UP_QUANTIFICATION + "Status";
   private static final String SOURCE_OF_FUND = "sourceOfFund";
   private static final String JAVERS = "javers";
 
@@ -36,12 +37,18 @@ public abstract class MessageKeys {
   private static final String PROGRAM = "program";
   private static final String PROCESSING_PERIOD = "processingPeriod";
   private static final String ORDERABLE = "orderable";
+  private static final String DATE = "date";
+  private static final String UUID = "uuid";
+  private static final String PARAMETER = "parameter";
+  private static final String BOOLEAN = "boolean";
 
   private static final String MISMATCH = "mismatch";
   private static final String NOT_FOUND = "notFound";
   private static final String DUPLICATED = "duplicated";
+  private static final String INVALID = "invalid";
   private static final String REQUIRED = "required";
   private static final String AUTHENTICATION = "authentication";
+  private static final String FORMAT = "format";
   private static final String PREPARE = "prepare";
 
   private static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
@@ -72,7 +79,14 @@ public abstract class MessageKeys {
       PROCESSING_PERIOD, NOT_FOUND);
   public static final String ERROR_ORDERABLE_NOT_FOUND = join(ERROR_PREFIX, ORDERABLE, NOT_FOUND);
   public static final String ERROR_ID_MISMATCH = join(ERROR_PREFIX, ID, MISMATCH);
-
+  private static final String ERROR_INVALID_FORMAT = join(ERROR_PREFIX, INVALID, FORMAT);
+  public static final String ERROR_INVALID_FORMAT_DATE = join(ERROR_INVALID_FORMAT, DATE);
+  public static final String ERROR_INVALID_FORMAT_UUID = join(ERROR_INVALID_FORMAT, UUID);
+  public static final String ERROR_INVALID_FORMAT_BOOLEAN = join(ERROR_INVALID_FORMAT, BOOLEAN);
+  public static final String ERROR_INVALID_SEARCH_PARAMS = join(ERROR_PREFIX, INVALID,
+      "searchParams");
+  public static final String ERROR_INVALID_PARAMETER_BOTTOM_UP_QUANTIFICATION_STATUS =
+      join(ERROR_PREFIX, INVALID, PARAMETER, BOTTOM_UP_QUANTIFICATION_STATUS);
   public static final String ERROR_JAVERS_EXISTING_ENTRY =
       join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
 
