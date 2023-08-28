@@ -55,14 +55,14 @@ import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.dto.referencedata.SupportedProgramDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
-import org.openlmis.buq.exception.ContentNotFoundMessageException;
+import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.exception.ValidationMessageException;
-import org.openlmis.buq.repository.RemarkRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 
@@ -94,7 +94,7 @@ public class BottomUpQuantificationServiceTest {
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
 
   @Mock
-  private RemarkRepository remarkRepository;
+  private RemarkService remarkService;
 
   public UUID facilityId = UUID.randomUUID();
   public UUID programId = UUID.randomUUID();
@@ -176,8 +176,8 @@ public class BottomUpQuantificationServiceTest {
         .newInstance(lineItem1);
     BottomUpQuantificationLineItemDto lineItemDto2 = BottomUpQuantificationLineItemDto
         .newInstance(lineItem2);
-    when(remarkRepository.findById(lineItem1.getRemark().getId()))
-        .thenReturn(Optional.ofNullable(lineItem1.getRemark()));
+    when(remarkService.findOne(lineItem1.getRemark().getId()))
+        .thenReturn(lineItem1.getRemark());
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Arrays.asList(lineItemDto1, lineItemDto2));
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
@@ -200,15 +200,15 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
   }
 
-  @Test(expected = ContentNotFoundMessageException.class)
+  @Test(expected = NotFoundException.class)
   public void shouldNotSaveBottomUpQuantificationWithInvalidRemarkId() {
     UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
     bottomUpQuantificationDto.setId(bottomUpQuantificationId);
     BottomUpQuantificationLineItem lineItem =
         new BottomUpQuantificationLineItemDataBuilder().build();
-    when(remarkRepository.findById(lineItem.getRemark().getId()))
-        .thenThrow(ContentNotFoundMessageException.class);
+    when(remarkService.findOne(lineItem.getRemark().getId()))
+        .thenThrow(NotFoundException.class);
     final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
         .newInstance(lineItem);
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
