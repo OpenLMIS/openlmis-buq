@@ -339,7 +339,7 @@ resourceTypes:
               body:
                 application/json:
       /download:
-        displayName: Bottom-up quantification
+        displayName: bottomUpQuantification
         get:
           is: [ secured ]
           description: Downloads csv file with bottom-up quantification data.
@@ -365,6 +365,53 @@ resourceTypes:
               body:
                 application/json:
                   schema: localizedErrorResponse
+      /authorize:
+        post:
+          is: [ secured ]
+          description: Authorize existing bottom-up quantification.
+          body:
+            application/json:
+              schema: bottomUpQuantification
+          responses:
+            200:
+              description: The request is valid and the given bottom-up quantification will be authorized and returned.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: bottomUpQuantification
+            400:
+              description: The request's body is invalid
+              body:
+                application/json:
+                  schema: localizedMessageMap
+            401:
+              headers:
+                Keep-Alive:
+              description: The request does not contain a token or the token might be invalid.
+              body:
+                application/json:
+            403:
+              description: The server understood the request but refuses to authorize it.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+            404:
+              description: The server understood the request but can not find the bottom-up quantification.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+            409:
+              description: There is a conflict while the request is handled.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
     /prepare:
       post:
         is: [ secured ]

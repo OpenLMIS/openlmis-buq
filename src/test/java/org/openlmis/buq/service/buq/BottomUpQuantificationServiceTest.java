@@ -35,11 +35,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
 import org.openlmis.buq.builder.FacilityDtoDataBuilder;
 import org.openlmis.buq.builder.ProcessingPeriodDtoDataBuilder;
 import org.openlmis.buq.builder.ProgramDtoDataBuilder;
+import org.openlmis.buq.builder.UserDtoDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.referencedata.ApprovedProductDto;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
@@ -159,10 +162,7 @@ public class BottomUpQuantificationServiceTest {
 
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
     bottomUpQuantification.setBottomUpQuantificationLineItems(Collections.emptyList());
-    when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
-        .thenReturn(Optional.of(bottomUpQuantification));
-
-    when(bottomUpQuantificationRepository.save(any())).thenReturn(bottomUpQuantification);
+    mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
 
     BottomUpQuantification result = bottomUpQuantificationService.save(bottomUpQuantificationDto,
         bottomUpQuantificationId);
@@ -199,6 +199,35 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationService.prepare(facilityId, programId, processingPeriodId);
 
     verify(facilitySupportsProgramHelper).checkIfFacilitySupportsProgram(facilityDto, programId);
+  }
+
+  @Test
+  public void shouldAuthorizeBottomUpQuantification() {
+    UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .withId(bottomUpQuantificationId).build();
+    BottomUpQuantificationDto bottomUpQuantificationDto = BottomUpQuantificationDto
+        .newInstance(bottomUpQuantification);
+    UserDto userDto = new UserDtoDataBuilder().buildAsDto();
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
+
+    BottomUpQuantification result = bottomUpQuantificationService
+        .authorize(bottomUpQuantificationDto, bottomUpQuantificationId);
+    List<BottomUpQuantificationStatusChange> resultStatusChanges = result.getStatusChanges();
+
+    assertNotNull(result);
+    assertEquals(bottomUpQuantification, result);
+    assertEquals(BottomUpQuantificationStatus.AUTHORIZED,
+        resultStatusChanges.get(resultStatusChanges.size() - 1).getStatus());
+    assertEquals(BottomUpQuantificationStatus.AUTHORIZED, result.getStatus());
+  }
+
+  private void mockUpdateBottomUpQuantification(UUID bottomUpQuantificationId,
+      BottomUpQuantification bottomUpQuantification) {
+    when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
+        .thenReturn(Optional.of(bottomUpQuantification));
+    when(bottomUpQuantificationRepository.save(any())).thenReturn(bottomUpQuantification);
   }
 
 }
