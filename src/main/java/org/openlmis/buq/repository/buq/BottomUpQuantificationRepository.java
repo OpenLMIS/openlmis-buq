@@ -71,4 +71,6 @@ public interface BottomUpQuantificationRepository extends
       nativeQuery = true)
   Page<BottomUpQuantification> findAllWithoutSnapshots(Pageable pageable);
 
+  Optional<BottomUpQuantification> findByFacilityIdAndProcessingPeriodId(
+          UUID facilityId, UUID processingPeriodId);
 }
