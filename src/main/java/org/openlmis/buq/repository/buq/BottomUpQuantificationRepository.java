@@ -15,10 +15,11 @@
 
 package org.openlmis.buq.repository.buq;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
 import org.openlmis.buq.repository.BaseAuditableRepository;
 import org.openlmis.buq.repository.buq.custom.BottomUpQuantificationRepositoryCustom;
 import org.springframework.data.domain.Page;
@@ -34,24 +35,33 @@ public interface BottomUpQuantificationRepository extends
     BaseAuditableRepository<BottomUpQuantification, UUID> {
 
   @Query(
-      value = "SELECT SUM(COALESCE(rli.adjustedconsumption, 0))"
-          + "AS annual_adjusted_consumption\n"
-          + "FROM requisition.requisition_line_items rli\n"
-          + "JOIN requisition.requisitions r ON rli.requisitionid = r.id\n"
-          + "JOIN referencedata.processing_periods pp_considered "
-          + "ON pp_considered.id = :processingPeriodId \n"
-          + "JOIN referencedata.processing_periods pp_requisition "
-          + "ON r.processingperiodid = pp_requisition.id\n"
-          + "WHERE rli.orderableid = :orderableId \n"
-          + "  AND r.facilityid = :facilityId \n"
+      value = "SELECT\n"
+          + "  CAST(rli.orderableid AS VARCHAR) AS orderableId,\n"
+          + "  SUM(COALESCE(rli.adjustedconsumption, 0)) AS annualAdjustedConsumption,\n"
+          + "  o.netcontent AS netContent,\n"
+          + "  o.packroundingthreshold AS packRoundingThreshold,\n"
+          + "  o.roundtozero AS roundToZero\n"
+          + "FROM\n"
+          + "requisition.requisition_line_items rli\n"
+          + "  JOIN requisition.requisitions r ON rli.requisitionid = r.id\n"
+          + "  JOIN referencedata.processing_periods pp_considered ON pp_considered.id "
+          + "= :processingPeriodId\n"
+          + "  JOIN referencedata.processing_periods pp_requisition ON r.processingperiodid "
+          + "= pp_requisition.id\n"
+          + "  JOIN referencedata.orderables o ON rli.orderableid = o.id\n"
+          + "WHERE\n"
+          + "  r.facilityid = :facilityId\n"
           + "  AND r.status IN ('APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER')\n"
           + "  AND NOT r.emergency\n"
           + "  AND (\n"
-          + "    pp_requisition.startdate >= pp_considered.startdate "
+          + "    pp_requisition.startdate >= pp_considered.startdate\n"
           + "    AND pp_requisition.enddate <= pp_considered.enddate\n"
-          + ");\n", nativeQuery = true
+          + "  )\n"
+          + "GROUP BY\n"
+          + "  rli.orderableid, o.netcontent, o.packroundingthreshold, o.roundtozero;\n",
+      nativeQuery = true
   )
-  Optional<Integer> getProductAnnualAdjustedConsumption(@Param("orderableId") UUID orderableId,
+  List<RequisitionLineItemDataProjection> getRequisitionLineItemsData(
       @Param("facilityId") UUID facilityId, @Param("processingPeriodId") UUID processingPeriodId);
 
   @Query(value = "SELECT\n"

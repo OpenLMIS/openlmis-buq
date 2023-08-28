@@ -15,14 +15,18 @@
 
 package org.openlmis.buq.service.buq;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,23 +39,28 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
+import org.openlmis.buq.builder.BottomUpQuantificationLineItemDataBuilder;
 import org.openlmis.buq.builder.FacilityDtoDataBuilder;
 import org.openlmis.buq.builder.ProcessingPeriodDtoDataBuilder;
 import org.openlmis.buq.builder.ProgramDtoDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
-import org.openlmis.buq.dto.referencedata.ApprovedProductDto;
+import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.dto.referencedata.SupportedProgramDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
+import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
-import org.openlmis.buq.service.referencedata.ApprovedProductReferenceDataService;
+import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.util.AuthenticationHelper;
@@ -79,10 +88,13 @@ public class BottomUpQuantificationServiceTest {
   private PeriodReferenceDataService periodReferenceDataService;
 
   @Mock
-  private ApprovedProductReferenceDataService approvedProductReferenceDataService;
+  private BottomUpQuantificationRepository bottomUpQuantificationRepository;
 
   @Mock
-  private BottomUpQuantificationRepository bottomUpQuantificationRepository;
+  private OrderableReferenceDataService orderableReferenceDataService;
+
+  @Mock
+  private CsvService csvService;
 
   public UUID facilityId = UUID.randomUUID();
   public UUID programId = UUID.randomUUID();
@@ -104,10 +116,16 @@ public class BottomUpQuantificationServiceTest {
     BasicOrderableDto orderableDto = new BasicOrderableDto();
     orderableDto.setId(UUID.randomUUID());
 
-    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
-    approvedProductDto.setOrderable(orderableDto);
-    final List<ApprovedProductDto> approvedProductDtos = Collections
-        .singletonList(approvedProductDto);
+    RequisitionLineItemDataProjection reqItemData = createRequisitionLineItem(
+        orderableDto.getId().toString(),
+        100,
+        10,
+        2,
+        false
+    );
+    final Integer requisitionAdjustedConsumptionInPacks = 10;
+    final List<RequisitionLineItemDataProjection> reqLineItemsData = Collections
+        .singletonList(reqItemData);
 
     UserDto userDto = new UserDto();
     userDto.setId(UUID.randomUUID());
@@ -115,8 +133,8 @@ public class BottomUpQuantificationServiceTest {
     when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
     when(periodReferenceDataService.findOne(processingPeriodId)).thenReturn(processingPeriodDto);
-    when(approvedProductReferenceDataService.getApprovedProducts(any(), any()))
-        .thenReturn(approvedProductDtos);
+    when(bottomUpQuantificationRepository.getRequisitionLineItemsData(
+        any(UUID.class), any(UUID.class))).thenReturn(reqLineItemsData);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     doNothing().when(facilitySupportsProgramHelper).checkIfFacilitySupportsProgram(facilityDto,
         programId);
@@ -131,9 +149,18 @@ public class BottomUpQuantificationServiceTest {
     assertEquals(processingPeriodDto.getId(), result.getProcessingPeriodId());
     assertEquals(targetYear, result.getTargetYear());
     assertEquals(BottomUpQuantificationStatus.DRAFT, result.getStatus());
-    assertNotNull(result.getBottomUpQuantificationLineItems());
-    assertEquals(approvedProductDtos.size(), result.getBottomUpQuantificationLineItems().size());
 
+    List<BottomUpQuantificationLineItem> resultLineItems = result
+        .getBottomUpQuantificationLineItems();
+
+    assertNotNull(result.getBottomUpQuantificationLineItems());
+    assertEquals(reqLineItemsData.size(), resultLineItems.size());
+
+    BottomUpQuantificationLineItem resultLineItem = resultLineItems.get(0);
+
+    assertEquals(resultLineItem.getOrderableId().toString(), reqItemData.getOrderableId());
+    assertEquals(resultLineItem.getAnnualAdjustedConsumption(),
+        requisitionAdjustedConsumptionInPacks);
   }
 
   @Test(expected = ValidationMessageException.class)
@@ -199,6 +226,39 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationService.prepare(facilityId, programId, processingPeriodId);
 
     verify(facilitySupportsProgramHelper).checkIfFacilitySupportsProgram(facilityDto, programId);
+  }
+
+  @Test
+  public void shouldReturnArrayOfBytes() throws IOException {
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .build();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .withLineItems(Collections.singletonList(lineItem)).build();
+    when(orderableReferenceDataService.findOne(any(UUID.class))).thenReturn(
+        new BasicOrderableDto(lineItem.getOrderableId(), "test-code", "test-full-name",
+            0, 0, false, null));
+    final String resultBytes = "result-bytes";
+    when(csvService.generateCsv(any(), eq(BottomUpQuantificationLineItemCsv.class)))
+        .thenReturn(resultBytes.getBytes());
+
+    byte[] result = bottomUpQuantificationService.getPreparationFormData(bottomUpQuantification);
+
+    assertArrayEquals(resultBytes.getBytes(), result);
+  }
+
+  private RequisitionLineItemDataProjection createRequisitionLineItem(
+      String orderableId,
+      Integer adjustedConsumption,
+      Integer netContent,
+      Integer packRoundingThreshold,
+      boolean roundToZero) {
+    RequisitionLineItemDataProjection lineItem = mock(RequisitionLineItemDataProjection.class);
+    when(lineItem.getOrderableId()).thenReturn(orderableId);
+    when(lineItem.getAnnualAdjustedConsumption()).thenReturn(adjustedConsumption);
+    when(lineItem.getNetContent()).thenReturn(netContent);
+    when(lineItem.getPackRoundingThreshold()).thenReturn(packRoundingThreshold);
+    when(lineItem.getRoundToZero()).thenReturn(roundToZero);
+    return lineItem;
   }
 
 }

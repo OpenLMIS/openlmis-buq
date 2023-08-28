@@ -40,17 +40,16 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
-import org.openlmis.buq.dto.referencedata.ApprovedProductDto;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
+import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.service.CsvService;
-import org.openlmis.buq.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
@@ -81,9 +80,6 @@ public class BottomUpQuantificationService {
   private PeriodReferenceDataService periodReferenceDataService;
 
   @Autowired
-  private ApprovedProductReferenceDataService approvedProductReferenceDataService;
-
-  @Autowired
   private OrderableReferenceDataService orderableReferenceDataService;
 
   @Autowired
@@ -109,11 +105,12 @@ public class BottomUpQuantificationService {
     facilitySupportsProgramHelper.checkIfFacilitySupportsProgram(facility, program.getId());
     ProcessingPeriodDto period = findPeriod(processingPeriodId);
 
-    List<ApprovedProductDto> approvedProducts = approvedProductReferenceDataService
-        .getApprovedProducts(facility.getId(), program.getId());
+    List<RequisitionLineItemDataProjection> requisitionLineItemsData =
+        bottomUpQuantificationRepository.getRequisitionLineItemsData(facility.getId(),
+            period.getId());
 
     BottomUpQuantification newBottomUpQuantification = prepareBottomUpQuantification(facility,
-        program, period, approvedProducts);
+        program, period, requisitionLineItemsData);
 
     bottomUpQuantificationRepository.save(newBottomUpQuantification);
 
@@ -150,15 +147,11 @@ public class BottomUpQuantificationService {
         .stream()
         .map(lineItem -> {
           BasicOrderableDto dto = findOrderable(lineItem.getOrderableId());
-          int annualAdjustedConsumption = Optional
-              .ofNullable(lineItem.getAnnualAdjustedConsumption()).orElse(0);
-          int adjustedConsumptionInPacks = Math.toIntExact(dto
-              .packsToOrder(annualAdjustedConsumption));
           return new BottomUpQuantificationLineItemCsv(
               dto.getProductCode(),
               dto.getFullProductName(),
               dto.getNetContent(),
-              adjustedConsumptionInPacks
+              lineItem.getAnnualAdjustedConsumption()
           );
         })
         .collect(Collectors.toList());
@@ -168,12 +161,12 @@ public class BottomUpQuantificationService {
 
   private BottomUpQuantification prepareBottomUpQuantification(FacilityDto facility,
       ProgramDto program, ProcessingPeriodDto processingPeriod,
-      List<ApprovedProductDto> approvedProducts) {
+      List<RequisitionLineItemDataProjection> requisitionLineItemsData) {
     int targetYear = processingPeriod.getEndDate().getYear();
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification(facility.getId(),
         program.getId(), processingPeriod.getId(), targetYear);
 
-    prepareLineItems(bottomUpQuantification, approvedProducts);
+    prepareLineItems(bottomUpQuantification, requisitionLineItemsData);
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
     addNewStatusChange(bottomUpQuantification);
 
@@ -182,18 +175,17 @@ public class BottomUpQuantificationService {
 
   private void prepareLineItems(
       BottomUpQuantification bottomUpQuantification,
-      List<ApprovedProductDto> approvedProducts) {
+      List<RequisitionLineItemDataProjection> requisitionLineItemsData) {
     List<BottomUpQuantificationLineItem> bottomUpQuantificationLineItems = new ArrayList<>();
-    for (ApprovedProductDto product : approvedProducts) {
+    for (RequisitionLineItemDataProjection itemData : requisitionLineItemsData) {
       BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItem();
       lineItem.setBottomUpQuantification(bottomUpQuantification);
-      lineItem.setOrderableId(product.getOrderable().getId());
-
-      lineItem.setAnnualAdjustedConsumption(bottomUpQuantificationRepository
-          .getProductAnnualAdjustedConsumption(lineItem.getOrderableId(),
-              bottomUpQuantification.getFacilityId(),
-              bottomUpQuantification.getProcessingPeriodId())
-          .orElse(0));
+      lineItem.setOrderableId(UUID.fromString(itemData.getOrderableId()));
+      Integer annualAdjustedConsmption = Math.toIntExact(OrderableReferenceDataService
+          .calculatePacks(itemData.getAnnualAdjustedConsumption(), itemData.getNetContent(),
+          itemData.getPackRoundingThreshold(), itemData.getRoundToZero()
+      ));
+      lineItem.setAnnualAdjustedConsumption(annualAdjustedConsmption);
 
       bottomUpQuantificationLineItems.add(lineItem);
     }
