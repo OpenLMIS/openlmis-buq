@@ -41,7 +41,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
 import org.openlmis.buq.builder.BottomUpQuantificationLineItemDataBuilder;
-import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
 import org.openlmis.buq.builder.FacilityDtoDataBuilder;
 import org.openlmis.buq.builder.ProcessingPeriodDtoDataBuilder;
 import org.openlmis.buq.builder.ProgramDtoDataBuilder;
@@ -69,6 +68,7 @@ import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class BottomUpQuantificationServiceTest {
 
@@ -246,21 +246,6 @@ public class BottomUpQuantificationServiceTest {
     assertArrayEquals(resultBytes.getBytes(), result);
   }
 
-  private RequisitionLineItemDataProjection createRequisitionLineItem(
-      String orderableId,
-      Integer adjustedConsumption,
-      Integer netContent,
-      Integer packRoundingThreshold,
-      boolean roundToZero) {
-    RequisitionLineItemDataProjection lineItem = mock(RequisitionLineItemDataProjection.class);
-    when(lineItem.getOrderableId()).thenReturn(orderableId);
-    when(lineItem.getAnnualAdjustedConsumption()).thenReturn(adjustedConsumption);
-    when(lineItem.getNetContent()).thenReturn(netContent);
-    when(lineItem.getPackRoundingThreshold()).thenReturn(packRoundingThreshold);
-    when(lineItem.getRoundToZero()).thenReturn(roundToZero);
-    return lineItem;
-  }
-
   @Test
   public void shouldAuthorizeBottomUpQuantification() {
     UUID bottomUpQuantificationId = UUID.randomUUID();
@@ -288,6 +273,21 @@ public class BottomUpQuantificationServiceTest {
     when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
         .thenReturn(Optional.of(bottomUpQuantification));
     when(bottomUpQuantificationRepository.save(any())).thenReturn(bottomUpQuantification);
+  }
+
+  private RequisitionLineItemDataProjection createRequisitionLineItem(
+      String orderableId,
+      Integer adjustedConsumption,
+      Integer netContent,
+      Integer packRoundingThreshold,
+      boolean roundToZero) {
+    RequisitionLineItemDataProjection lineItem = mock(RequisitionLineItemDataProjection.class);
+    when(lineItem.getOrderableId()).thenReturn(orderableId);
+    when(lineItem.getAnnualAdjustedConsumption()).thenReturn(adjustedConsumption);
+    when(lineItem.getNetContent()).thenReturn(netContent);
+    when(lineItem.getPackRoundingThreshold()).thenReturn(packRoundingThreshold);
+    when(lineItem.getRoundToZero()).thenReturn(roundToZero);
+    return lineItem;
   }
 
 }
