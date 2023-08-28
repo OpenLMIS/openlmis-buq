@@ -338,11 +338,9 @@ public class BottomUpQuantificationService {
    * @param facilityId UUID of facility
    * @return returns true if a buq of given period and facility exists. False otherwise.
    */
-  public boolean existsByPeriodAndFacility(UUID periodId, UUID facilityId) {
-    Optional<BottomUpQuantification> bottomUpQuantification =
-            bottomUpQuantificationRepository
-                    .findByFacilityIdAndProcessingPeriodId(periodId, facilityId);
-    return bottomUpQuantification.isPresent();
+  public boolean existsByPeriodAndFacility(UUID facilityId, UUID periodId) {
+    return bottomUpQuantificationRepository
+                    .existsByFacilityIdAndProcessingPeriodId(facilityId, periodId);
   }
 
   Map<String, Message> getErrors(BindingResult bindingResult) {

@@ -16,6 +16,7 @@
 package org.openlmis.buq.exception;
 
 import java.util.Map;
+import java.util.Objects;
 import org.openlmis.buq.util.Message;
 
 public class BindingResultException extends RuntimeException {
@@ -23,7 +24,7 @@ public class BindingResultException extends RuntimeException {
   private final Map<String, Message> errors;
 
   public BindingResultException(Map<String, Message> errors) {
-    this.errors = errors;
+    this.errors = Objects.requireNonNull(errors);
   }
 
   public Map<String, Message> getErrors() {
