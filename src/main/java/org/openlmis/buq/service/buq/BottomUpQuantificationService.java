@@ -159,6 +159,24 @@ public class BottomUpQuantificationService {
     return csvService.generateCsv(csvLineItems, BottomUpQuantificationLineItemCsv.class);
   }
 
+  /**
+   * Changes BUQ status to authorized and updates it with the given data.
+   *
+   * @param bottomUpQuantificationImporter DTO containing new data.
+   * @param bottomUpQuantificationId ID of the bottom-up quantification to be authorized.
+   * @return Authorized Bottom-up quantification.
+   */
+  public BottomUpQuantification authorize(BottomUpQuantificationDto bottomUpQuantificationImporter,
+      UUID bottomUpQuantificationId) {
+    BottomUpQuantification updatedBottomUpQuantification =
+        updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
+    updatedBottomUpQuantification.setStatus(BottomUpQuantificationStatus.AUTHORIZED);
+    addNewStatusChange(updatedBottomUpQuantification);
+    bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
+
+    return updatedBottomUpQuantification;
+  }
+
   private BottomUpQuantification prepareBottomUpQuantification(FacilityDto facility,
       ProgramDto program, ProcessingPeriodDto processingPeriod,
       List<RequisitionLineItemDataProjection> requisitionLineItemsData) {

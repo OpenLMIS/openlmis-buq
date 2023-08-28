@@ -18,6 +18,7 @@ package org.openlmis.buq.web.buq;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Matchers.any;
@@ -63,6 +64,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String ID_URL = RESOURCE_URL + "/{id}";
   private static final String PREPARE_URL = RESOURCE_URL + "/prepare";
   private static final String DOWNLOAD_URL = ID_URL + "/download";
+  private static final String AUTHORIZE_URL = ID_URL + "/authorize";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String STATUS = "status";
@@ -208,6 +210,30 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   }
 
   @Test
+  public void shouldUpdateBottomUpQuantification() {
+    given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
+        .willReturn(true);
+    given(bottomUpQuantificationService.authorize(any(BottomUpQuantificationDto.class),
+        eq(bottomUpQuantificationDto.getId())))
+        .willReturn(bottomUpQuantification);
+
+    restAssured
+        .given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .pathParam(ID, bottomUpQuantificationDto.getId().toString())
+        .body(bottomUpQuantificationDto)
+        .when()
+        .post(AUTHORIZE_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body(ID, Matchers.is(bottomUpQuantification.getId().toString()))
+        .body(STATUS, Matchers.is(bottomUpQuantification.getStatus().toString()));
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
   public void shouldReturnUnauthorizedForUpdateBuqEndpointIfUserIsNotAuthorized() {
     restAssured
         .given()
@@ -266,6 +292,30 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .delete(ID_URL)
         .then()
         .statusCode(HttpStatus.SC_UNAUTHORIZED);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldAuthorizeBottomUpQuantification() {
+    given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
+        .willReturn(true);
+    given(bottomUpQuantificationService.authorize(any(BottomUpQuantificationDto.class),
+        eq(bottomUpQuantificationDto.getId())))
+        .willReturn(bottomUpQuantification);
+
+    restAssured
+        .given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .pathParam(ID, bottomUpQuantificationDto.getId().toString())
+        .body(bottomUpQuantificationDto)
+        .when()
+        .post(AUTHORIZE_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body(ID, Matchers.is(bottomUpQuantification.getId().toString()))
+        .body(STATUS, Matchers.is(bottomUpQuantification.getStatus().toString()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
