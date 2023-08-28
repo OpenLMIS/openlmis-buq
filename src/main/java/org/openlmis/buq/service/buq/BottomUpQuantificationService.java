@@ -34,6 +34,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
@@ -55,6 +56,7 @@ import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 import org.openlmis.buq.util.Message;
@@ -91,6 +93,9 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
+
+  @Autowired
+  private RemarkService remarkService;
 
   /**
    * Prepares given bottom-up quantification if possible.
@@ -251,6 +256,10 @@ public class BottomUpQuantificationService {
               .newInstance(lineItemDto);
           lineItem.setBottomUpQuantification(bottomUpQuantificationToUpdate);
           lineItem.setId(lineItemDto.getId());
+          if (lineItemDto.getRemark() != null) {
+            Remark remark = remarkService.findOne(lineItemDto.getRemark().getId());
+            lineItem.setRemark(remark);
+          }
 
           return lineItem;
         })
