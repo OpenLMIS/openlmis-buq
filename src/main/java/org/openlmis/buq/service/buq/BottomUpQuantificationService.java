@@ -21,6 +21,7 @@ import static org.openlmis.buq.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_ORDERABLE_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROCESSING_PERIOD_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROGRAM_NOT_FOUND;
+import static org.openlmis.buq.i18n.MessageKeys.ERROR_REMARK_NOT_FOUND;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -34,6 +35,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
@@ -48,6 +50,7 @@ import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
+import org.openlmis.buq.repository.RemarkRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.referencedata.ApprovedProductReferenceDataService;
@@ -91,6 +94,9 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
+
+  @Autowired
+  private RemarkRepository remarkRepository;
 
   /**
    * Prepares given bottom-up quantification if possible.
@@ -251,6 +257,10 @@ public class BottomUpQuantificationService {
               .newInstance(lineItemDto);
           lineItem.setBottomUpQuantification(bottomUpQuantificationToUpdate);
           lineItem.setId(lineItemDto.getId());
+          if (lineItemDto.getRemark() != null) {
+            Remark remark = findRemark(lineItemDto.getRemark().getId());
+            lineItem.setRemark(remark);
+          }
 
           return lineItem;
         })
@@ -292,6 +302,14 @@ public class BottomUpQuantificationService {
         .findById(bottomUpQuantificationId)
         .orElseThrow(() -> new ContentNotFoundMessageException(
             ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND, bottomUpQuantificationId)
+        );
+  }
+
+  Remark findRemark(UUID remarkId) {
+    return remarkRepository
+        .findById(remarkId)
+        .orElseThrow(() -> new ContentNotFoundMessageException(
+            ERROR_REMARK_NOT_FOUND, remarkId)
         );
   }
 
