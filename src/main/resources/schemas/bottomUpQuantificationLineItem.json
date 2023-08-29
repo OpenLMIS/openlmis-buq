@@ -23,6 +23,11 @@
     "forecastedDemand": {
       "type": "integer",
       "title": "forecastedDemand"
+    },
+    "remark": {
+      "type": "object",
+      "$ref": "remark.json",
+      "title": "remark"
     }
   },
   "required": [

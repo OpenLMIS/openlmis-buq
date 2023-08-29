@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +36,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
@@ -45,6 +48,7 @@ import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
+import org.openlmis.buq.exception.BindingResultException;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
@@ -54,11 +58,16 @@ import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 import org.openlmis.buq.util.Message;
+import org.openlmis.buq.validate.BottomUpQuantificationValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @Service
@@ -88,6 +97,16 @@ public class BottomUpQuantificationService {
   @Autowired
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
 
+  @Autowired
+  private BottomUpQuantificationValidator validator;
+
+  @Autowired
+  private RemarkService remarkService;
+
+  private static final String MESSAGE_SEPARATOR = ":";
+
+  private static final String PARAMETER_SEPARATOR = ",";
+
   /**
    * Prepares given bottom-up quantification if possible.
    *
@@ -111,7 +130,12 @@ public class BottomUpQuantificationService {
 
     BottomUpQuantification newBottomUpQuantification = prepareBottomUpQuantification(facility,
         program, period, requisitionLineItemsData);
-
+    BindingResult errors = new BeanPropertyBindingResult(newBottomUpQuantification,
+            "bottomUpQuantification");
+    validator.validate(newBottomUpQuantification, errors);
+    if (errors.hasErrors()) {
+      throw new BindingResultException(getErrors(errors));
+    }
     bottomUpQuantificationRepository.save(newBottomUpQuantification);
 
     return newBottomUpQuantification;
@@ -243,6 +267,10 @@ public class BottomUpQuantificationService {
               .newInstance(lineItemDto);
           lineItem.setBottomUpQuantification(bottomUpQuantificationToUpdate);
           lineItem.setId(lineItemDto.getId());
+          if (lineItemDto.getRemark() != null) {
+            Remark remark = remarkService.findOne(lineItemDto.getRemark().getId());
+            lineItem.setRemark(remark);
+          }
 
           return lineItem;
         })
@@ -304,4 +332,29 @@ public class BottomUpQuantificationService {
     }
   }
 
+  /**
+   * Checks if a bottomUpQuantification of given period and facility exists.
+   *
+   * @param periodId UUID of period
+   * @param facilityId UUID of facility
+   * @return returns true if a buq of given period and facility exists. False otherwise.
+   */
+  public boolean existsByPeriodAndFacility(UUID facilityId, UUID periodId) {
+    return bottomUpQuantificationRepository
+                    .existsByFacilityIdAndProcessingPeriodId(facilityId, periodId);
+  }
+
+  Map<String, Message> getErrors(BindingResult bindingResult) {
+    Map<String, Message> errors = new HashMap<>();
+
+    for (FieldError error : bindingResult.getFieldErrors()) {
+      String[] parts = error.getCode().split(MESSAGE_SEPARATOR);
+      String messageKey = parts[0];
+      String[] parameters = parts[1].split(PARAMETER_SEPARATOR);
+      errors.put(error.getField(), new Message(messageKey.trim(),
+              Arrays.stream(parameters).map(String::trim).toArray()));
+    }
+
+    return errors;
+  }
 }

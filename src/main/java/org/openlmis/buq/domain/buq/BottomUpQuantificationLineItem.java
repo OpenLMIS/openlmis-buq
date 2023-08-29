@@ -29,6 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.openlmis.buq.domain.BaseEntity;
+import org.openlmis.buq.domain.Remark;
 
 @Entity
 @Table(name = "bottom_up_quantification_line_items")
@@ -61,6 +62,12 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
   @Setter
   private Integer forecastedDemand;
 
+  @ManyToOne
+  @JoinColumn(name = "remarkId")
+  @Getter
+  @Setter
+  private Remark remark;
+
   /**
    * Creates new instance based on data from the importer.
    */
@@ -85,6 +92,7 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
     exporter.setAnnualAdjustedConsumption(annualAdjustedConsumption);
     exporter.setVerifiedAnnualAdjustedConsumption(verifiedAnnualAdjustedConsumption);
     exporter.setForecastedDemand(forecastedDemand);
+    exporter.setRemark(remark);
   }
 
   public interface Exporter extends BaseExporter {
@@ -97,6 +105,8 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
 
     void setForecastedDemand(Integer forecastedDemand);
 
+    void setRemark(Remark remark);
+
   }
 
   public interface Importer extends BaseImporter {
@@ -108,6 +118,8 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
     Integer getVerifiedAnnualAdjustedConsumption();
 
     Integer getForecastedDemand();
+
+    Remark.Importer getRemark();
 
   }
 
