@@ -51,8 +51,8 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
-import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
+import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
@@ -72,6 +72,7 @@ import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 import org.openlmis.buq.validate.BottomUpQuantificationValidator;
+import org.springframework.validation.Errors;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
@@ -152,6 +153,7 @@ public class BottomUpQuantificationServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     doNothing().when(facilitySupportsProgramHelper).checkIfFacilitySupportsProgram(facilityDto,
         programId);
+    doNothing().when(validator).validate(any(), any(Errors.class));
     when(bottomUpQuantificationRepository.save(any())).thenReturn(new BottomUpQuantification());
 
     BottomUpQuantification result = bottomUpQuantificationService.prepare(facilityId, programId,
@@ -333,11 +335,6 @@ public class BottomUpQuantificationServiceTest {
     when(lineItem.getPackRoundingThreshold()).thenReturn(packRoundingThreshold);
     when(lineItem.getRoundToZero()).thenReturn(roundToZero);
     return lineItem;
-  }
-
-  @Test
-  public void testValidatorInjection() {
-    assertNotNull(validator);
   }
 
 }
