@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -36,14 +37,17 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
+import org.openlmis.buq.builder.BottomUpQuantificationLineItemDataBuilder;
 import org.openlmis.buq.builder.FacilityDtoDataBuilder;
 import org.openlmis.buq.builder.ProcessingPeriodDtoDataBuilder;
 import org.openlmis.buq.builder.ProgramDtoDataBuilder;
 import org.openlmis.buq.builder.UserDtoDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
+import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 import org.openlmis.buq.dto.referencedata.ApprovedProductDto;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
@@ -51,14 +55,17 @@ import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.dto.referencedata.SupportedProgramDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
+import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
+import org.openlmis.buq.validate.BottomUpQuantificationValidator;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BottomUpQuantificationServiceTest {
@@ -86,6 +93,12 @@ public class BottomUpQuantificationServiceTest {
 
   @Mock
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
+
+  @Mock
+  private BottomUpQuantificationValidator validator;
+
+  @Mock
+  private RemarkService remarkService;
 
   public UUID facilityId = UUID.randomUUID();
   public UUID programId = UUID.randomUUID();
@@ -159,9 +172,20 @@ public class BottomUpQuantificationServiceTest {
     UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
     bottomUpQuantificationDto.setId(bottomUpQuantificationId);
-
+    BottomUpQuantificationLineItem lineItem1 =
+        new BottomUpQuantificationLineItemDataBuilder().build();
+    BottomUpQuantificationLineItem lineItem2 =
+        new BottomUpQuantificationLineItemDataBuilder().withRemark(null).build();
+    BottomUpQuantificationLineItemDto lineItemDto1 = BottomUpQuantificationLineItemDto
+        .newInstance(lineItem1);
+    BottomUpQuantificationLineItemDto lineItemDto2 = BottomUpQuantificationLineItemDto
+        .newInstance(lineItem2);
+    when(remarkService.findOne(lineItem1.getRemark().getId()))
+        .thenReturn(lineItem1.getRemark());
+    bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
+        Arrays.asList(lineItemDto1, lineItemDto2));
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
-    bottomUpQuantification.setBottomUpQuantificationLineItems(Collections.emptyList());
+    bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
 
     BottomUpQuantification result = bottomUpQuantificationService.save(bottomUpQuantificationDto,
@@ -176,6 +200,29 @@ public class BottomUpQuantificationServiceTest {
     UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
     bottomUpQuantificationDto.setId(UUID.randomUUID());
+
+    bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldNotSaveBottomUpQuantificationWithInvalidRemarkId() {
+    UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
+    bottomUpQuantificationDto.setId(bottomUpQuantificationId);
+    BottomUpQuantificationLineItem lineItem =
+        new BottomUpQuantificationLineItemDataBuilder().build();
+    when(remarkService.findOne(lineItem.getRemark().getId()))
+        .thenThrow(NotFoundException.class);
+    final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
+        .newInstance(lineItem);
+    bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
+        Collections.singletonList(lineItemDto)
+    );
+
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
+    when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
+        .thenReturn(Optional.of(bottomUpQuantification));
 
     bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
   }
@@ -230,4 +277,8 @@ public class BottomUpQuantificationServiceTest {
     when(bottomUpQuantificationRepository.save(any())).thenReturn(bottomUpQuantification);
   }
 
+  @Test
+  public void testValidatorInjection() {
+    assertNotNull(validator);
+  }
 }

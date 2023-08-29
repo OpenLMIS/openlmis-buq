@@ -15,6 +15,8 @@
 
 package org.openlmis.buq.dto.buq;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -22,8 +24,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.dto.BaseDto;
+import org.openlmis.buq.dto.remark.RemarkDto;
 
 @Getter
 @Setter
@@ -38,6 +42,7 @@ public final class BottomUpQuantificationLineItemDto extends BaseDto
   private Integer annualAdjustedConsumption;
   private Integer verifiedAnnualAdjustedConsumption;
   private Integer forecastedDemand;
+  private RemarkDto remark;
 
   /**
    * Creates new instance based on domain object.
@@ -48,6 +53,19 @@ public final class BottomUpQuantificationLineItemDto extends BaseDto
     buqLineItem.export(dto);
 
     return dto;
+  }
+
+  @JsonSetter("remark")
+  public void setRemark(RemarkDto remark) {
+    this.remark = remark;
+  }
+
+  @Override
+  @JsonIgnore
+  public void setRemark(Remark remark) {
+    if (remark != null) {
+      this.remark = RemarkDto.newInstance(remark);
+    }
   }
 
 }
