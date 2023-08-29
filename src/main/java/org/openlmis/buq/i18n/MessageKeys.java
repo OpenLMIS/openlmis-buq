@@ -51,6 +51,8 @@ public abstract class MessageKeys {
   private static final String FORMAT = "format";
   private static final String PREPARE = "prepare";
 
+  private static final String PERIOD_FACILITY_UNIQUE = "periodAndFacilityUnique";
+
   private static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
 
   public static final String ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND = join(ERROR_PREFIX,
@@ -89,6 +91,9 @@ public abstract class MessageKeys {
       join(ERROR_PREFIX, INVALID, PARAMETER, BOTTOM_UP_QUANTIFICATION_STATUS);
   public static final String ERROR_JAVERS_EXISTING_ENTRY =
       join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
+
+  public static final String ERROR_PERIOD_FACILITY_PAIR_UNIQUE =
+          join(ERROR_PREFIX, PERIOD_FACILITY_UNIQUE);
 
   private MessageKeys() {
     throw new UnsupportedOperationException();

@@ -65,6 +65,7 @@ import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
+import org.openlmis.buq.validate.BottomUpQuantificationValidator;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BottomUpQuantificationServiceTest {
@@ -92,6 +93,9 @@ public class BottomUpQuantificationServiceTest {
 
   @Mock
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
+
+  @Mock
+  private BottomUpQuantificationValidator validator;
 
   @Mock
   private RemarkService remarkService;
@@ -273,4 +277,8 @@ public class BottomUpQuantificationServiceTest {
     when(bottomUpQuantificationRepository.save(any())).thenReturn(bottomUpQuantification);
   }
 
+  @Test
+  public void testValidatorInjection() {
+    assertNotNull(validator);
+  }
 }
