@@ -44,4 +44,36 @@ public class OrderableReferenceDataService
     return getPage(RequestParameters.init()).getContent();
   }
 
+
+  /**
+   * Returns the number of packs of product based on a given data.
+   *
+   * @param dispensingUnits # of dispensing units.
+   * @param netContent # of products per package.
+   * @param packRoundingThreshold A threshold value for rounding up to the next pack when
+   *                              the remainder exceeds this value.
+   * @param roundToZero A boolean indicating whether to round down to zero when no
+   *                    full packs are needed.
+   * @return The calculated number of packs.
+   */
+  public static long calculatePacks(long dispensingUnits, long netContent,
+      long packRoundingThreshold, boolean roundToZero) {
+    if (dispensingUnits <= 0 || netContent == 0) {
+      return 0;
+    }
+
+    long packsToOrder = dispensingUnits / netContent;
+    long remainderQuantity = dispensingUnits % netContent;
+
+    if (remainderQuantity > 0 && remainderQuantity > packRoundingThreshold) {
+      packsToOrder += 1;
+    }
+
+    if (packsToOrder == 0 && !roundToZero) {
+      packsToOrder = 1;
+    }
+
+    return packsToOrder;
+  }
+
 }

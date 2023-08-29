@@ -13,15 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.dto.referencedata;
+package org.openlmis.buq.dto.requisition;
 
-import org.openlmis.buq.dto.EqualsContractTest;
+public interface RequisitionLineItemDataProjection {
 
-public class ApprovedProductDtoTest extends EqualsContractTest<ApprovedProductDto> {
+  String getOrderableId();
 
-  @Override
-  protected Class<ApprovedProductDto> getTestClass() {
-    return ApprovedProductDto.class;
-  }
+  Integer getAnnualAdjustedConsumption();
+
+  Integer getNetContent();
+
+  Integer getPackRoundingThreshold();
+
+  boolean getRoundToZero();
 
 }
