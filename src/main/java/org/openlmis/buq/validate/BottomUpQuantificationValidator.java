@@ -21,6 +21,7 @@ import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 import org.openlmis.buq.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 
@@ -34,7 +35,7 @@ public class BottomUpQuantificationValidator extends BaseValidator {
 
   @Autowired
   public BottomUpQuantificationValidator(
-          BottomUpQuantificationService bottomUpQuantificationService) {
+          @Lazy BottomUpQuantificationService bottomUpQuantificationService) {
     this.bottomUpQuantificationService = bottomUpQuantificationService;
   }
 
