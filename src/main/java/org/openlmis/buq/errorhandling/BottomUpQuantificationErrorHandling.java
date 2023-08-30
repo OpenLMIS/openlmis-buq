@@ -15,8 +15,8 @@
 
 package org.openlmis.buq.errorhandling;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.openlmis.buq.exception.BindingResultException;
 import org.openlmis.buq.util.Message;
 import org.springframework.http.HttpStatus;
@@ -33,13 +33,15 @@ public class BottomUpQuantificationErrorHandling extends AbstractErrorHandling {
   @ExceptionHandler(BindingResultException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ResponseBody
-  public Map<String, Message.LocalizedMessage> handleBindingResultException(
+  public Message.LocalizedMessage handleBindingRequltException(
           BindingResultException ex) {
-    Map<String, Message.LocalizedMessage> errors = new HashMap<>();
+    List<Message.LocalizedMessage> errors = ex.getErrors()
+            .values()
+            .stream()
+            .map(this::getLocalizedMessage)
+            .collect(Collectors.toList());
 
-    ex.getErrors()
-            .forEach((field, message) -> errors.put(field, getLocalizedMessage(message)));
 
-    return errors;
+    return !errors.isEmpty() ? errors.get(0) : null;
   }
 }
