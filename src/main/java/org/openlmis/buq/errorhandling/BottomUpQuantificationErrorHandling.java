@@ -33,7 +33,7 @@ public class BottomUpQuantificationErrorHandling extends AbstractErrorHandling {
   @ExceptionHandler(BindingResultException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ResponseBody
-  public Message.LocalizedMessage handleBindingRequltException(
+  public Message.LocalizedMessage handleBindingResultException(
           BindingResultException ex) {
     List<Message.LocalizedMessage> errors = ex.getErrors()
             .values()
