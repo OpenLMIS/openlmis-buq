@@ -412,6 +412,21 @@ resourceTypes:
               body:
                 application/json:
                   schema: localizedMessage
+      /submit:
+        post:
+          is: [ secured ]
+          description: Submit bottomUpQuantification
+          body:
+            application/json:
+              schema: bottomUpQuantification
+          responses:
+            200:
+              description: The request is valid and the given bottom-up quantification will be submited and returned.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: bottomUpQuantification
     /prepare:
       post:
         is: [ secured ]

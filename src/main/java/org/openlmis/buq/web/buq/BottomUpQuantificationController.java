@@ -236,4 +236,20 @@ public class BottomUpQuantificationController extends BaseController {
         page);
   }
 
+  /**
+   * Endpoint to submit a bottomUpQuantification.
+   *
+   * @param id UUID of bottom-up quantification which we want to update.
+   * @param bottomUpQuantificationDto A bottom-up quantification DTO bound to the request body.
+   * @return updated bottom-up quantification dto.
+   */
+  @PostMapping("/{id}/submit")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public BottomUpQuantificationDto submitBottomUpQuantification(
+          @PathVariable("id") UUID id,
+          @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
+    return bottomUpQuantificationService
+            .submitBottomUpQuantification(bottomUpQuantificationDto, id);
+  }
 }
