@@ -302,6 +302,10 @@ public class BottomUpQuantificationServiceTest {
         .newInstance(bottomUpQuantification);
     UserDto userDto = new UserDtoDataBuilder().buildAsDto();
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    doNothing().when(validator).validateCanBeAuthorized(bottomUpQuantificationDto,
+        bottomUpQuantificationId);
+    when(bottomUpQuantificationRepository.save(any())).thenReturn(new BottomUpQuantification());
+
     mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
 
     BottomUpQuantification result = bottomUpQuantificationService
@@ -313,6 +317,22 @@ public class BottomUpQuantificationServiceTest {
     assertEquals(BottomUpQuantificationStatus.AUTHORIZED,
         resultStatusChanges.get(resultStatusChanges.size() - 1).getStatus());
     assertEquals(BottomUpQuantificationStatus.AUTHORIZED, result.getStatus());
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowValidationMessageExceptionIf() {
+    UUID invalidBottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .withId(invalidBottomUpQuantificationId).build();
+    BottomUpQuantificationDto invalidBottomUpQuantificationDto = BottomUpQuantificationDto
+        .newInstance(bottomUpQuantification);
+
+    doThrow(ValidationMessageException.class).when(validator)
+        .validateCanBeAuthorized(invalidBottomUpQuantificationDto,
+            invalidBottomUpQuantificationId);
+
+    bottomUpQuantificationService.authorize(invalidBottomUpQuantificationDto,
+        invalidBottomUpQuantificationId);
   }
 
   private void mockUpdateBottomUpQuantification(UUID bottomUpQuantificationId,

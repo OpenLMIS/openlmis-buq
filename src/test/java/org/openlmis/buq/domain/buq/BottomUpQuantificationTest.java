@@ -17,7 +17,8 @@ package org.openlmis.buq.domain.buq;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.UUID;
+import java.util.Collections;
+import java.util.List;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.junit.Test;
@@ -61,24 +62,14 @@ public class BottomUpQuantificationTest {
   @Test
   public void shouldUpdateFrom() {
     BottomUpQuantification buq = new BottomUpQuantificationDataBuilder().build();
-    BottomUpQuantification original = new BottomUpQuantificationDataBuilder()
-        .withFacilityId(UUID.fromString("f501970e-a552-4be8-b8c0-c3d844550176"))
-        .withProgramId(UUID.fromString("1282721e-fbe6-4834-9004-5f695850c7e3"))
-        .withProcessingPeriodId(UUID.fromString("1c327620-a434-4c5c-a6ff-a79cf93eb43d"))
-        .withStatus(BottomUpQuantificationStatus.AUTHORIZED)
-        .withTargetYear(1999)
-        .build();
+    BottomUpQuantificationLineItem buqLineItem =
+        new BottomUpQuantificationLineItemDataBuilder().build();
+    List<BottomUpQuantificationLineItem> updatedLineItems = Collections.singletonList(buqLineItem);
 
-    buq.updateFrom(original, null);
+    buq.updateFrom(updatedLineItems);
 
-    assertThat(buq.getFacilityId())
-        .isEqualTo(UUID.fromString("f501970e-a552-4be8-b8c0-c3d844550176"));
-    assertThat(buq.getProgramId())
-        .isEqualTo(UUID.fromString("1282721e-fbe6-4834-9004-5f695850c7e3"));
-    assertThat(buq.getProcessingPeriodId())
-        .isEqualTo(UUID.fromString("1c327620-a434-4c5c-a6ff-a79cf93eb43d"));
-    assertThat(buq.getStatus()).isEqualTo(BottomUpQuantificationStatus.AUTHORIZED);
-    assertThat(buq.getTargetYear()).isEqualTo(1999);
+    assertThat(buq.getBottomUpQuantificationLineItems())
+        .isEqualTo(updatedLineItems);
   }
 
   @Test

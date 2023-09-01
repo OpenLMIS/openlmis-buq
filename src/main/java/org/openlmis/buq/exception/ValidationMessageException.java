@@ -50,6 +50,16 @@ public class ValidationMessageException extends BaseMessageException {
   }
 
   /**
+   * Create a new validation exception with the given message.
+   * Message is constructed from message key and message parameters.
+   * @param messageKey        the message key for new Message.
+   * @param messageParameters the parameters for Message.
+   */
+  public ValidationMessageException(String messageKey, Object... messageParameters) {
+    super(new Message(messageKey, messageParameters));
+  }
+
+  /**
    * Create a new validation exception with the given message and cause.
    * Message is constructed from message key and message parameters.
    * @param cause             the exception.

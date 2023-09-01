@@ -133,12 +133,14 @@ public class BottomUpQuantificationService {
 
     BottomUpQuantification newBottomUpQuantification = prepareBottomUpQuantification(facility,
         program, period, requisitionLineItemsData);
+
     BindingResult errors = new BeanPropertyBindingResult(newBottomUpQuantification,
-            "bottomUpQuantification");
+        "bottomUpQuantification");
     validator.validate(newBottomUpQuantification, errors);
     if (errors.hasErrors()) {
       throw new BindingResultException(getErrors(errors));
     }
+
     bottomUpQuantificationRepository.save(newBottomUpQuantification);
 
     return newBottomUpQuantification;
@@ -195,6 +197,8 @@ public class BottomUpQuantificationService {
    */
   public BottomUpQuantification authorize(BottomUpQuantificationDto bottomUpQuantificationImporter,
       UUID bottomUpQuantificationId) {
+    validator.validateCanBeAuthorized(bottomUpQuantificationImporter, bottomUpQuantificationId);
+
     BottomUpQuantification updatedBottomUpQuantification =
         updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
     updatedBottomUpQuantification.setStatus(BottomUpQuantificationStatus.AUTHORIZED);
@@ -202,6 +206,65 @@ public class BottomUpQuantificationService {
     bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
 
     return updatedBottomUpQuantification;
+  }
+
+  /**
+   * Submits a bottomUpQuantification.
+   *
+   * @param bottomUpQuantificationDto DTO of bottomUpQuantification
+   * @param id id of bottomUpQuantification
+   * @return Bottom-up quantification dto with new data.
+   */
+  public BottomUpQuantificationDto submitBottomUpQuantification(
+      BottomUpQuantificationDto bottomUpQuantificationDto, UUID id) {
+    validator.validateCanBeSubmitted(bottomUpQuantificationDto, id);
+
+    BottomUpQuantification bottomUpQuantification = save(bottomUpQuantificationDto, id);
+    changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.SUBMITTED);
+    return bottomUpQuantificationDtoBuilder
+        .buildDto(bottomUpQuantification);
+  }
+
+  /**
+   * Checks if a bottomUpQuantification of given period and facility exists.
+   *
+   * @param periodId UUID of period
+   * @param facilityId UUID of facility
+   * @return returns true if a buq of given period and facility exists. False otherwise.
+   */
+  public boolean existsByPeriodAndFacility(UUID facilityId, UUID periodId) {
+    return bottomUpQuantificationRepository
+        .existsByFacilityIdAndProcessingPeriodId(facilityId, periodId);
+  }
+
+  /**
+   * Finds and retrieves a BottomUpQuantification entity by its unique identifier.
+   *
+   * @param bottomUpQuantificationId The UUID identifier of the BottomUpQuantification to find.
+   * @return The found BottomUpQuantification entity.
+   * @throws ContentNotFoundMessageException If the BottomUpQuantification with the given ID is
+   *     not found.
+   */
+  public BottomUpQuantification findBottomUpQuantification(UUID bottomUpQuantificationId) {
+    return bottomUpQuantificationRepository
+        .findById(bottomUpQuantificationId)
+        .orElseThrow(() -> new ContentNotFoundMessageException(
+            ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND, bottomUpQuantificationId)
+        );
+  }
+
+  Map<String, Message> getErrors(BindingResult bindingResult) {
+    Map<String, Message> errors = new HashMap<>();
+
+    for (FieldError error : bindingResult.getFieldErrors()) {
+      String[] parts = error.getCode().split(MESSAGE_SEPARATOR);
+      String messageKey = parts[0];
+      String[] parameters = parts[1].split(PARAMETER_SEPARATOR);
+      errors.put(error.getField(), new Message(messageKey.trim(),
+          Arrays.stream(parameters).map(String::trim).toArray()));
+    }
+
+    return errors;
   }
 
   private BottomUpQuantification prepareBottomUpQuantification(FacilityDto facility,
@@ -228,8 +291,8 @@ public class BottomUpQuantificationService {
       lineItem.setOrderableId(UUID.fromString(itemData.getOrderableId()));
       Integer annualAdjustedConsmption = Math.toIntExact(OrderableReferenceDataService
           .calculatePacks(itemData.getAnnualAdjustedConsumption(), itemData.getNetContent(),
-          itemData.getPackRoundingThreshold(), itemData.getRoundToZero()
-      ));
+              itemData.getPackRoundingThreshold(), itemData.getRoundToZero()
+          ));
       lineItem.setAnnualAdjustedConsumption(annualAdjustedConsmption);
 
       bottomUpQuantificationLineItems.add(lineItem);
@@ -258,10 +321,6 @@ public class BottomUpQuantificationService {
     BottomUpQuantification bottomUpQuantificationToUpdate =
         findBottomUpQuantification(bottomUpQuantificationId);
 
-    BottomUpQuantification updatedBottomUpQuantification = BottomUpQuantification
-        .newInstance(bottomUpQuantificationDto);
-    updatedBottomUpQuantification.setId(bottomUpQuantificationId);
-
     List<BottomUpQuantificationLineItem> updatedLineItems = bottomUpQuantificationDto
         .getBottomUpQuantificationLineItems()
         .stream()
@@ -278,7 +337,7 @@ public class BottomUpQuantificationService {
           return lineItem;
         })
         .collect(Collectors.toList());
-    bottomUpQuantificationToUpdate.updateFrom(updatedBottomUpQuantification, updatedLineItems);
+    bottomUpQuantificationToUpdate.updateFrom(updatedLineItems);
 
     return bottomUpQuantificationToUpdate;
   }
@@ -307,14 +366,6 @@ public class BottomUpQuantificationService {
     return Optional
         .ofNullable(finder.apply(id))
         .orElseThrow(() -> new ContentNotFoundMessageException(errorMessage, id)
-        );
-  }
-
-  BottomUpQuantification findBottomUpQuantification(UUID bottomUpQuantificationId) {
-    return bottomUpQuantificationRepository
-        .findById(bottomUpQuantificationId)
-        .orElseThrow(() -> new ContentNotFoundMessageException(
-            ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND, bottomUpQuantificationId)
         );
   }
 
@@ -349,45 +400,4 @@ public class BottomUpQuantificationService {
     bottomUpQuantificationRepository.save(bottomUpQuantification);
   }
 
-  /**
-   * Submits a bottomUpQuantification.
-   *
-   * @param bottomUpQuantificationDto DTO of bottomUpQuantification
-   * @param id id of bottomUpQuantification
-   * @return Bottom-up quantification dto with new data.
-   */
-  public BottomUpQuantificationDto submitBottomUpQuantification(
-      BottomUpQuantificationDto bottomUpQuantificationDto,
-      UUID id) {
-    BottomUpQuantification bottomUpQuantification = save(bottomUpQuantificationDto, id);
-    changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.SUBMITTED);
-    return bottomUpQuantificationDtoBuilder
-            .buildDto(bottomUpQuantification);
-  }
-  
-  /**
-   * Checks if a bottomUpQuantification of given period and facility exists.
-   *
-   * @param periodId UUID of period
-   * @param facilityId UUID of facility
-   * @return returns true if a buq of given period and facility exists. False otherwise.
-   */
-  public boolean existsByPeriodAndFacility(UUID facilityId, UUID periodId) {
-    return bottomUpQuantificationRepository
-                    .existsByFacilityIdAndProcessingPeriodId(facilityId, periodId);
-  }
-
-  Map<String, Message> getErrors(BindingResult bindingResult) {
-    Map<String, Message> errors = new HashMap<>();
-
-    for (FieldError error : bindingResult.getFieldErrors()) {
-      String[] parts = error.getCode().split(MESSAGE_SEPARATOR);
-      String messageKey = parts[0];
-      String[] parameters = parts[1].split(PARAMETER_SEPARATOR);
-      errors.put(error.getField(), new Message(messageKey.trim(),
-              Arrays.stream(parameters).map(String::trim).toArray()));
-    }
-
-    return errors;
-  }
 }
