@@ -17,6 +17,7 @@ package org.openlmis.buq.validate;
 
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,12 +25,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
+import org.openlmis.buq.builder.BottomUpQuantificationLineItemDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
+import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class BottomUpQuantificationValidatorTest {
 
@@ -63,6 +68,262 @@ public class BottomUpQuantificationValidatorTest {
         .thenReturn(target);
 
     validator.validateCanBeAuthorized(BottomUpQuantificationDto.newInstance(target), targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfAnnualAdjustedConsumptionIsNullForSubmission() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.DRAFT)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withAnnualAdjustedConsumption(null)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeSubmitted(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfVerifiedAnnualAdjustedConsumptionIsNullForSubmission() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.DRAFT)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withVerifiedAnnualAdjustedConsumption(null)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeSubmitted(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfForecastedDemandIsNullForSubmission() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.DRAFT)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withForecastedDemand(null)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeSubmitted(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfAnnualAdjustedConsumptionValueIsNegativeForSubmission() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.DRAFT)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withAnnualAdjustedConsumption(-1)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeSubmitted(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfVerifiedAnnualAdjustedConsumptionValueIsNegativeForSubmit() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.DRAFT)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withVerifiedAnnualAdjustedConsumption(-1)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeSubmitted(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfForecastedDemandValueIsNegativeForSubmission() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.DRAFT)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withForecastedDemand(-1)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeSubmitted(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionWhenNoRemarkProvidedForValuesDifferencesForSubmission() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.DRAFT)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withAnnualAdjustedConsumption(1)
+        .withForecastedDemand(2)
+        .withRemark(null)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeSubmitted(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfAnnualAdjustedConsumptionIsNullForAuthorization() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.SUBMITTED)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withAnnualAdjustedConsumption(null)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeAuthorized(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfVerifiedAnnualAdjustedConsumptionIsNullForAuthorization() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.SUBMITTED)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withVerifiedAnnualAdjustedConsumption(null)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeAuthorized(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfForecastedDemandIsNullForAuthorization() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.SUBMITTED)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withForecastedDemand(null)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeAuthorized(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfAnnualAdjustedConsumptionValueIsNegativeForAuthorization() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.SUBMITTED)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withAnnualAdjustedConsumption(-1)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeAuthorized(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfVerifiedAnnualAdjustedConsumptionIsNegativeForAuthorization() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.SUBMITTED)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withVerifiedAnnualAdjustedConsumption(-1)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeAuthorized(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfForecastedDemandValueIsNegativeForAuthorization() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.SUBMITTED)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withForecastedDemand(-1)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeAuthorized(targetDto, targetId);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionWhenNoRemarkProvidedForValuesDifferencesForAuthorization() {
+    UUID targetId = UUID.randomUUID();
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+        .withStatus(BottomUpQuantificationStatus.SUBMITTED)
+        .build();
+    when(quantificationService.findBottomUpQuantification(targetId))
+        .thenReturn(target);
+    BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
+    BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
+        .withAnnualAdjustedConsumption(1)
+        .withForecastedDemand(2)
+        .withRemark(null)
+        .build();
+    targetDto.setBottomUpQuantificationLineItems(Collections
+        .singletonList(BottomUpQuantificationLineItemDto.newInstance(lineItem)));
+
+    validator.validateCanBeAuthorized(targetDto, targetId);
   }
 
 }

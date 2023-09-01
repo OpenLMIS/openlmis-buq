@@ -6,33 +6,33 @@ baseUri: "@baseUrl@"
 protocols: [ HTTP, HTTPS ]
 
 documentation:
-  - title: Getting Started
-    content: Welcome to the OpenLMIS Bottom-Up Quantification documentation.
+- title: Getting Started
+  content: Welcome to the OpenLMIS Bottom-Up Quantification documentation.
 
 schemas:
-  - auditLogEntry: !include schemas/auditLogEntry.json
+- auditLogEntry: !include schemas/auditLogEntry.json
 
-  - auditLogEntryArray: |
-      {
-          "type": "array",
-          "items": { "type": "object", "$ref": "schemas/auditLogEntry.json" }
-      }
+- auditLogEntryArray: |
+    {
+        "type": "array",
+        "items": { "type": "object", "$ref": "schemas/auditLogEntry.json" }
+    }
 
-  - localizedErrorResponse: !include schemas/localizedErrorResponse.json
+- localizedErrorResponse: !include schemas/localizedErrorResponse.json
 
-  - version: !include schemas/version.json
+- version: !include schemas/version.json
 
-  - bottomUpQuantification: !include schemas/bottomUpQuantification.json
-  - bottomUpQuantificationPage: !include schemas/bottomUpQuantificationPage.json
-  - sourceOfFund: !include schemas/sourceOfFund.json
-  - sourceOfFundPage: !include schemas/sourceOfFundPage.json
-  - remark: !include schemas/remark.json
+- bottomUpQuantification: !include schemas/bottomUpQuantification.json
+- bottomUpQuantificationPage: !include schemas/bottomUpQuantificationPage.json
+- sourceOfFund: !include schemas/sourceOfFund.json
+- sourceOfFundPage: !include schemas/sourceOfFundPage.json
+- remark: !include schemas/remark.json
 
-  - remarkArray: |
-      {
-          "type": "array",
-          "items": { "type": "object", "$ref": "schemas/remark.json" }
-      }
+- remarkArray: |
+    {
+        "type": "array",
+        "items": { "type": "object", "$ref": "schemas/remark.json" }
+    }
 
 traits:
   - secured:

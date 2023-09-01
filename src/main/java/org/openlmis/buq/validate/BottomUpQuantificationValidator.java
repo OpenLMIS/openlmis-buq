@@ -39,9 +39,14 @@ import org.springframework.validation.Errors;
 @Component
 public class BottomUpQuantificationValidator extends BaseValidator {
 
-  private final BottomUpQuantificationService bottomUpQuantificationService;
+  public static final String ANNUAL_ADJUSTED_CONSUMPTION_FIELD = "annualAdjustedConsumption";
+  public static final String VERIFIED_ANNUAL_ADJUSTED_CONSUMPTION_FIELD =
+      "verifiedAnnualAdjustedConsumption";
+  public static final String FORECASTED_DEMAND_FIELD = "forecastedDemand";
+  private static final String PROCESSING_PERIOD_ID_FIELD = "processingPeriodId";
+  public static final String REMARK_FIELD = "remark";
 
-  private static final String PROCESSING_PERIOD_ID = "processingPeriodId";
+  private final BottomUpQuantificationService bottomUpQuantificationService;
 
   @Autowired
   public BottomUpQuantificationValidator(
@@ -96,7 +101,8 @@ public class BottomUpQuantificationValidator extends BaseValidator {
     if (bottomUpQuantificationService
         .existsByPeriodAndFacility(bottomUpQuantification.getFacilityId(),
             bottomUpQuantification.getProcessingPeriodId())) {
-      rejectValue(errors, PROCESSING_PERIOD_ID, new Message(ERROR_PERIOD_FACILITY_PAIR_UNIQUE));
+      rejectValue(errors, PROCESSING_PERIOD_ID_FIELD,
+          new Message(ERROR_PERIOD_FACILITY_PAIR_UNIQUE));
     }
   }
 
@@ -112,13 +118,14 @@ public class BottomUpQuantificationValidator extends BaseValidator {
 
   private void validateBottomUpQuantificationLineItemCanChangeStatus(
       BottomUpQuantificationLineItemDto target) {
-    rejectIfNullOrNegative(target.getAnnualAdjustedConsumption(), "annualAdjustedConsumption");
+    rejectIfNullOrNegative(target.getAnnualAdjustedConsumption(),
+        ANNUAL_ADJUSTED_CONSUMPTION_FIELD);
     rejectIfNullOrNegative(target.getVerifiedAnnualAdjustedConsumption(),
-        "verifiedAnnualAdjustedConsumption");
-    rejectIfNullOrNegative(target.getForecastedDemand(), "forecastedDemand");
+        VERIFIED_ANNUAL_ADJUSTED_CONSUMPTION_FIELD);
+    rejectIfNullOrNegative(target.getForecastedDemand(), FORECASTED_DEMAND_FIELD);
 
     if (!Objects.equals(target.getAnnualAdjustedConsumption(), target.getForecastedDemand())) {
-      rejectIfNull(target.getRemark(), ERROR_LINE_ITEM_REMARK_REQUIRED, "remark");
+      rejectIfNull(target.getRemark(), ERROR_LINE_ITEM_REMARK_REQUIRED, REMARK_FIELD);
     }
 
   }
