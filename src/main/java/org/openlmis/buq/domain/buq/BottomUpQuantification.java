@@ -95,7 +95,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
    * @param processingPeriodId id of the ProcessingPeriod
    */
   public BottomUpQuantification(UUID facilityId, UUID programId, UUID processingPeriodId,
-       Integer targetYear) {
+      Integer targetYear) {
     this.facilityId = facilityId;
     this.programId = programId;
     this.processingPeriodId = processingPeriodId;
@@ -123,17 +123,9 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
   /**
    * Copy values of attributes into new or updated BottomUpQuantification.
    *
-   * @param original object to update from.
    * @param lineItems list of bottom-up quantification line items.
    */
-  public void updateFrom(BottomUpQuantification original,
-      List<BottomUpQuantificationLineItem> lineItems) {
-    facilityId = original.getFacilityId();
-    programId = original.getProgramId();
-    processingPeriodId = original.getProcessingPeriodId();
-    targetYear = original.getTargetYear();
-    status = original.getStatus();
-
+  public void updateFrom(List<BottomUpQuantificationLineItem> lineItems) {
     if (lineItems != null) {
       bottomUpQuantificationLineItems.clear();
       bottomUpQuantificationLineItems.addAll(lineItems);

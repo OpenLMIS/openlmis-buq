@@ -32,14 +32,14 @@ abstract class BaseValidator implements Validator {
   private static final Pattern UTF8_PATTERN = Pattern.compile(UTF8_REGEX);
 
   protected <T> void rejectIfNotContains(Errors errors, Collection<T> collection, T value,
-                                         String field, Message message) {
+      String field, Message message) {
     if (!collection.contains(value)) {
       rejectValue(errors, field, message);
     }
   }
 
   protected void rejectIfLengthTooLong(Errors errors, String value, int max, String field,
-                                       Message message) {
+      Message message) {
     if (length(value) > max) {
       rejectValue(errors, field, message);
     }
@@ -54,4 +54,5 @@ abstract class BaseValidator implements Validator {
   protected void rejectValue(Errors errors, String field, Message message) {
     errors.rejectValue(field, message.toString());
   }
+
 }

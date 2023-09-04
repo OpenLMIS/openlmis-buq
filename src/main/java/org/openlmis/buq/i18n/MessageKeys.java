@@ -37,9 +37,11 @@ public abstract class MessageKeys {
   private static final String PROGRAM = "program";
   private static final String PROCESSING_PERIOD = "processingPeriod";
   private static final String ORDERABLE = "orderable";
+  private static final String LINE_ITEM = "lineItem";
   private static final String DATE = "date";
   private static final String UUID = "uuid";
   private static final String PARAMETER = "parameter";
+  private static final String FIELD = "field";
   private static final String BOOLEAN = "boolean";
 
   private static final String MISMATCH = "mismatch";
@@ -50,7 +52,8 @@ public abstract class MessageKeys {
   private static final String AUTHENTICATION = "authentication";
   private static final String FORMAT = "format";
   private static final String PREPARE = "prepare";
-
+  private static final String SUBMIT = "submit";
+  private static final String AUTHORIZE = "authorize";
   private static final String PERIOD_FACILITY_UNIQUE = "periodAndFacilityUnique";
 
   private static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
@@ -58,14 +61,14 @@ public abstract class MessageKeys {
   public static final String ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND = join(ERROR_PREFIX,
       BOTTOM_UP_QUANTIFICATION, NOT_FOUND);
   public static final String ERROR_SOURCE_OF_FUND_NOT_FOUND = join(ERROR_PREFIX, SOURCE_OF_FUND,
-          NOT_FOUND);
+      NOT_FOUND);
   public static final String ERROR_SOURCE_OF_FUND_ID_MISMATCH = join(ERROR_PREFIX, SOURCE_OF_FUND,
-          ID, MISMATCH);
+      ID, MISMATCH);
   public static final String ERROR_SOURCE_OF_FUND_NAME_DUPLICATED =
-          join(ERROR_PREFIX, SOURCE_OF_FUND, NAME, DUPLICATED);
+      join(ERROR_PREFIX, SOURCE_OF_FUND, NAME, DUPLICATED);
 
   public static final String ERROR_REMARK_NAME_DUPLICATED =
-          join(ERROR_PREFIX, REMARK, NAME, DUPLICATED);
+      join(ERROR_PREFIX, REMARK, NAME, DUPLICATED);
   public static final String ERROR_REMARK_NOT_FOUND = join(ERROR_PREFIX, REMARK, NOT_FOUND);
   public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION,
       "userCanNotBeFound");
@@ -89,11 +92,21 @@ public abstract class MessageKeys {
       "searchParams");
   public static final String ERROR_INVALID_PARAMETER_BOTTOM_UP_QUANTIFICATION_STATUS =
       join(ERROR_PREFIX, INVALID, PARAMETER, BOTTOM_UP_QUANTIFICATION_STATUS);
+  public static final String ERROR_MUST_BE_DRAFT_TO_BE_SUBMITTED = join(ERROR_PREFIX, SUBMIT,
+      "mustBeDraftToBeSubmitted");
+  public static final String ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED = join(ERROR_PREFIX,
+      AUTHORIZE, "mustBeSubmittedToBeAuthorize");
+  public static final String ERROR_LINE_ITEM_FIELD_REQUIRED = join(ERROR_PREFIX, LINE_ITEM, FIELD,
+      REQUIRED);
+  public static final String ERROR_LINE_ITEM_FIELD_MUST_BE_NON_NEGATIVE = join(ERROR_PREFIX,
+      LINE_ITEM, FIELD, "mustBeNonNegative");
+  public static final String ERROR_LINE_ITEM_REMARK_REQUIRED = join(ERROR_PREFIX, LINE_ITEM, REMARK,
+      REQUIRED);
   public static final String ERROR_JAVERS_EXISTING_ENTRY =
       join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
 
   public static final String ERROR_PERIOD_FACILITY_PAIR_UNIQUE =
-          join(ERROR_PREFIX, PERIOD_FACILITY_UNIQUE);
+      join(ERROR_PREFIX, PERIOD_FACILITY_UNIQUE);
 
   private MessageKeys() {
     throw new UnsupportedOperationException();
