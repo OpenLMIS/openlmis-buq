@@ -128,7 +128,8 @@ public class BottomUpQuantificationValidator extends BaseValidator {
         VERIFIED_ANNUAL_ADJUSTED_CONSUMPTION_FIELD);
     rejectIfNullOrNegative(target.getForecastedDemand(), FORECASTED_DEMAND_FIELD);
 
-    if (!Objects.equals(target.getAnnualAdjustedConsumption(), target.getForecastedDemand())) {
+    if (!Objects.equals(target.getVerifiedAnnualAdjustedConsumption(),
+        target.getForecastedDemand())) {
       rejectIfNull(target.getRemark(), ERROR_LINE_ITEM_REMARK_REQUIRED, REMARK_FIELD);
     }
 

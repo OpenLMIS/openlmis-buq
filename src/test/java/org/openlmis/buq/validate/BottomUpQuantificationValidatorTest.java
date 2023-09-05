@@ -188,7 +188,7 @@ public class BottomUpQuantificationValidatorTest {
         .thenReturn(target);
     BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
     BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
-        .withAnnualAdjustedConsumption(1)
+        .withVerifiedAnnualAdjustedConsumption(1)
         .withForecastedDemand(2)
         .withRemark(null)
         .build();
@@ -316,7 +316,7 @@ public class BottomUpQuantificationValidatorTest {
         .thenReturn(target);
     BottomUpQuantificationDto targetDto = BottomUpQuantificationDto.newInstance(target);
     BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItemDataBuilder()
-        .withAnnualAdjustedConsumption(1)
+        .withVerifiedAnnualAdjustedConsumption(1)
         .withForecastedDemand(2)
         .withRemark(null)
         .build();
