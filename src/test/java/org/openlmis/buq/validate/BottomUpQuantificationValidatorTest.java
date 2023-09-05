@@ -15,6 +15,7 @@
 
 package org.openlmis.buq.validate;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -66,8 +67,12 @@ public class BottomUpQuantificationValidatorTest {
 
     when(quantificationService.findBottomUpQuantification(targetId))
         .thenReturn(target);
+    when(quantificationService.canSkipAuthorization(target))
+        .thenReturn(false);
 
     validator.validateCanBeAuthorized(BottomUpQuantificationDto.newInstance(target), targetId);
+
+    verify(quantificationService).canSkipAuthorization(target);
   }
 
   @Test(expected = ValidationMessageException.class)
