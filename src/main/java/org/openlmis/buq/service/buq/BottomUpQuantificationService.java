@@ -238,6 +238,19 @@ public class BottomUpQuantificationService {
   }
 
   /**
+   * Checks whether the authorization step can be skipped for the given BottomUpQuantification.
+   * This method determines if the program associated with the BottomUpQuantification allows
+   * skipping the authorization step.
+   *
+   * @param bottomUpQuantification The BottomUpQuantification for which authorization is checked.
+   * @return Returns true if the program associated with the BottomUpQuantification allows skipping
+   *         authorization. False otherwise.
+   */
+  public boolean canSkipAuthorization(BottomUpQuantification bottomUpQuantification) {
+    return findProgram(bottomUpQuantification.getProgramId()).getSkipAuthorization();
+  }
+
+  /**
    * Finds and retrieves a BottomUpQuantification entity by its unique identifier.
    *
    * @param bottomUpQuantificationId The UUID identifier of the BottomUpQuantification to find.

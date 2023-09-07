@@ -88,8 +88,12 @@ public class BottomUpQuantificationValidator extends BaseValidator {
    * @throws ValidationMessageException If the target cannot be authorized.
    */
   public void validateCanBeAuthorized(BottomUpQuantificationDto target, UUID targetId) {
-    if (!bottomUpQuantificationService.findBottomUpQuantification(targetId).getStatus()
-        .equals(BottomUpQuantificationStatus.SUBMITTED)) {
+    BottomUpQuantification bottomUpQuantification = bottomUpQuantificationService
+        .findBottomUpQuantification(targetId);
+    if (!bottomUpQuantification.getStatus().equals(BottomUpQuantificationStatus.SUBMITTED)
+        && !(bottomUpQuantification.getStatus().equals(BottomUpQuantificationStatus.DRAFT)
+        && bottomUpQuantificationService.canSkipAuthorization(bottomUpQuantification))
+    ) {
       throw new ValidationMessageException(new Message(ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED));
     } else {
       validateCanChangeStatus(target);
