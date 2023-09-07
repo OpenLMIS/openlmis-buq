@@ -165,6 +165,7 @@ public class BottomUpQuantificationServiceTest {
     assertEquals(processingPeriodDto.getId(), result.getProcessingPeriodId());
     assertEquals(targetYear, result.getTargetYear());
     assertEquals(BottomUpQuantificationStatus.DRAFT, result.getStatus());
+    assertNotNull(result.getFundingDetails());
 
     List<BottomUpQuantificationLineItem> resultLineItems = result
         .getBottomUpQuantificationLineItems();

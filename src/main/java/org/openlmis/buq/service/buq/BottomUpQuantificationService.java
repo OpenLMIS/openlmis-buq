@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
@@ -273,6 +274,9 @@ public class BottomUpQuantificationService {
     int targetYear = processingPeriod.getEndDate().getYear();
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification(facility.getId(),
         program.getId(), processingPeriod.getId(), targetYear);
+    BottomUpQuantificationFundingDetails fundingDetails =
+        new BottomUpQuantificationFundingDetails(bottomUpQuantification);
+    bottomUpQuantification.setFundingDetails(fundingDetails);
 
     prepareLineItems(bottomUpQuantification, requisitionLineItemsData);
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
@@ -289,11 +293,11 @@ public class BottomUpQuantificationService {
       BottomUpQuantificationLineItem lineItem = new BottomUpQuantificationLineItem();
       lineItem.setBottomUpQuantification(bottomUpQuantification);
       lineItem.setOrderableId(UUID.fromString(itemData.getOrderableId()));
-      Integer annualAdjustedConsmption = Math.toIntExact(OrderableReferenceDataService
+      Integer annualAdjustedConsumption = Math.toIntExact(OrderableReferenceDataService
           .calculatePacks(itemData.getAnnualAdjustedConsumption(), itemData.getNetContent(),
               itemData.getPackRoundingThreshold(), itemData.getRoundToZero()
           ));
-      lineItem.setAnnualAdjustedConsumption(annualAdjustedConsmption);
+      lineItem.setAnnualAdjustedConsumption(annualAdjustedConsumption);
 
       bottomUpQuantificationLineItems.add(lineItem);
     }
@@ -337,6 +341,14 @@ public class BottomUpQuantificationService {
           return lineItem;
         })
         .collect(Collectors.toList());
+
+    if (bottomUpQuantificationDto.getFundingDetails() != null) {
+      BottomUpQuantificationFundingDetails fundingDetails = bottomUpQuantificationToUpdate
+          .getFundingDetails();
+      fundingDetails.updateFrom(bottomUpQuantificationDto.getFundingDetails());
+      bottomUpQuantificationToUpdate.setFundingDetails(fundingDetails);
+    }
+
     bottomUpQuantificationToUpdate.updateFrom(updatedLineItems);
 
     return bottomUpQuantificationToUpdate;

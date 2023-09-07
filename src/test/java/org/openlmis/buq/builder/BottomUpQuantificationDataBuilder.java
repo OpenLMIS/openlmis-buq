@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
@@ -40,6 +41,7 @@ public class BottomUpQuantificationDataBuilder {
       Lists.newArrayList();
   private List<BottomUpQuantificationStatusChange> statusChanges =
       Lists.newArrayList();
+  private BottomUpQuantificationFundingDetails fundingDetails = null;
 
   /**
    * Creates new instance of {@link BottomUpQuantification}.
@@ -58,7 +60,7 @@ public class BottomUpQuantificationDataBuilder {
   public BottomUpQuantification buildAsNew() {
     BottomUpQuantification buq = new BottomUpQuantification(
         facilityId, programId, processingPeriodId, targetYear,
-        buqStatus, buqLineItems, statusChanges
+        buqStatus, buqLineItems, statusChanges, fundingDetails
     );
     buq.setCreatedDate(createdDate);
     buq.setModifiedDate(modifiedDate);
@@ -109,6 +111,12 @@ public class BottomUpQuantificationDataBuilder {
 
   public BottomUpQuantificationDataBuilder withCreatedDate(ZonedDateTime createdDate) {
     this.createdDate = createdDate;
+    return this;
+  }
+
+  public BottomUpQuantificationDataBuilder withBottomUpQuantificationFundingDetails(
+      BottomUpQuantificationFundingDetails fundingDetails) {
+    this.fundingDetails = fundingDetails;
     return this;
   }
 

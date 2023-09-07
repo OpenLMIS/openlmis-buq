@@ -18,6 +18,8 @@ package org.openlmis.buq.dto.buq;
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -31,6 +33,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.dto.BaseDto;
 
@@ -77,6 +80,10 @@ public final class BottomUpQuantificationDto extends BaseDto
   @Setter
   private List<BottomUpQuantificationStatusChangeDto> statusChanges;
 
+  @Getter
+  @Setter
+  private BottomUpQuantificationFundingDetailsDto fundingDetails;
+
   /**
    * Creates new instance based on domain object.
    */
@@ -95,6 +102,19 @@ public final class BottomUpQuantificationDto extends BaseDto
   public List<BottomUpQuantificationStatusChangeDto> getStatusChanges() {
     return Lists.newArrayList(Optional.ofNullable(statusChanges)
         .orElse(Collections.emptyList()));
+  }
+
+  @Override
+  @JsonIgnore
+  public void setFundingDetails(BottomUpQuantificationFundingDetails fundingDetails) {
+    if (fundingDetails != null) {
+      this.fundingDetails = BottomUpQuantificationFundingDetailsDto.newInstance(fundingDetails);
+    }
+  }
+
+  @JsonSetter("fundingDetails")
+  public void setFundingDetails(BottomUpQuantificationFundingDetailsDto fundingDetails) {
+    this.fundingDetails = fundingDetails;
   }
 
 }

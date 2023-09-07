@@ -24,6 +24,7 @@ import nl.jqno.equalsverifier.Warning;
 import org.junit.Test;
 import org.openlmis.buq.ToStringTestUtils;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
+import org.openlmis.buq.builder.BottomUpQuantificationFundingDetailsDataBuilder;
 import org.openlmis.buq.builder.BottomUpQuantificationLineItemDataBuilder;
 import org.openlmis.buq.builder.BottomUpQuantificationStatusChangeDataBuilder;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
@@ -43,12 +44,17 @@ public class BottomUpQuantificationTest {
         new BottomUpQuantificationStatusChangeDataBuilder().build();
     BottomUpQuantificationStatusChange sc2 = new BottomUpQuantificationStatusChange();
 
+    BottomUpQuantificationFundingDetails fd1 =
+        new BottomUpQuantificationFundingDetailsDataBuilder().build();
+    BottomUpQuantificationFundingDetails fd2 = new BottomUpQuantificationFundingDetails();
+
     EqualsVerifier
         .forClass(BottomUpQuantification.class)
         .withRedefinedSuperclass()
         .withPrefabValues(BottomUpQuantificationStatus.class, buqStatus1, buqStatus2)
         .withPrefabValues(BottomUpQuantificationLineItem.class, buqItem1, buqItem2)
         .withPrefabValues(BottomUpQuantificationStatusChange.class, sc1, sc2)
+        .withPrefabValues(BottomUpQuantificationFundingDetails.class, fd1, fd2)
         .suppress(Warning.NONFINAL_FIELDS)
         .verify();
   }
