@@ -15,6 +15,10 @@
 
 package org.openlmis.buq.dto.buq;
 
+import com.google.common.collect.Lists;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -33,10 +37,24 @@ public final class BottomUpQuantificationFundingDetailsDto extends BaseDto
     implements BottomUpQuantificationFundingDetails.Importer,
     BottomUpQuantificationFundingDetails.Exporter {
 
+  @Getter
+  @Setter
   private UUID bottomUpQuantificationId;
-  private Long totalProjectedFund;
-  private Long totalForecastedCost;
-  private Long gap;
+
+  @Getter
+  @Setter
+  private Double totalProjectedFund;
+
+  @Getter
+  @Setter
+  private Double totalForecastedCost;
+
+  @Getter
+  @Setter
+  private Double gap;
+
+  @Setter
+  private List<BottomUpQuantificationSourceOfFundDto> sourcesOfFunds;
 
   /**
    * Creates new instance based on domain object.
@@ -47,6 +65,11 @@ public final class BottomUpQuantificationFundingDetailsDto extends BaseDto
     fundingDetails.export(dto);
 
     return dto;
+  }
+
+  public List<BottomUpQuantificationSourceOfFundDto> getSourcesOfFunds() {
+    return Lists.newArrayList(Optional.ofNullable(sourcesOfFunds)
+        .orElse(Collections.emptyList()));
   }
 
 }

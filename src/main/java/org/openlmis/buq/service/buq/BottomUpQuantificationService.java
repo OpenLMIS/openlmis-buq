@@ -21,6 +21,7 @@ import static org.openlmis.buq.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_ORDERABLE_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROCESSING_PERIOD_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROGRAM_NOT_FOUND;
+import static org.openlmis.buq.i18n.MessageKeys.ERROR_SOURCE_OF_FUND_NOT_FOUND;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -40,8 +41,10 @@ import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
+import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
@@ -54,6 +57,7 @@ import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
+import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
@@ -106,6 +110,9 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private RemarkService remarkService;
+
+  @Autowired
+  private SourceOfFundRepository sourceOfFundRepository;
 
   private static final String MESSAGE_SEPARATOR = ":";
 
@@ -346,6 +353,26 @@ public class BottomUpQuantificationService {
       BottomUpQuantificationFundingDetails fundingDetails = bottomUpQuantificationToUpdate
           .getFundingDetails();
       fundingDetails.updateFrom(bottomUpQuantificationDto.getFundingDetails());
+
+      List<BottomUpQuantificationSourceOfFund> updatedSourcesOfFunds = bottomUpQuantificationDto
+          .getFundingDetails().getSourcesOfFunds()
+          .stream()
+          .map(sourceOfFundsDto -> {
+            BottomUpQuantificationSourceOfFund sourceOfFunds = BottomUpQuantificationSourceOfFund
+                .newInstance(sourceOfFundsDto);
+            sourceOfFunds.setFundingDetails(fundingDetails);
+            sourceOfFunds.setId(sourceOfFundsDto.getId());
+            if (sourceOfFundsDto.getSourceOfFunds() != null) {
+              SourceOfFund source = findSourceOfFunds(sourceOfFundsDto.getSourceOfFunds().getId());
+              sourceOfFunds.setSourceOfFund(source);
+            }
+
+            return sourceOfFunds;
+          })
+          .collect(Collectors.toList());
+
+      fundingDetails.getSourcesOfFunds().clear();
+      fundingDetails.getSourcesOfFunds().addAll(updatedSourcesOfFunds);
       bottomUpQuantificationToUpdate.setFundingDetails(fundingDetails);
     }
 
@@ -378,6 +405,14 @@ public class BottomUpQuantificationService {
     return Optional
         .ofNullable(finder.apply(id))
         .orElseThrow(() -> new ContentNotFoundMessageException(errorMessage, id)
+        );
+  }
+
+  private SourceOfFund findSourceOfFunds(UUID sourceOfFundsId) {
+    return sourceOfFundRepository
+        .findById(sourceOfFundsId)
+        .orElseThrow(() -> new ContentNotFoundMessageException(
+            ERROR_SOURCE_OF_FUND_NOT_FOUND, sourceOfFundsId)
         );
   }
 

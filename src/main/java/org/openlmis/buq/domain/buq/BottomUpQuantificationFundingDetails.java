@@ -15,10 +15,12 @@
 
 package org.openlmis.buq.domain.buq;
 
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -28,6 +30,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.openlmis.buq.domain.BaseEntity;
+import org.openlmis.buq.dto.buq.BottomUpQuantificationSourceOfFundDto;
 
 @Getter
 @Entity
@@ -44,13 +47,21 @@ public class BottomUpQuantificationFundingDetails extends BaseEntity {
   private BottomUpQuantification bottomUpQuantification;
 
   @Setter
-  private Long totalProjectedFund;
+  private Double totalProjectedFund;
 
   @Setter
-  private Long totalForecastedCost;
+  private Double totalForecastedCost;
 
   @Setter
-  private Long gap;
+  private Double gap;
+
+  @OneToMany(
+      mappedBy = "fundingDetails",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true)
+  @Getter
+  @Setter
+  private List<BottomUpQuantificationSourceOfFund> sourcesOfFunds;
 
   public BottomUpQuantificationFundingDetails(BottomUpQuantification bottomUpQuantification) {
     this.bottomUpQuantification = bottomUpQuantification;
@@ -86,11 +97,11 @@ public class BottomUpQuantificationFundingDetails extends BaseEntity {
 
     void setBottomUpQuantificationId(UUID bottomUpQuantificationId);
 
-    void setTotalProjectedFund(Long totalProjectedFund);
+    void setTotalProjectedFund(Double totalProjectedFund);
 
-    void setTotalForecastedCost(Long totalForecastedCost);
+    void setTotalForecastedCost(Double totalForecastedCost);
 
-    void setGap(Long gap);
+    void setGap(Double gap);
 
   }
 
@@ -100,11 +111,13 @@ public class BottomUpQuantificationFundingDetails extends BaseEntity {
 
     UUID getBottomUpQuantificationId();
 
-    Long getTotalProjectedFund();
+    Double getTotalProjectedFund();
 
-    Long getTotalForecastedCost();
+    Double getTotalForecastedCost();
 
-    Long getGap();
+    Double getGap();
+
+    List<BottomUpQuantificationSourceOfFundDto> getSourcesOfFunds();
 
   }
 

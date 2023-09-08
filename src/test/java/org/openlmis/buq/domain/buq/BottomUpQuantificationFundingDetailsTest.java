@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.openlmis.buq.ToStringTestUtils;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
 import org.openlmis.buq.builder.BottomUpQuantificationFundingDetailsDataBuilder;
+import org.openlmis.buq.builder.BottomUpQuantificationSourceOfFundDataBuilder;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationFundingDetailsDto;
-
 
 public class BottomUpQuantificationFundingDetailsTest {
 
@@ -33,10 +33,15 @@ public class BottomUpQuantificationFundingDetailsTest {
     BottomUpQuantification buq1 = new BottomUpQuantificationDataBuilder().build();
     BottomUpQuantification buq2 = new BottomUpQuantification();
 
+    BottomUpQuantificationSourceOfFund bs1 =
+        new BottomUpQuantificationSourceOfFundDataBuilder().build();
+    BottomUpQuantificationSourceOfFund bs2 = new BottomUpQuantificationSourceOfFund();
+
     EqualsVerifier
         .forClass(BottomUpQuantificationFundingDetails.class)
         .withRedefinedSuperclass()
         .withPrefabValues(BottomUpQuantification.class, buq1, buq2)
+        .withPrefabValues(BottomUpQuantificationSourceOfFund.class, bs1, bs2)
         .suppress(Warning.NONFINAL_FIELDS)
         .verify();
   }
@@ -52,17 +57,17 @@ public class BottomUpQuantificationFundingDetailsTest {
   public void shouldUpdateFrom() {
     BottomUpQuantificationFundingDetailsDto importer =
         new BottomUpQuantificationFundingDetailsDto();
-    importer.setTotalProjectedFund(100L);
-    importer.setTotalForecastedCost(150L);
-    importer.setGap(50L);
+    importer.setTotalProjectedFund(100.00d);
+    importer.setTotalForecastedCost(150.00d);
+    importer.setGap(50.00d);
     BottomUpQuantificationFundingDetails fundingDetails =
         new BottomUpQuantificationFundingDetailsDataBuilder().build();
 
     fundingDetails.updateFrom(importer);
 
-    assertThat(fundingDetails.getTotalProjectedFund()).isEqualTo(100L);
-    assertThat(fundingDetails.getTotalForecastedCost()).isEqualTo(150L);
-    assertThat(fundingDetails.getGap()).isEqualTo(50L);
+    assertThat(fundingDetails.getTotalProjectedFund()).isEqualTo(100.00d);
+    assertThat(fundingDetails.getTotalForecastedCost()).isEqualTo(150.00d);
+    assertThat(fundingDetails.getGap()).isEqualTo(50.00d);
   }
 
   @Test

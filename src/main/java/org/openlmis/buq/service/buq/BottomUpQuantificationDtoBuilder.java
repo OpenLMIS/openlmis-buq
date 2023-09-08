@@ -19,9 +19,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
+import org.openlmis.buq.dto.buq.BottomUpQuantificationSourceOfFundDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationStatusChangeDto;
 import org.springframework.stereotype.Component;
 
@@ -53,6 +55,16 @@ public class BottomUpQuantificationDtoBuilder {
         .map(BottomUpQuantificationStatusChangeDto::newInstance)
         .collect(Collectors.toList());
     dto.setStatusChanges(statusChangeDtos);
+
+    if (bottomUpQuantification.getFundingDetails().getSourcesOfFunds() != null) {
+      List<BottomUpQuantificationSourceOfFund> sourceOfFunds =
+          bottomUpQuantification.getFundingDetails().getSourcesOfFunds();
+      List<BottomUpQuantificationSourceOfFundDto> sourceOfFundsDtos = sourceOfFunds
+          .stream()
+          .map(BottomUpQuantificationSourceOfFundDto::newInstance)
+          .collect(Collectors.toList());
+      dto.getFundingDetails().setSourcesOfFunds(sourceOfFundsDtos);
+    }
 
     return dto;
   }

@@ -15,18 +15,22 @@
 
 package org.openlmis.buq.builder;
 
+import java.util.List;
 import java.util.UUID;
+import org.assertj.core.util.Lists;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
 
 public class BottomUpQuantificationFundingDetailsDataBuilder {
 
   private UUID id = UUID.randomUUID();
   private BottomUpQuantification bottomUpQuantification =
       new BottomUpQuantificationDataBuilder().buildAsNew();
-  private Long totalProjectedFund = 1000L;
-  private Long totalForecastedCost = 800L;
-  private Long gap = 200L;
+  private Double totalProjectedFund = 1000d;
+  private Double totalForecastedCost = 800d;
+  private Double gap = 200d;
+  private List<BottomUpQuantificationSourceOfFund> sourceOfFunds = Lists.newArrayList();
 
   /**
    * Creates new instance of {@link BottomUpQuantificationFundingDetails}.
@@ -44,7 +48,7 @@ public class BottomUpQuantificationFundingDetailsDataBuilder {
    */
   public BottomUpQuantificationFundingDetails buildAsNew() {
     return new BottomUpQuantificationFundingDetails(
-        bottomUpQuantification, totalProjectedFund, totalForecastedCost, gap
+        bottomUpQuantification, totalProjectedFund, totalForecastedCost, gap, sourceOfFunds
     );
   }
 
@@ -54,19 +58,25 @@ public class BottomUpQuantificationFundingDetailsDataBuilder {
   }
 
   public BottomUpQuantificationFundingDetailsDataBuilder withTotalProjectedFund(
-      Long totalProjectedFund) {
+      Double totalProjectedFund) {
     this.totalProjectedFund = totalProjectedFund;
     return this;
   }
 
   public BottomUpQuantificationFundingDetailsDataBuilder withTotalForecastedCost(
-      Long totalForecastedCost) {
+      Double totalForecastedCost) {
     this.totalForecastedCost = totalForecastedCost;
     return this;
   }
 
-  public BottomUpQuantificationFundingDetailsDataBuilder withGap(Long gap) {
+  public BottomUpQuantificationFundingDetailsDataBuilder withGap(Double gap) {
     this.gap = gap;
+    return this;
+  }
+
+  public BottomUpQuantificationFundingDetailsDataBuilder withSourcesOfFunds(
+      List<BottomUpQuantificationSourceOfFund> sourceOfFunds) {
+    this.sourceOfFunds = sourceOfFunds;
     return this;
   }
 
