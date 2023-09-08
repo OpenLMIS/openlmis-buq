@@ -88,8 +88,12 @@ public class BottomUpQuantificationValidator extends BaseValidator {
    * @throws ValidationMessageException If the target cannot be authorized.
    */
   public void validateCanBeAuthorized(BottomUpQuantificationDto target, UUID targetId) {
-    if (!bottomUpQuantificationService.findBottomUpQuantification(targetId).getStatus()
-        .equals(BottomUpQuantificationStatus.SUBMITTED)) {
+    BottomUpQuantification bottomUpQuantification = bottomUpQuantificationService
+        .findBottomUpQuantification(targetId);
+    if (!bottomUpQuantification.getStatus().equals(BottomUpQuantificationStatus.SUBMITTED)
+        && !(bottomUpQuantification.getStatus().equals(BottomUpQuantificationStatus.DRAFT)
+        && bottomUpQuantificationService.canSkipAuthorization(bottomUpQuantification))
+    ) {
       throw new ValidationMessageException(new Message(ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED));
     } else {
       validateCanChangeStatus(target);
@@ -124,7 +128,8 @@ public class BottomUpQuantificationValidator extends BaseValidator {
         VERIFIED_ANNUAL_ADJUSTED_CONSUMPTION_FIELD);
     rejectIfNullOrNegative(target.getForecastedDemand(), FORECASTED_DEMAND_FIELD);
 
-    if (!Objects.equals(target.getAnnualAdjustedConsumption(), target.getForecastedDemand())) {
+    if (!Objects.equals(target.getVerifiedAnnualAdjustedConsumption(),
+        target.getForecastedDemand())) {
       rejectIfNull(target.getRemark(), ERROR_LINE_ITEM_REMARK_REQUIRED, REMARK_FIELD);
     }
 
