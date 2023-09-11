@@ -60,6 +60,7 @@ import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.dto.referencedata.SupportedProgramDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
 import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
+import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
@@ -207,6 +208,8 @@ public class BottomUpQuantificationServiceTest {
         .newInstance(lineItem1);
     BottomUpQuantificationLineItemDto lineItemDto2 = BottomUpQuantificationLineItemDto
         .newInstance(lineItem2);
+    when(orderableReferenceDataService.findOne(any(UUID.class)))
+        .thenReturn(new BasicOrderableDto());
     when(remarkService.findOne(lineItem1.getRemark().getId()))
         .thenReturn(lineItem1.getRemark());
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
@@ -242,6 +245,31 @@ public class BottomUpQuantificationServiceTest {
         .thenThrow(NotFoundException.class);
     final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
         .newInstance(lineItem);
+    when(orderableReferenceDataService.findOne(lineItemDto.getOrderableId()))
+        .thenReturn(new BasicOrderableDto());
+    bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
+        Collections.singletonList(lineItemDto)
+    );
+
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
+    when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
+        .thenReturn(Optional.of(bottomUpQuantification));
+
+    bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
+  }
+
+  @Test(expected = ContentNotFoundMessageException.class)
+  public void shouldNotSaveBottomUpQuantificationWithInvalidOrderableId() {
+    UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
+    bottomUpQuantificationDto.setId(bottomUpQuantificationId);
+    BottomUpQuantificationLineItem lineItem =
+        new BottomUpQuantificationLineItemDataBuilder().build();
+    final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
+        .newInstance(lineItem);
+    when(orderableReferenceDataService.findOne(lineItemDto.getOrderableId()))
+        .thenThrow(ContentNotFoundMessageException.class);
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Collections.singletonList(lineItemDto)
     );

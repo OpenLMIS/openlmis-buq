@@ -338,6 +338,8 @@ public class BottomUpQuantificationService {
         .getBottomUpQuantificationLineItems()
         .stream()
         .map(lineItemDto -> {
+          findOrderable(lineItemDto.getOrderableId());
+
           BottomUpQuantificationLineItem lineItem = BottomUpQuantificationLineItem
               .newInstance(lineItemDto);
           lineItem.setBottomUpQuantification(bottomUpQuantificationToUpdate);
