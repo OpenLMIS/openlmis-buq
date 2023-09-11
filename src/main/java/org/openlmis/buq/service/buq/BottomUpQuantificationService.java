@@ -362,8 +362,8 @@ public class BottomUpQuantificationService {
                 .newInstance(sourceOfFundsDto);
             sourceOfFunds.setFundingDetails(fundingDetails);
             sourceOfFunds.setId(sourceOfFundsDto.getId());
-            if (sourceOfFundsDto.getSourceOfFunds() != null) {
-              SourceOfFund source = findSourceOfFunds(sourceOfFundsDto.getSourceOfFunds().getId());
+            if (sourceOfFundsDto.getSourceOfFund() != null) {
+              SourceOfFund source = findSourceOfFunds(sourceOfFundsDto.getSourceOfFund().getId());
               sourceOfFunds.setSourceOfFund(source);
             }
 

@@ -15,7 +15,11 @@
 
 package org.openlmis.buq.builder;
 
+import static org.openlmis.buq.CurrencyConfig.currencyCode;
+
 import java.util.UUID;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
@@ -25,8 +29,8 @@ public class BottomUpQuantificationSourceOfFundDataBuilder {
   private UUID id = UUID.randomUUID();
   private BottomUpQuantificationFundingDetails fundingDetails =
       new BottomUpQuantificationFundingDetailsDataBuilder().build();
-  private Double amountUsedInLastFinancialYear;
-  private Double projectedFund;
+  private Money amountUsedInLastFinancialYear = asMoney(20);
+  private Money projectedFund = asMoney(30);
   private SourceOfFund sourceOfFunds = new SourceOfFundDataBuilder().buildAsNew();
 
   /**
@@ -65,12 +69,12 @@ public class BottomUpQuantificationSourceOfFundDataBuilder {
   }
 
   public BottomUpQuantificationSourceOfFundDataBuilder withAmountUsedInLastFinancialYear(
-      Double amountUsedInLastFinancialYear) {
+      Money amountUsedInLastFinancialYear) {
     this.amountUsedInLastFinancialYear = amountUsedInLastFinancialYear;
     return this;
   }
 
-  public BottomUpQuantificationSourceOfFundDataBuilder withProjectedFund(Double projectedFund) {
+  public BottomUpQuantificationSourceOfFundDataBuilder withProjectedFund(Money projectedFund) {
     this.projectedFund = projectedFund;
     return this;
   }
@@ -79,6 +83,10 @@ public class BottomUpQuantificationSourceOfFundDataBuilder {
       SourceOfFund sourceOfFunds) {
     this.sourceOfFunds = sourceOfFunds;
     return this;
+  }
+
+  private Money asMoney(Number value) {
+    return Money.of(CurrencyUnit.of(currencyCode), value.doubleValue());
   }
 
 }

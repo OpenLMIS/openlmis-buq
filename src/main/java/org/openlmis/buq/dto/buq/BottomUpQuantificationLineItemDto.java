@@ -17,6 +17,8 @@ package org.openlmis.buq.dto.buq;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -24,10 +26,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.dto.BaseDto;
 import org.openlmis.buq.dto.remark.RemarkDto;
+import org.openlmis.buq.util.MoneyDeserializer;
+import org.openlmis.buq.util.MoneySerializer;
 
 @Getter
 @Setter
@@ -42,6 +47,9 @@ public final class BottomUpQuantificationLineItemDto extends BaseDto
   private Integer annualAdjustedConsumption;
   private Integer verifiedAnnualAdjustedConsumption;
   private Integer forecastedDemand;
+  @JsonSerialize(using = MoneySerializer.class)
+  @JsonDeserialize(using = MoneyDeserializer.class)
+  private Money totalCost;
   private RemarkDto remark;
 
   /**

@@ -17,15 +17,20 @@ package org.openlmis.buq.dto.buq;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.openlmis.buq.dto.BaseDto;
 import org.openlmis.buq.dto.sourceoffund.SourceOfFundDto;
+import org.openlmis.buq.util.MoneyDeserializer;
+import org.openlmis.buq.util.MoneySerializer;
 
 @Getter
 @Setter
@@ -36,9 +41,13 @@ public final class BottomUpQuantificationSourceOfFundDto extends BaseDto
     implements BottomUpQuantificationSourceOfFund.Importer,
     BottomUpQuantificationSourceOfFund.Exporter {
 
-  private Double amountUsedInLastFinancialYear;
-  private Double projectedFund;
-  private SourceOfFundDto sourceOfFunds;
+  @JsonSerialize(using = MoneySerializer.class)
+  @JsonDeserialize(using = MoneyDeserializer.class)
+  private Money amountUsedInLastFinancialYear;
+  @JsonSerialize(using = MoneySerializer.class)
+  @JsonDeserialize(using = MoneyDeserializer.class)
+  private Money projectedFund;
+  private SourceOfFundDto sourceOfFund;
 
   /**
    * Creates new instance based on domain object.
@@ -51,9 +60,9 @@ public final class BottomUpQuantificationSourceOfFundDto extends BaseDto
     return dto;
   }
 
-  @JsonSetter("sourceOfFunds")
+  @JsonSetter("sourceOfFund")
   public void setSourceOfFunds(SourceOfFundDto sourceOfFunds) {
-    this.sourceOfFunds = sourceOfFunds;
+    this.sourceOfFund = sourceOfFunds;
   }
 
   /**
@@ -62,9 +71,9 @@ public final class BottomUpQuantificationSourceOfFundDto extends BaseDto
    * @param sourceOfFunds The SourceOfFund object.
    */
   @JsonIgnore
-  public void setSourceOfFunds(SourceOfFund sourceOfFunds) {
+  public void setSourceOfFund(SourceOfFund sourceOfFunds) {
     if (sourceOfFunds != null) {
-      this.sourceOfFunds = SourceOfFundDto.newInstance(sourceOfFunds);
+      this.sourceOfFund = SourceOfFundDto.newInstance(sourceOfFunds);
     }
   }
 

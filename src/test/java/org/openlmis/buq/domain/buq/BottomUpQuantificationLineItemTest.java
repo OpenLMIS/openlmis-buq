@@ -61,6 +61,7 @@ public class BottomUpQuantificationLineItemTest {
     assertThat(dto.getVerifiedAnnualAdjustedConsumption())
         .isEqualTo(buqLineItem.getVerifiedAnnualAdjustedConsumption());
     assertThat(dto.getForecastedDemand()).isEqualTo(buqLineItem.getForecastedDemand());
+    assertThat(dto.getTotalCost()).isEqualTo(buqLineItem.getTotalCost());
   }
 
 }

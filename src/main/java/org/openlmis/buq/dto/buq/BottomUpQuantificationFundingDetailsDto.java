@@ -15,6 +15,8 @@
 
 package org.openlmis.buq.dto.buq;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Lists;
 import java.util.Collections;
 import java.util.List;
@@ -25,8 +27,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
 import org.openlmis.buq.dto.BaseDto;
+import org.openlmis.buq.util.MoneyDeserializer;
+import org.openlmis.buq.util.MoneySerializer;
 
 @Getter
 @Setter
@@ -43,15 +48,21 @@ public final class BottomUpQuantificationFundingDetailsDto extends BaseDto
 
   @Getter
   @Setter
-  private Double totalProjectedFund;
+  @JsonSerialize(using = MoneySerializer.class)
+  @JsonDeserialize(using = MoneyDeserializer.class)
+  private Money totalProjectedFund;
 
   @Getter
   @Setter
-  private Double totalForecastedCost;
+  @JsonSerialize(using = MoneySerializer.class)
+  @JsonDeserialize(using = MoneyDeserializer.class)
+  private Money totalForecastedCost;
 
   @Getter
   @Setter
-  private Double gap;
+  @JsonSerialize(using = MoneySerializer.class)
+  @JsonDeserialize(using = MoneyDeserializer.class)
+  private Money gap;
 
   @Setter
   private List<BottomUpQuantificationSourceOfFundDto> sourcesOfFunds;

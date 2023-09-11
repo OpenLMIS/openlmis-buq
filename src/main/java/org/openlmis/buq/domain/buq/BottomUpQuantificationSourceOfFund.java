@@ -26,6 +26,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Type;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 
@@ -45,11 +47,13 @@ public class BottomUpQuantificationSourceOfFund extends BaseEntity {
 
   @Getter
   @Setter
-  private Double amountUsedInLastFinancialYear;
+  @Type(type = "org.openlmis.buq.domain.type.CustomSingleColumnMoneyUserType")
+  private Money amountUsedInLastFinancialYear;
 
   @Getter
   @Setter
-  private Double projectedFund;
+  @Type(type = "org.openlmis.buq.domain.type.CustomSingleColumnMoneyUserType")
+  private Money projectedFund;
 
   @ManyToOne
   @JoinColumn(name = "sourceOfFundId")
@@ -75,26 +79,26 @@ public class BottomUpQuantificationSourceOfFund extends BaseEntity {
     exporter.setId(getId());
     exporter.setAmountUsedInLastFinancialYear(amountUsedInLastFinancialYear);
     exporter.setProjectedFund(projectedFund);
-    exporter.setSourceOfFunds(sourceOfFund);
+    exporter.setSourceOfFund(sourceOfFund);
   }
 
   public interface Exporter extends BaseExporter {
 
-    void setAmountUsedInLastFinancialYear(Double amountUsedInLastFinancialYear);
+    void setAmountUsedInLastFinancialYear(Money amountUsedInLastFinancialYear);
 
-    void setProjectedFund(Double projectedFund);
+    void setProjectedFund(Money projectedFund);
 
-    void setSourceOfFunds(SourceOfFund sourceOfFund);
+    void setSourceOfFund(SourceOfFund sourceOfFund);
 
   }
 
   public interface Importer extends BaseImporter {
 
-    Double getAmountUsedInLastFinancialYear();
+    Money getAmountUsedInLastFinancialYear();
 
-    Double getProjectedFund();
+    Money getProjectedFund();
 
-    SourceOfFund.Importer getSourceOfFunds();
+    SourceOfFund.Importer getSourceOfFund();
 
   }
 

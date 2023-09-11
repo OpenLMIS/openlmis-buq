@@ -15,7 +15,11 @@
 
 package org.openlmis.buq.builder;
 
+import static org.openlmis.buq.CurrencyConfig.currencyCode;
+
 import java.util.UUID;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
@@ -30,6 +34,7 @@ public class BottomUpQuantificationLineItemDataBuilder {
   private Integer annualAdjustedConsumption = 100;
   private Integer verifiedAnnualAdjustedConsumption = 110;
   private Integer forecastedDemand = 111;
+  private Money totalCost = asMoney(200d);
   private Remark remark = new RemarkDataBuilder().buildAsNew();
 
   /**
@@ -49,7 +54,7 @@ public class BottomUpQuantificationLineItemDataBuilder {
   public BottomUpQuantificationLineItem buildAsNew() {
     BottomUpQuantificationLineItem buq = new BottomUpQuantificationLineItem(
         bottomUpQuantification, orderableId, annualAdjustedConsumption,
-        verifiedAnnualAdjustedConsumption, forecastedDemand, remark
+        verifiedAnnualAdjustedConsumption, forecastedDemand, totalCost, remark
     );
 
     return buq;
@@ -89,9 +94,22 @@ public class BottomUpQuantificationLineItemDataBuilder {
     return this;
   }
 
+  public BottomUpQuantificationLineItemDataBuilder withTotalCost(Money totalCost) {
+    this.totalCost = totalCost;
+    return this;
+  }
+
+  public BottomUpQuantificationLineItemDataBuilder withTotalCost(double totalCost) {
+    return withTotalCost(asMoney(totalCost));
+  }
+
   public BottomUpQuantificationLineItemDataBuilder withRemark(Remark remark) {
     this.remark = remark;
     return this;
+  }
+
+  private Money asMoney(Number value) {
+    return Money.of(CurrencyUnit.of(currencyCode), value.doubleValue());
   }
 
 }

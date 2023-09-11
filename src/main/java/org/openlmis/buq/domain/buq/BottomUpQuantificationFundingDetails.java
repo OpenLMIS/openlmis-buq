@@ -29,6 +29,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Type;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationSourceOfFundDto;
 
@@ -47,13 +49,16 @@ public class BottomUpQuantificationFundingDetails extends BaseEntity {
   private BottomUpQuantification bottomUpQuantification;
 
   @Setter
-  private Double totalProjectedFund;
+  @Type(type = "org.openlmis.buq.domain.type.CustomSingleColumnMoneyUserType")
+  private Money totalProjectedFund;
 
   @Setter
-  private Double totalForecastedCost;
+  @Type(type = "org.openlmis.buq.domain.type.CustomSingleColumnMoneyUserType")
+  private Money totalForecastedCost;
 
   @Setter
-  private Double gap;
+  @Type(type = "org.openlmis.buq.domain.type.CustomSingleColumnMoneyUserType")
+  private Money gap;
 
   @OneToMany(
       mappedBy = "fundingDetails",
@@ -97,11 +102,11 @@ public class BottomUpQuantificationFundingDetails extends BaseEntity {
 
     void setBottomUpQuantificationId(UUID bottomUpQuantificationId);
 
-    void setTotalProjectedFund(Double totalProjectedFund);
+    void setTotalProjectedFund(Money totalProjectedFund);
 
-    void setTotalForecastedCost(Double totalForecastedCost);
+    void setTotalForecastedCost(Money totalForecastedCost);
 
-    void setGap(Double gap);
+    void setGap(Money gap);
 
   }
 
@@ -111,11 +116,11 @@ public class BottomUpQuantificationFundingDetails extends BaseEntity {
 
     UUID getBottomUpQuantificationId();
 
-    Double getTotalProjectedFund();
+    Money getTotalProjectedFund();
 
-    Double getTotalForecastedCost();
+    Money getTotalForecastedCost();
 
-    Double getGap();
+    Money getGap();
 
     List<BottomUpQuantificationSourceOfFundDto> getSourcesOfFunds();
 

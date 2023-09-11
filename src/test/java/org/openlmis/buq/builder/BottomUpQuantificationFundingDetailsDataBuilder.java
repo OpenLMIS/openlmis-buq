@@ -15,9 +15,13 @@
 
 package org.openlmis.buq.builder;
 
+import static org.openlmis.buq.CurrencyConfig.currencyCode;
+
 import java.util.List;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
@@ -27,9 +31,9 @@ public class BottomUpQuantificationFundingDetailsDataBuilder {
   private UUID id = UUID.randomUUID();
   private BottomUpQuantification bottomUpQuantification =
       new BottomUpQuantificationDataBuilder().buildAsNew();
-  private Double totalProjectedFund = 1000d;
-  private Double totalForecastedCost = 800d;
-  private Double gap = 200d;
+  private Money totalProjectedFund = asMoney(1000);
+  private Money totalForecastedCost = asMoney(808);
+  private Money gap = asMoney(200);
   private List<BottomUpQuantificationSourceOfFund> sourceOfFunds = Lists.newArrayList();
 
   /**
@@ -58,18 +62,18 @@ public class BottomUpQuantificationFundingDetailsDataBuilder {
   }
 
   public BottomUpQuantificationFundingDetailsDataBuilder withTotalProjectedFund(
-      Double totalProjectedFund) {
+      Money totalProjectedFund) {
     this.totalProjectedFund = totalProjectedFund;
     return this;
   }
 
   public BottomUpQuantificationFundingDetailsDataBuilder withTotalForecastedCost(
-      Double totalForecastedCost) {
+      Money totalForecastedCost) {
     this.totalForecastedCost = totalForecastedCost;
     return this;
   }
 
-  public BottomUpQuantificationFundingDetailsDataBuilder withGap(Double gap) {
+  public BottomUpQuantificationFundingDetailsDataBuilder withGap(Money gap) {
     this.gap = gap;
     return this;
   }
@@ -78,6 +82,10 @@ public class BottomUpQuantificationFundingDetailsDataBuilder {
       List<BottomUpQuantificationSourceOfFund> sourceOfFunds) {
     this.sourceOfFunds = sourceOfFunds;
     return this;
+  }
+
+  private Money asMoney(Number value) {
+    return Money.of(CurrencyUnit.of(currencyCode), value.doubleValue());
   }
 
 }

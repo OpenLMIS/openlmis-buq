@@ -16,9 +16,12 @@
 package org.openlmis.buq.domain.buq;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.openlmis.buq.CurrencyConfig.currencyCode;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.junit.Test;
 import org.openlmis.buq.ToStringTestUtils;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
@@ -55,19 +58,21 @@ public class BottomUpQuantificationFundingDetailsTest {
 
   @Test
   public void shouldUpdateFrom() {
+    CurrencyUnit currency = CurrencyUnit.of(currencyCode);
+
     BottomUpQuantificationFundingDetailsDto importer =
         new BottomUpQuantificationFundingDetailsDto();
-    importer.setTotalProjectedFund(100.00d);
-    importer.setTotalForecastedCost(150.00d);
-    importer.setGap(50.00d);
+    importer.setTotalProjectedFund(Money.of(currency, 100));
+    importer.setTotalForecastedCost(Money.of(currency, 150));
+    importer.setGap(Money.of(currency, 50));
     BottomUpQuantificationFundingDetails fundingDetails =
         new BottomUpQuantificationFundingDetailsDataBuilder().build();
 
     fundingDetails.updateFrom(importer);
 
-    assertThat(fundingDetails.getTotalProjectedFund()).isEqualTo(100.00d);
-    assertThat(fundingDetails.getTotalForecastedCost()).isEqualTo(150.00d);
-    assertThat(fundingDetails.getGap()).isEqualTo(50.00d);
+    assertThat(fundingDetails.getTotalProjectedFund()).isEqualTo(Money.of(currency, 100));
+    assertThat(fundingDetails.getTotalForecastedCost()).isEqualTo(Money.of(currency, 150));
+    assertThat(fundingDetails.getGap()).isEqualTo(Money.of(currency, 50));
   }
 
   @Test
