@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThat;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_INVALID_PARAMETER_BOTTOM_UP_QUANTIFICATION_STATUS;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_INVALID_SEARCH_PARAMS;
 
+import java.util.UUID;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import org.springframework.util.LinkedMultiValueMap;
 public class QueryBottomUpQuantificationSearchParamsTest {
 
   private static final String STATUS = "status";
+  private static final String FACILITY = "facility";
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -61,6 +63,16 @@ public class QueryBottomUpQuantificationSearchParamsTest {
 
     assertThat(params.getStatuses(),
         hasItems(BottomUpQuantificationStatus.DRAFT, BottomUpQuantificationStatus.SUBMITTED));
+  }
+
+  @Test
+  public void shouldGetFacilityValueFromParameters() {
+    final UUID facilityId = UUID.randomUUID();
+    queryMap.add(FACILITY, facilityId.toString());
+    QueryBottomUpQuantificationSearchParams params =
+        new QueryBottomUpQuantificationSearchParams(queryMap);
+
+    assertEquals(facilityId, params.getFacility());
   }
 
   @Test

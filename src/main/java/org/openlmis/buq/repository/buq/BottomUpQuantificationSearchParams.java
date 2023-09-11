@@ -16,11 +16,14 @@
 package org.openlmis.buq.repository.buq;
 
 import java.util.Set;
+import java.util.UUID;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 
 public interface BottomUpQuantificationSearchParams {
 
   Set<BottomUpQuantificationStatus> getStatuses();
+
+  UUID getFacility();
 
   boolean isEmpty();
 

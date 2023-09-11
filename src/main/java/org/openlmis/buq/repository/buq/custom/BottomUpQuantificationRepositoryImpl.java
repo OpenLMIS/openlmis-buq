@@ -38,6 +38,7 @@ public class BottomUpQuantificationRepositoryImpl
 
   private static final String CREATED_DATE = "createdDate";
   private static final String STATUS = "status";
+  private static final String FACILITY_ID = "facilityId";
 
   /**
    * This method is supposed to retrieve all bottom-up quantifications with matched parameters.
@@ -85,6 +86,7 @@ public class BottomUpQuantificationRepositoryImpl
 
     Predicate predicate = builder.conjunction();
     predicate = addInFilter(predicate, builder, root, STATUS, params.getStatuses());
+    predicate = addEqualFilter(predicate, builder, root, FACILITY_ID, params.getFacility());
 
     query.where(predicate);
 

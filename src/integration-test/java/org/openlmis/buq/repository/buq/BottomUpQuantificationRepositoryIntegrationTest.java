@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.Getter;
+import lombok.Setter;
 import org.junit.Before;
 import org.junit.Test;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
@@ -47,6 +48,7 @@ public class BottomUpQuantificationRepositoryIntegrationTest extends
   private BottomUpQuantification submittedBuq;
   private BottomUpQuantification authorizedBuq;
   private PageRequest pageable;
+  private final UUID facility = UUID.randomUUID();
 
   @Override
   public CrudRepository<BottomUpQuantification, UUID> getRepository() {
@@ -59,8 +61,10 @@ public class BottomUpQuantificationRepositoryIntegrationTest extends
 
     draftedBuq = generateInstance();
     submittedBuq = new BottomUpQuantificationDataBuilder()
+        .withFacilityId(facility)
         .withStatus(BottomUpQuantificationStatus.SUBMITTED).build();
     authorizedBuq = new BottomUpQuantificationDataBuilder()
+        .withFacilityId(facility)
         .withStatus(BottomUpQuantificationStatus.AUTHORIZED).build();
 
     bottomUpQuantificationRepository.save(draftedBuq);
@@ -72,28 +76,33 @@ public class BottomUpQuantificationRepositoryIntegrationTest extends
 
   @Test
   public void shouldFindAllBottomUpQuantificationsIfNotStatusSpecified() {
-    searchAndCheckResults(draftedBuq, 3);
+    searchAndCheckResults(draftedBuq, 3, null);
   }
 
   @Test
   public void shouldFindOnlyBottomUpQuantificationsWithStatusSubmitted() {
-    searchAndCheckResults(submittedBuq, 1, BottomUpQuantificationStatus.SUBMITTED);
+    searchAndCheckResults(submittedBuq, 1, null, BottomUpQuantificationStatus.SUBMITTED);
   }
 
   @Test
   public void shouldFindOnlyBottomUpQuantificationsWithStatusAuthorized() {
-    searchAndCheckResults(authorizedBuq, 1, BottomUpQuantificationStatus.AUTHORIZED);
+    searchAndCheckResults(authorizedBuq, 1, null, BottomUpQuantificationStatus.AUTHORIZED);
   }
 
   @Test
   public void shouldFindOnlyBottomUpQuantificationsWithStatusDraft() {
-    searchAndCheckResults(draftedBuq, 1, BottomUpQuantificationStatus.DRAFT);
+    searchAndCheckResults(draftedBuq, 1, null, BottomUpQuantificationStatus.DRAFT);
   }
 
   @Test
   public void shouldFindOnlyBottomUpQuantificationsWithStatusSubmittedAndAuthorized() {
-    searchAndCheckResults(submittedBuq, 2, BottomUpQuantificationStatus.SUBMITTED,
+    searchAndCheckResults(submittedBuq, 2, null, BottomUpQuantificationStatus.SUBMITTED,
         BottomUpQuantificationStatus.AUTHORIZED);
+  }
+
+  @Test
+  public void shouldFindOnlyBottomUpQuantificationsWithGivenFacilityId() {
+    searchAndCheckResults(submittedBuq, 2, facility);
   }
 
   @Override
@@ -102,9 +111,9 @@ public class BottomUpQuantificationRepositoryIntegrationTest extends
         .buildAsNew();
   }
 
-  private void searchAndCheckResults(BottomUpQuantification buq, int expectedSize,
+  private void searchAndCheckResults(BottomUpQuantification buq, int expectedSize, UUID facility,
       BottomUpQuantificationStatus... status) {
-    BottomUpQuantificationSearchParams params = new TestSearchParams(status);
+    BottomUpQuantificationSearchParams params = new TestSearchParams(facility, status);
     List<BottomUpQuantification> foundBuqs = bottomUpQuantificationRepository
         .search(params, pageable)
         .getContent();
@@ -113,11 +122,14 @@ public class BottomUpQuantificationRepositoryIntegrationTest extends
   }
 
   @Getter
+  @Setter
   private static final class TestSearchParams implements
       BottomUpQuantificationSearchParams {
     private final Set<BottomUpQuantificationStatus> statuses;
+    private UUID facility;
 
-    TestSearchParams(BottomUpQuantificationStatus... buqStatuses) {
+    TestSearchParams(UUID facilityParam, BottomUpQuantificationStatus... buqStatuses) {
+      facility = facilityParam;
       statuses = Sets.newHashSet(buqStatuses);
     }
 
