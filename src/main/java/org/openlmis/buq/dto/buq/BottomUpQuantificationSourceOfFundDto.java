@@ -19,60 +19,61 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.joda.money.Money;
-import org.openlmis.buq.domain.Remark;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
+import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.openlmis.buq.dto.BaseDto;
-import org.openlmis.buq.dto.remark.RemarkDto;
+import org.openlmis.buq.dto.sourceoffund.SourceOfFundDto;
 import org.openlmis.buq.util.MoneyDeserializer;
 import org.openlmis.buq.util.MoneySerializer;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public final class BottomUpQuantificationLineItemDto extends BaseDto
-    implements BottomUpQuantificationLineItem.Importer, BottomUpQuantificationLineItem.Exporter {
+public final class BottomUpQuantificationSourceOfFundDto extends BaseDto
+    implements BottomUpQuantificationSourceOfFund.Importer,
+    BottomUpQuantificationSourceOfFund.Exporter {
 
-  private UUID orderableId;
-  private Integer annualAdjustedConsumption;
-  private Integer verifiedAnnualAdjustedConsumption;
-  private Integer forecastedDemand;
   @JsonSerialize(using = MoneySerializer.class)
   @JsonDeserialize(using = MoneyDeserializer.class)
-  private Money totalCost;
-  private RemarkDto remark;
+  private Money amountUsedInLastFinancialYear;
+  @JsonSerialize(using = MoneySerializer.class)
+  @JsonDeserialize(using = MoneyDeserializer.class)
+  private Money projectedFund;
+  private SourceOfFundDto sourceOfFund;
 
   /**
    * Creates new instance based on domain object.
    */
-  public static BottomUpQuantificationLineItemDto newInstance(
-      BottomUpQuantificationLineItem buqLineItem) {
-    BottomUpQuantificationLineItemDto dto = new BottomUpQuantificationLineItemDto();
-    buqLineItem.export(dto);
+  public static BottomUpQuantificationSourceOfFundDto newInstance(
+      BottomUpQuantificationSourceOfFund sourceOfFunds) {
+    BottomUpQuantificationSourceOfFundDto dto = new BottomUpQuantificationSourceOfFundDto();
+    sourceOfFunds.export(dto);
 
     return dto;
   }
 
-  @JsonSetter("remark")
-  public void setRemark(RemarkDto remark) {
-    this.remark = remark;
+  @JsonSetter("sourceOfFund")
+  public void setSourceOfFunds(SourceOfFundDto sourceOfFunds) {
+    this.sourceOfFund = sourceOfFunds;
   }
 
-  @Override
+  /**
+   * Sets the source of funds for this BottomUpQuantificationSourceOfFundDto.
+   *
+   * @param sourceOfFunds The SourceOfFund object.
+   */
   @JsonIgnore
-  public void setRemark(Remark remark) {
-    if (remark != null) {
-      this.remark = RemarkDto.newInstance(remark);
+  public void setSourceOfFund(SourceOfFund sourceOfFunds) {
+    if (sourceOfFunds != null) {
+      this.sourceOfFund = SourceOfFundDto.newInstance(sourceOfFunds);
     }
   }
 

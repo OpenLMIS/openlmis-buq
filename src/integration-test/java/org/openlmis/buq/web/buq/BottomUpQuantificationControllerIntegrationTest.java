@@ -87,6 +87,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   public void setUp() {
     given(bottomUpQuantificationRepository.saveAndFlush(any(BottomUpQuantification.class)))
         .willAnswer(new SaveAnswer<>());
+    given(bottomUpQuantificationDtoBuilder.buildDto(any(BottomUpQuantification.class)))
+        .willReturn(bottomUpQuantificationDto);
     change.bindToCommit(commitMetadata);
   }
 

@@ -18,6 +18,7 @@ package org.openlmis.buq;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.Locale;
+import javax.annotation.PostConstruct;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.callback.Callback;
 import org.javers.core.Javers;
@@ -65,6 +66,9 @@ public class Application {
 
   @Value("${time.zoneId}")
   private String timeZoneId;
+
+  @Value("${currencyCode}")
+  private String currencyCode;
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -168,6 +172,14 @@ public class Application {
             .withPackagesToScan(javersProperties.getPackagesToScan())
             .withDateTimeProvider(customDateProvider)
             .build();
+  }
+
+  /**
+   * Sets currency code.
+   */
+  @PostConstruct
+  public void setCurrencyCode() {
+    CurrencyConfig.currencyCode = currencyCode;
   }
 
 }

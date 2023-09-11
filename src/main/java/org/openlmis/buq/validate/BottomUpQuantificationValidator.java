@@ -45,6 +45,7 @@ public class BottomUpQuantificationValidator extends BaseValidator {
   public static final String FORECASTED_DEMAND_FIELD = "forecastedDemand";
   private static final String PROCESSING_PERIOD_ID_FIELD = "processingPeriodId";
   public static final String REMARK_FIELD = "remark";
+  public static final String TOTAL_COST_FIELD = "totalCost";
 
   private final BottomUpQuantificationService bottomUpQuantificationService;
 
@@ -127,6 +128,10 @@ public class BottomUpQuantificationValidator extends BaseValidator {
     rejectIfNullOrNegative(target.getVerifiedAnnualAdjustedConsumption(),
         VERIFIED_ANNUAL_ADJUSTED_CONSUMPTION_FIELD);
     rejectIfNullOrNegative(target.getForecastedDemand(), FORECASTED_DEMAND_FIELD);
+
+    rejectIfNull(target.getTotalCost(), ERROR_LINE_ITEM_FIELD_REQUIRED, TOTAL_COST_FIELD);
+    rejectIfLessThanZero(target.getTotalCost().getAmountMajorInt(),
+        ERROR_LINE_ITEM_FIELD_REQUIRED, TOTAL_COST_FIELD);
 
     if (!Objects.equals(target.getVerifiedAnnualAdjustedConsumption(),
         target.getForecastedDemand())) {

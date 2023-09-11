@@ -40,6 +40,7 @@ import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.repository.RemarkRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
+import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 import org.openlmis.buq.util.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,6 +126,9 @@ public abstract class BaseWebIntegrationTest {
 
   @MockBean
   public RemarkRepository remarkRepository;
+
+  @MockBean
+  public BottomUpQuantificationDtoBuilder bottomUpQuantificationDtoBuilder;
 
   /**
    * Constructor for test.

@@ -24,6 +24,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -87,6 +88,13 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
   @Setter
   private List<BottomUpQuantificationStatusChange> statusChanges = new ArrayList<>();
 
+  @OneToOne(mappedBy = "bottomUpQuantification",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true)
+  @Getter
+  @Setter
+  private BottomUpQuantificationFundingDetails fundingDetails;
+
   /**
    * Constructor.
    *
@@ -147,6 +155,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     exporter.setProcessingPeriodId(processingPeriodId);
     exporter.setTargetYear(targetYear);
     exporter.setStatus(status);
+    exporter.setFundingDetails(fundingDetails);
   }
 
   public interface Exporter extends BaseTimestampedExporter {
@@ -160,6 +169,8 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     void setTargetYear(Integer targetYear);
 
     void setStatus(BottomUpQuantificationStatus status);
+
+    void setFundingDetails(BottomUpQuantificationFundingDetails fundingDetails);
 
   }
 

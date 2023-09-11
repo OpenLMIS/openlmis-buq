@@ -28,6 +28,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Type;
+import org.joda.money.Money;
 import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.domain.Remark;
 
@@ -62,6 +64,11 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
   @Setter
   private Integer forecastedDemand;
 
+  @Getter
+  @Setter
+  @Type(type = "org.openlmis.buq.domain.type.CustomSingleColumnMoneyUserType")
+  private Money totalCost;
+
   @ManyToOne
   @JoinColumn(name = "remarkId")
   @Getter
@@ -78,6 +85,7 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
     buqLineItem.setAnnualAdjustedConsumption(importer.getAnnualAdjustedConsumption());
     buqLineItem.setVerifiedAnnualAdjustedConsumption(importer
         .getVerifiedAnnualAdjustedConsumption());
+    buqLineItem.setTotalCost(importer.getTotalCost());
     buqLineItem.setForecastedDemand(importer.getForecastedDemand());
 
     return buqLineItem;
@@ -92,6 +100,7 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
     exporter.setAnnualAdjustedConsumption(annualAdjustedConsumption);
     exporter.setVerifiedAnnualAdjustedConsumption(verifiedAnnualAdjustedConsumption);
     exporter.setForecastedDemand(forecastedDemand);
+    exporter.setTotalCost(totalCost);
     exporter.setRemark(remark);
   }
 
@@ -104,6 +113,8 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
     void setVerifiedAnnualAdjustedConsumption(Integer verifiedAnnualAdjustedConsumption);
 
     void setForecastedDemand(Integer forecastedDemand);
+
+    void setTotalCost(Money money);
 
     void setRemark(Remark remark);
 
@@ -118,6 +129,8 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
     Integer getVerifiedAnnualAdjustedConsumption();
 
     Integer getForecastedDemand();
+
+    Money getTotalCost();
 
     Remark.Importer getRemark();
 
