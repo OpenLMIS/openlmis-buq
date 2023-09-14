@@ -201,6 +201,8 @@ public class BottomUpQuantificationServiceTest {
     UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
     bottomUpQuantificationDto.setId(bottomUpQuantificationId);
+    bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
     BottomUpQuantificationLineItem lineItem1 =
         new BottomUpQuantificationLineItemDataBuilder().build();
     BottomUpQuantificationLineItem lineItem2 =
@@ -228,9 +230,11 @@ public class BottomUpQuantificationServiceTest {
 
   @Test(expected = ValidationMessageException.class)
   public void shouldNotSaveBottomUpQuantificationWithInvalidId() {
-    UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
+    bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
     bottomUpQuantificationDto.setId(UUID.randomUUID());
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
+    UUID bottomUpQuantificationId = UUID.randomUUID();
 
     bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
   }
@@ -240,6 +244,8 @@ public class BottomUpQuantificationServiceTest {
     UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
     bottomUpQuantificationDto.setId(bottomUpQuantificationId);
+    bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
     BottomUpQuantificationLineItem lineItem =
         new BottomUpQuantificationLineItemDataBuilder().build();
     when(remarkService.findOne(lineItem.getRemark().getId()))
@@ -265,6 +271,8 @@ public class BottomUpQuantificationServiceTest {
     UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
     bottomUpQuantificationDto.setId(bottomUpQuantificationId);
+    bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
     BottomUpQuantificationLineItem lineItem =
         new BottomUpQuantificationLineItemDataBuilder().build();
     final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
@@ -329,8 +337,7 @@ public class BottomUpQuantificationServiceTest {
         .withId(bottomUpQuantificationId).build();
     BottomUpQuantificationDto bottomUpQuantificationDto = BottomUpQuantificationDto
         .newInstance(bottomUpQuantification);
-    UserDto userDto = new UserDtoDataBuilder().buildAsDto();
-    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
     doNothing().when(validator).validateCanBeAuthorized(bottomUpQuantificationDto,
         bottomUpQuantificationId);
     when(bottomUpQuantificationRepository.save(any())).thenReturn(new BottomUpQuantification());
@@ -349,12 +356,13 @@ public class BottomUpQuantificationServiceTest {
   }
 
   @Test(expected = ValidationMessageException.class)
-  public void shouldThrowValidationMessageExceptionIf() {
+  public void shouldThrowValidationMessageExceptionIfBuqIsInvalid() {
     UUID invalidBottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
         .withId(invalidBottomUpQuantificationId).build();
     BottomUpQuantificationDto invalidBottomUpQuantificationDto = BottomUpQuantificationDto
         .newInstance(bottomUpQuantification);
+    mockUserHomeFacilityPermission(invalidBottomUpQuantificationDto);
 
     doThrow(ValidationMessageException.class).when(validator)
         .validateCanBeAuthorized(invalidBottomUpQuantificationDto,
@@ -362,6 +370,27 @@ public class BottomUpQuantificationServiceTest {
 
     bottomUpQuantificationService.authorize(invalidBottomUpQuantificationDto,
         invalidBottomUpQuantificationId);
+  }
+
+  @Test
+  public void shouldCallDelete() {
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .build();
+    mockUserHomeFacilityPermission(BottomUpQuantificationDto.newInstance(bottomUpQuantification));
+
+    bottomUpQuantificationService.delete(bottomUpQuantification);
+
+    verify(bottomUpQuantificationRepository).deleteById(bottomUpQuantification.getId());
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowValidationMessageExceptionIfUserHomeFacilityIsNotEqualsToBuqFacility() {
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .build();
+    UserDto userDto = new UserDtoDataBuilder().withHomeFacilityId(UUID.randomUUID()).buildAsDto();
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+
+    bottomUpQuantificationService.delete(bottomUpQuantification);
   }
 
   private void mockUpdateBottomUpQuantification(UUID bottomUpQuantificationId,
@@ -384,6 +413,13 @@ public class BottomUpQuantificationServiceTest {
     when(lineItem.getPackRoundingThreshold()).thenReturn(packRoundingThreshold);
     when(lineItem.getRoundToZero()).thenReturn(roundToZero);
     return lineItem;
+  }
+
+  private void mockUserHomeFacilityPermission(
+      BottomUpQuantificationDto bottomUpQuantificationDto) {
+    UserDto user = new UserDtoDataBuilder().withHomeFacilityId(
+        bottomUpQuantificationDto.getFacilityId()).buildAsDto();
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
   }
 
 }

@@ -22,6 +22,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.openlmis.buq.dto.referencedata.RoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
 
+@SuppressWarnings("PMD.TooManyMethods")
 public class UserDtoDataBuilder implements DtoDataBuilder<UserDto> {
   private UUID id = UUID.randomUUID();
   private String username = RandomStringUtils.randomAlphanumeric(5);
@@ -77,6 +78,11 @@ public class UserDtoDataBuilder implements DtoDataBuilder<UserDto> {
 
   public UserDtoDataBuilder withRoleAssignment(RoleAssignmentDto roleAssignment) {
     roleAssignments.add(roleAssignment);
+    return this;
+  }
+
+  public UserDtoDataBuilder withHomeFacilityId(UUID facilityId) {
+    this.homeFacilityId = facilityId;
     return this;
   }
 

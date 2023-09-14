@@ -163,6 +163,7 @@ public class BottomUpQuantificationService {
    */
   public BottomUpQuantification save(BottomUpQuantificationDto bottomUpQuantificationImporter,
       UUID bottomUpQuantificationId) {
+    checkFacilityPermission(bottomUpQuantificationImporter.getFacilityId());
     BottomUpQuantification updatedBottomUpQuantification =
         updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
     bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
@@ -205,6 +206,7 @@ public class BottomUpQuantificationService {
    */
   public BottomUpQuantification authorize(BottomUpQuantificationDto bottomUpQuantificationImporter,
       UUID bottomUpQuantificationId) {
+    checkFacilityPermission(bottomUpQuantificationImporter.getFacilityId());
     validator.validateCanBeAuthorized(bottomUpQuantificationImporter, bottomUpQuantificationId);
 
     BottomUpQuantification updatedBottomUpQuantification =
@@ -225,6 +227,7 @@ public class BottomUpQuantificationService {
    */
   public BottomUpQuantificationDto submitBottomUpQuantification(
       BottomUpQuantificationDto bottomUpQuantificationDto, UUID id) {
+    checkFacilityPermission(bottomUpQuantificationDto.getFacilityId());
     validator.validateCanBeSubmitted(bottomUpQuantificationDto, id);
 
     BottomUpQuantification bottomUpQuantification = save(bottomUpQuantificationDto, id);
@@ -272,6 +275,17 @@ public class BottomUpQuantificationService {
         .orElseThrow(() -> new ContentNotFoundMessageException(
             ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND, bottomUpQuantificationId)
         );
+  }
+
+  /**
+   * Deletes a Bottom-Up Quantification record.
+   *
+   * @param bottomUpQuantification The Bottom-Up Quantification entity to be deleted.
+   */
+  public void delete(BottomUpQuantification bottomUpQuantification) {
+    checkFacilityPermission(bottomUpQuantification.getFacilityId());
+
+    bottomUpQuantificationRepository.deleteById(bottomUpQuantification.getId());
   }
 
   Map<String, Message> getErrors(BindingResult bindingResult) {
@@ -445,6 +459,14 @@ public class BottomUpQuantificationService {
       String missingParams = String.join(", ", missingParamsList);
       throw new ValidationMessageException(
           new Message(MessageKeys.ERROR_PREPARE_MISSING_PARAMETERS, missingParams));
+    }
+  }
+
+  private void checkFacilityPermission(UUID bottomUpQuantificationFacilityId) {
+    if (!authenticationHelper.getCurrentUser().getHomeFacilityId()
+        .equals(bottomUpQuantificationFacilityId)) {
+      throw new ValidationMessageException(new Message(
+          MessageKeys.ERROR_USER_HOME_FACILITY_AND_BUQ_FACILITY_MISMATCH));
     }
   }
 

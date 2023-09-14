@@ -117,11 +117,10 @@ public class BottomUpQuantificationController extends BaseController {
   @DeleteMapping(value = "/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteBottomUpQuantification(@PathVariable("id") UUID id) {
-    if (!bottomUpQuantificationRepository.existsById(id)) {
-      throw new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND);
-    }
+    BottomUpQuantification buq = bottomUpQuantificationRepository.findById(id).orElseThrow(
+        () -> new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
 
-    bottomUpQuantificationRepository.deleteById(id);
+    bottomUpQuantificationService.delete(buq);
   }
 
   /**

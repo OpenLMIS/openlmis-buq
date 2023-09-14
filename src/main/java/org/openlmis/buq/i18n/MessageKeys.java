@@ -43,6 +43,7 @@ public abstract class MessageKeys {
   private static final String PARAMETER = "parameter";
   private static final String FIELD = "field";
   private static final String BOOLEAN = "boolean";
+  private static final String USER = "user";
 
   private static final String MISMATCH = "mismatch";
   private static final String NOT_FOUND = "notFound";
@@ -55,6 +56,7 @@ public abstract class MessageKeys {
   private static final String SUBMIT = "submit";
   private static final String AUTHORIZE = "authorize";
   private static final String PERIOD_FACILITY_UNIQUE = "periodAndFacilityUnique";
+  private static final String AND = "and";
 
   private static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
 
@@ -70,8 +72,8 @@ public abstract class MessageKeys {
   public static final String ERROR_REMARK_NAME_DUPLICATED =
       join(ERROR_PREFIX, REMARK, NAME, DUPLICATED);
   public static final String ERROR_REMARK_NOT_FOUND = join(ERROR_PREFIX, REMARK, NOT_FOUND);
-  public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION,
-      "userCanNotBeFound");
+  public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION, USER,
+      "canNotBeFound");
   public static final String ERROR_SERVICE_REQUIRED = join(ERROR_PREFIX, SERVICE, REQUIRED);
   public static final String ERROR_SERVICE_OCCURRED = join(ERROR_PREFIX, SERVICE, "errorOccurred");
   public static final String ERROR_PREPARE_MISSING_PARAMETERS = join(ERROR_PREFIX, PREPARE,
@@ -102,6 +104,9 @@ public abstract class MessageKeys {
       LINE_ITEM, FIELD, "mustBeNonNegative");
   public static final String ERROR_LINE_ITEM_REMARK_REQUIRED = join(ERROR_PREFIX, LINE_ITEM, REMARK,
       REQUIRED);
+  public static final String ERROR_USER_HOME_FACILITY_AND_BUQ_FACILITY_MISMATCH =
+      join(ERROR_PREFIX, USER, "home", FACILITY, AND, BOTTOM_UP_QUANTIFICATION, FACILITY,
+          MISMATCH);
   public static final String ERROR_JAVERS_EXISTING_ENTRY =
       join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
 
