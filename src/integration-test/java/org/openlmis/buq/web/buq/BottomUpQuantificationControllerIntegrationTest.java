@@ -20,6 +20,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
@@ -253,8 +254,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldDeleteBottomUpQuantification() {
-    given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
-        .willReturn(true);
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+    willDoNothing().given(bottomUpQuantificationService).delete(bottomUpQuantification);
 
     restAssured
         .given()
@@ -270,8 +272,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnNotFoundMessageIfBuqDoesNotExistForDeleteBuqOfFundEndpoint() {
-    given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
-        .willReturn(false);
+    given(bottomUpQuantificationRepository.findById(any()))
+        .willReturn(Optional.empty());
 
     restAssured
         .given()

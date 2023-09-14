@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
@@ -39,8 +40,9 @@ final class QueryBottomUpQuantificationSearchParams implements
     BottomUpQuantificationSearchParams {
 
   private static final String STATUS = "status";
+  private static final String FACILITY = "facility";
 
-  private static final List<String> ALL_PARAMETERS = asList(STATUS);
+  private static final List<String> ALL_PARAMETERS = asList(STATUS, FACILITY);
 
   private SearchParams queryParams;
 
@@ -72,6 +74,19 @@ final class QueryBottomUpQuantificationSearchParams implements
       throw new ValidationMessageException(cause,
           new Message(ERROR_INVALID_PARAMETER_BOTTOM_UP_QUANTIFICATION_STATUS, values));
     }
+  }
+
+  /**
+   * Gets {@link UUID} for "facility" key from params.
+   *
+   * @return UUID value of facility id or null if params doesn't contain "facility" key.
+   */
+  @Override
+  public UUID getFacility() {
+    if (!queryParams.containsKey(FACILITY)) {
+      return null;
+    }
+    return queryParams.getUuid(FACILITY);
   }
 
   /**
