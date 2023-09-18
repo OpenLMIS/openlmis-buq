@@ -61,7 +61,7 @@ public final class BottomUpQuantificationSourceOfFundDto extends BaseDto
   }
 
   @JsonSetter("sourceOfFund")
-  public void setSourceOfFunds(SourceOfFundDto sourceOfFunds) {
+  public void setSourceOfFund(SourceOfFundDto sourceOfFunds) {
     this.sourceOfFund = sourceOfFunds;
   }
 
@@ -70,6 +70,7 @@ public final class BottomUpQuantificationSourceOfFundDto extends BaseDto
    *
    * @param sourceOfFunds The SourceOfFund object.
    */
+  @Override
   @JsonIgnore
   public void setSourceOfFund(SourceOfFund sourceOfFunds) {
     if (sourceOfFunds != null) {
