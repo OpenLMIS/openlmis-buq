@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Approve Facility Forecasting Stats",
+  "description": "Single approve facility forecasting stats instance",
+  "properties": {
+    "totalFacilities": {
+      "type": "integer",
+      "title": "totalFacilities"
+    },
+    "totalSubmitted": {
+      "type": "integer",
+      "title": "totalSubmitted"
+    },
+    "percentageSubmitted": {
+      "type": "integer",
+      "title": "percentageSubmitted"
+    }
+  }
+}
