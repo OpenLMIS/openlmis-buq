@@ -82,6 +82,7 @@ import org.springframework.validation.FieldError;
 public class BottomUpQuantificationService {
 
   public static final String APPROVE_BUQ_RIGHT_NAME = "APPROVE_BUQ";
+
   @Autowired
   private AuthenticationHelper authenticationHelper;
 
@@ -322,17 +323,17 @@ public class BottomUpQuantificationService {
 
     if (totalBottomUpQuantifications == 0) {
       return new ApproveFacilityForecastingStats(totalFacilities, 0, 0);
-    } else {
-      int submittedBottomUpQuantifications = (int) bottomUpQuantifications.stream()
-          .filter(buq -> buq.getStatus().isPostSubmitted())
-          .count();
-
-      int percentageOfSubmittedBottomUpQuantifications = Math
-          .round((float) (submittedBottomUpQuantifications * 100) / totalBottomUpQuantifications);
-
-      return new ApproveFacilityForecastingStats(totalFacilities, submittedBottomUpQuantifications,
-          percentageOfSubmittedBottomUpQuantifications);
     }
+
+    int submittedBottomUpQuantifications = (int) bottomUpQuantifications.stream()
+        .filter(buq -> buq.getStatus().isPostSubmitted())
+        .count();
+
+    int percentageOfSubmittedBottomUpQuantifications = Math
+        .round((float) (submittedBottomUpQuantifications * 100) / totalBottomUpQuantifications);
+
+    return new ApproveFacilityForecastingStats(totalFacilities, submittedBottomUpQuantifications,
+        percentageOfSubmittedBottomUpQuantifications);
   }
 
   Map<String, Message> getErrors(BindingResult bindingResult) {

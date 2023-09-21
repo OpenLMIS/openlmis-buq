@@ -408,7 +408,11 @@ public class BottomUpQuantificationServiceTest {
         APPROVE_BUQ_RIGHT_NAME + "|" + user.getHomeFacilityId() + "|" + programId,
         APPROVE_BUQ_RIGHT_NAME + "|" + user.getHomeFacilityId() + "|" + UUID.randomUUID(),
         APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID() + "|" + programId,
-        "SOME_RIGHT|" + user.getHomeFacilityId().toString() + "|" + programId
+        "SOME_RIGHT|" + user.getHomeFacilityId() + "|" + programId,
+        "SOME_RIGHT|" + user.getHomeFacilityId(),
+        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID(),
+        APPROVE_BUQ_RIGHT_NAME,
+        "SOME_RIGHT"
     );
     when(userReferenceDataService.getPermissionStrings(user.getId()))
         .thenReturn(permissionStrings);
