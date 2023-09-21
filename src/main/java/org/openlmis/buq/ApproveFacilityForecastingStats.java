@@ -13,25 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.dto;
+package org.openlmis.buq;
 
-import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
-import org.openlmis.buq.domain.BaseEntity;
 
 @Getter
 @Setter
-@EqualsAndHashCode
-@ToString
 @AllArgsConstructor
-@NoArgsConstructor
-public abstract class BaseDto implements BaseEntity.BaseExporter, BaseEntity.BaseImporter {
+public class ApproveFacilityForecastingStats {
 
-  private UUID id;
+  private int totalFacilities;
+  private int totalSubmitted;
+  private int percentageSubmitted;
 
 }

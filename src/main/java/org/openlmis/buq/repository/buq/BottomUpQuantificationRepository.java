@@ -64,6 +64,8 @@ public interface BottomUpQuantificationRepository extends
   List<RequisitionLineItemDataProjection> getRequisitionLineItemsData(
       @Param("facilityId") UUID facilityId, @Param("processingPeriodId") UUID processingPeriodId);
 
+  List<BottomUpQuantification> findByFacilityIdIn(List<UUID> facilityIds);
+
   @Query(value = "SELECT\n"
       + "    bs.*\n"
       + "FROM\n"

@@ -34,6 +34,7 @@ import guru.nidi.ramltester.junit.RamlMatchers;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
@@ -46,6 +47,7 @@ import org.javers.repository.jql.JqlQuery;
 import org.joda.time.LocalDateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
@@ -67,9 +69,14 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String DOWNLOAD_URL = ID_URL + "/download";
   private static final String AUTHORIZE_URL = ID_URL + "/authorize";
   private static final String SUBMIT_URL = ID_URL + "/submit";
+  private static final String APPROVE_FACILITY_FORECASTING_STATUS_URL = RESOURCE_URL
+      + "/approveFacilityForecastingStats";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String STATUS = "status";
+  public static final String PROGRAM_ID = "programId";
+  public static final String FACILITY_ID = "facilityId";
+  public static final String PROCESSING_PERIOD_ID = "processingPeriodId";
 
   private final BottomUpQuantification bottomUpQuantification =
       new BottomUpQuantificationDataBuilder().build();
@@ -131,9 +138,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     restAssured
         .given()
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .queryParam("facilityId", bottomUpQuantificationDto.getFacilityId())
-        .queryParam("programId", bottomUpQuantificationDto.getProgramId())
-        .queryParam("processingPeriodId", bottomUpQuantificationDto.getProcessingPeriodId())
+        .queryParam(FACILITY_ID, bottomUpQuantificationDto.getFacilityId())
+        .queryParam(PROGRAM_ID, bottomUpQuantificationDto.getProgramId())
+        .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantificationDto.getProcessingPeriodId())
         .when()
         .post(PREPARE_URL)
         .then()
@@ -169,9 +176,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
     restAssured.given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .queryParam("facilityId", bottomUpQuantification.getFacilityId())
-        .queryParam("programId", bottomUpQuantification.getProgramId())
-        .queryParam("processingPeriodId", bottomUpQuantification.getProcessingPeriodId())
+        .queryParam(FACILITY_ID, bottomUpQuantification.getFacilityId())
+        .queryParam(PROGRAM_ID, bottomUpQuantification.getProgramId())
+        .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantification.getProcessingPeriodId())
         .when()
         .post(PREPARE_URL)
         .then()
@@ -390,6 +397,28 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .then()
         .statusCode(HttpStatus.SC_NOT_FOUND)
         .body(MESSAGE_KEY, Matchers.is(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnApproveFacilityForecastingStats() {
+    final UUID programId = UUID.randomUUID();
+    ApproveFacilityForecastingStats stats = new ApproveFacilityForecastingStats(10, 3, 30);
+    given(bottomUpQuantificationService.getApproveFacilityForecastingStats(programId))
+        .willReturn(stats);
+
+    restAssured
+        .given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam(PROGRAM_ID, programId)
+        .when()
+        .get(APPROVE_FACILITY_FORECASTING_STATUS_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body("totalFacilities", Matchers.is(10))
+        .body("totalSubmitted", Matchers.is(3))
+        .body("percentageSubmitted", Matchers.is(30));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }

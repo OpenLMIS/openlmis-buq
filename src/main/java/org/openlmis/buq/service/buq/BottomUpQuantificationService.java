@@ -37,6 +37,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
@@ -51,6 +52,7 @@ import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
+import org.openlmis.buq.dto.referencedata.UserDto;
 import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
 import org.openlmis.buq.exception.BindingResultException;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
@@ -63,6 +65,7 @@ import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.referencedata.UserReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
@@ -78,6 +81,7 @@ import org.springframework.validation.FieldError;
 @Service
 public class BottomUpQuantificationService {
 
+  public static final String APPROVE_BUQ_RIGHT_NAME = "APPROVE_BUQ";
   @Autowired
   private AuthenticationHelper authenticationHelper;
 
@@ -113,6 +117,9 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private SourceOfFundRepository sourceOfFundRepository;
+
+  @Autowired
+  private UserReferenceDataService userReferenceDataService;
 
   private static final String MESSAGE_SEPARATOR = ":";
 
@@ -286,6 +293,46 @@ public class BottomUpQuantificationService {
     checkFacilityPermission(bottomUpQuantification.getFacilityId());
 
     bottomUpQuantificationRepository.deleteById(bottomUpQuantification.getId());
+  }
+
+  /**
+   * Calculates and retrieves statistics related to the approval of facility forecasting for a
+   * given program.
+   *
+   * @param programId The UUID of the program for which statistics are calculated.
+   * @return {@link ApproveFacilityForecastingStats} containing the calculated data.
+   */
+  public ApproveFacilityForecastingStats getApproveFacilityForecastingStats(UUID programId) {
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    List<String> userPermissionStrings = userReferenceDataService
+        .getPermissionStrings(currentUser.getId());
+
+    List<UUID> userSupervisedFacilities = userPermissionStrings.stream()
+        .filter(p -> p.length() - p.replace("|", "").length() == 2
+            && APPROVE_BUQ_RIGHT_NAME.equals(p.substring(0, p.indexOf('|'))))
+        .map(p -> p.split("\\|"))
+        .filter(p -> programId.equals(UUID.fromString(p[2])))
+        .map(p -> UUID.fromString(p[1]))
+        .collect(Collectors.toList());
+    int totalFacilities = userSupervisedFacilities.size();
+
+    List<BottomUpQuantification> bottomUpQuantifications =
+        bottomUpQuantificationRepository.findByFacilityIdIn(userSupervisedFacilities);
+    int totalBottomUpQuantifications = bottomUpQuantifications.size();
+
+    if (totalBottomUpQuantifications == 0) {
+      return new ApproveFacilityForecastingStats(totalFacilities, 0, 0);
+    } else {
+      int submittedBottomUpQuantifications = (int) bottomUpQuantifications.stream()
+          .filter(buq -> buq.getStatus().isPostSubmitted())
+          .count();
+
+      int percentageOfSubmittedBottomUpQuantifications = Math
+          .round((float) (submittedBottomUpQuantifications * 100) / totalBottomUpQuantifications);
+
+      return new ApproveFacilityForecastingStats(totalFacilities, submittedBottomUpQuantifications,
+          percentageOfSubmittedBottomUpQuantifications);
+    }
   }
 
   Map<String, Message> getErrors(BindingResult bindingResult) {
