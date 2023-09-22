@@ -60,10 +60,10 @@ public class BottomUpQuantificationStatusTest {
     return Arrays.asList(new Object[][]{
         {BottomUpQuantificationStatus.DRAFT, false, true, false},
         {BottomUpQuantificationStatus.SUBMITTED, false, true, true},
-        {BottomUpQuantificationStatus.AUTHORIZED, false, false, true},
-        {BottomUpQuantificationStatus.APPROVED_BY_DP, true, false, true},
-        {BottomUpQuantificationStatus.APPROVED_BY_RP, true, false, true},
-        {BottomUpQuantificationStatus.APPROVED_BY_NQT, true, false, true}
+        {BottomUpQuantificationStatus.AUTHORIZED, true, false, true},
+        {BottomUpQuantificationStatus.IN_APPROVAL, true, false, true},
+        {BottomUpQuantificationStatus.APPROVED, false, false, true},
+        {BottomUpQuantificationStatus.APPROVED_BY_NQT, false, false, true}
     });
   }
 
@@ -81,5 +81,4 @@ public class BottomUpQuantificationStatusTest {
   public void shouldHaveCorrectValueForPostSubmitted() throws Exception {
     assertThat(status.isPostSubmitted(), is(equalTo(postSubmitted)));
   }
-
 }

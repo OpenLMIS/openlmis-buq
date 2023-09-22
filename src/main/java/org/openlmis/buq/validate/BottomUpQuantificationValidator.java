@@ -18,6 +18,7 @@ package org.openlmis.buq.validate;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_LINE_ITEM_FIELD_MUST_BE_NON_NEGATIVE;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_LINE_ITEM_FIELD_REQUIRED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_LINE_ITEM_REMARK_REQUIRED;
+import static org.openlmis.buq.i18n.MessageKeys.ERROR_MUST_BE_AUTHORIZED_TO_BE_APPROVED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_MUST_BE_DRAFT_TO_BE_SUBMITTED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PERIOD_FACILITY_PAIR_UNIQUE;
@@ -36,6 +37,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @Component
 public class BottomUpQuantificationValidator extends BaseValidator {
 
@@ -96,6 +98,22 @@ public class BottomUpQuantificationValidator extends BaseValidator {
         && bottomUpQuantificationService.canSkipAuthorization(bottomUpQuantification))
     ) {
       throw new ValidationMessageException(new Message(ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED));
+    } else {
+      validateCanChangeStatus(target);
+    }
+  }
+
+  /**
+   * Validates whether a BottomUpQuantificationDto can be approved.
+   *
+   * @param target   The BottomUpQuantificationDto to be validated.
+   * @param targetId The ID of the BottomUpQuantification to be validated.
+   * @throws ValidationMessageException If the target cannot be approved.
+   */
+  public void validateCanBeApproved(BottomUpQuantificationDto target, UUID targetId) {
+    if (!bottomUpQuantificationService.findBottomUpQuantification(targetId).getStatus()
+        .equals(BottomUpQuantificationStatus.AUTHORIZED)) {
+      throw new ValidationMessageException(new Message(ERROR_MUST_BE_AUTHORIZED_TO_BE_APPROVED));
     } else {
       validateCanChangeStatus(target);
     }

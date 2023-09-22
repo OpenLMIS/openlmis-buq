@@ -209,6 +209,27 @@ public class BottomUpQuantificationController extends BaseController {
   }
 
   /**
+   * Approve given bottom-up quantification.
+   *
+   * @param bottomUpQuantificationId UUID of BottomUpQuantification to approve.
+   * @return approved BottomUpQuantification.
+   */
+  @PostMapping("/{id}/approve")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public BottomUpQuantificationDto approve(@PathVariable("id") UUID bottomUpQuantificationId,
+      @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
+    if (!bottomUpQuantificationRepository.existsById(bottomUpQuantificationId)) {
+      throw new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND);
+    }
+
+    BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
+        .approve(bottomUpQuantificationDto, bottomUpQuantificationId);
+
+    return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
+  }
+
+  /**
    * Retrieves audit information related to the specified bottom-up quantification.
    *
    * @param author The author of the changes which should be returned.

@@ -24,15 +24,15 @@ public enum BottomUpQuantificationStatus {
   DRAFT(1),
   SUBMITTED(2),
   AUTHORIZED(3),
-  APPROVED_BY_DP(4),
-  APPROVED_BY_RP(5),
-  APPROVED_BY_NQT(6);
+  IN_APPROVAL(3),
+  APPROVED(4),
+  APPROVED_BY_NQT(5);
 
   private int value;
 
   @JsonIgnore
   public boolean duringApproval() {
-    return value >= 4;
+    return value == 3;
   }
 
   @JsonIgnore

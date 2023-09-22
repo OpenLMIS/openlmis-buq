@@ -288,6 +288,27 @@ public class BottomUpQuantificationService {
     bottomUpQuantificationRepository.deleteById(bottomUpQuantification.getId());
   }
 
+  /**
+   * Changes BUQ status to approved and updates it with the given data.
+   *
+   * @param bottomUpQuantificationImporter DTO containing new data.
+   * @param bottomUpQuantificationId ID of the bottom-up quantification to be approved.
+   * @return Approved Bottom-up quantification.
+   */
+  public BottomUpQuantification approve(BottomUpQuantificationDto bottomUpQuantificationImporter,
+                                          UUID bottomUpQuantificationId) {
+    validator.validateCanBeApproved(bottomUpQuantificationImporter, bottomUpQuantificationId);
+
+    BottomUpQuantification updatedBottomUpQuantification =
+        updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
+
+    updatedBottomUpQuantification.setStatus(BottomUpQuantificationStatus.APPROVED);
+    addNewStatusChange(updatedBottomUpQuantification);
+    bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
+
+    return updatedBottomUpQuantification;
+  }
+
   Map<String, Message> getErrors(BindingResult bindingResult) {
     Map<String, Message> errors = new HashMap<>();
 

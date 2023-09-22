@@ -49,7 +49,7 @@ public class BottomUpQuantificationValidatorTest {
   public void shouldThrowExceptionIfStatusIsNotDraftForSubmission() {
     UUID targetId = UUID.randomUUID();
     BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
-        .withStatus(BottomUpQuantificationStatus.APPROVED_BY_DP)
+        .withStatus(BottomUpQuantificationStatus.IN_APPROVAL)
         .build();
 
     when(quantificationService.findBottomUpQuantification(targetId))
