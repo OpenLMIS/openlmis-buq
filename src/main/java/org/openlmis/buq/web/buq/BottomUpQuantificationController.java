@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.exception.NotFoundException;
@@ -230,6 +231,23 @@ public class BottomUpQuantificationController extends BaseController {
   }
 
   /**
+   * Retrieves statistics related to the approval of facility forecasting for a specific program.
+   * The statistics include total facilities number, the number and percentage of bottom-up
+   * quantifications submitted.
+   *
+   * @param programId The UUID of the program for which to retrieve approval statistics.
+   * @return An instance of the {@link ApproveFacilityForecastingStats} class containing the
+   *         approval statistics for the specified program.
+   */
+  @GetMapping(value = "/approveFacilityForecastingStats")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public ApproveFacilityForecastingStats getApproveFacilityForecastingStats(
+      @RequestParam(value = "programId") UUID programId) {
+    return bottomUpQuantificationService.getApproveFacilityForecastingStats(programId);
+  }
+
+  /**
    * Retrieves audit information related to the specified bottom-up quantification.
    *
    * @param author The author of the changes which should be returned.
@@ -272,4 +290,5 @@ public class BottomUpQuantificationController extends BaseController {
     return bottomUpQuantificationService
             .submitBottomUpQuantification(bottomUpQuantificationDto, id);
   }
+
 }

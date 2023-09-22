@@ -142,6 +142,14 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
   }
 
   /**
+   * Check if the bottom-up quantification is post-submitted.
+   *
+   */
+  public boolean isPostSubmitted() {
+    return status.isPostSubmitted();
+  }
+
+  /**
    * Export this object to the specified exporter (DTO).
    *
    * @param exporter exporter to export to

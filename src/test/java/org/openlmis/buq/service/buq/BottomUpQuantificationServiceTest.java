@@ -25,6 +25,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.openlmis.buq.service.buq.BottomUpQuantificationService.APPROVE_BUQ_RIGHT_NAME;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
 import org.openlmis.buq.builder.BottomUpQuantificationLineItemDataBuilder;
 import org.openlmis.buq.builder.FacilityDtoDataBuilder;
@@ -69,6 +71,7 @@ import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.referencedata.UserReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
@@ -111,6 +114,9 @@ public class BottomUpQuantificationServiceTest {
 
   @Mock
   private RemarkService remarkService;
+
+  @Mock
+  private UserReferenceDataService userReferenceDataService;
 
   public UUID facilityId = UUID.randomUUID();
   public UUID programId = UUID.randomUUID();
@@ -433,6 +439,57 @@ public class BottomUpQuantificationServiceTest {
 
     bottomUpQuantificationService.approve(invalidBottomUpQuantificationDto,
         invalidBottomUpQuantificationId);
+  }
+
+  @Test
+  public void shouldReturnApproveFacilityForecastingStatsWithCalculatedValues() {
+    UserDto user = new UserDtoDataBuilder().buildAsDto();
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    List<String> permissionStrings = Arrays.asList(
+        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID() + "|" + programId,
+        APPROVE_BUQ_RIGHT_NAME + "|" + user.getHomeFacilityId() + "|" + programId,
+        APPROVE_BUQ_RIGHT_NAME + "|" + user.getHomeFacilityId() + "|" + UUID.randomUUID(),
+        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID() + "|" + programId,
+        "SOME_RIGHT|" + user.getHomeFacilityId() + "|" + programId,
+        "SOME_RIGHT|" + user.getHomeFacilityId(),
+        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID(),
+        APPROVE_BUQ_RIGHT_NAME,
+        "SOME_RIGHT"
+    );
+    when(userReferenceDataService.getPermissionStrings(user.getId()))
+        .thenReturn(permissionStrings);
+    List<BottomUpQuantification> bottomUpQuantifications = Arrays.asList(
+        new BottomUpQuantificationDataBuilder()
+            .withStatus(BottomUpQuantificationStatus.DRAFT).buildAsNew(),
+        new BottomUpQuantificationDataBuilder()
+            .withStatus(BottomUpQuantificationStatus.SUBMITTED).buildAsNew()
+    );
+    when(bottomUpQuantificationRepository.findByFacilityIdIn(any()))
+        .thenReturn(bottomUpQuantifications);
+
+    ApproveFacilityForecastingStats result =
+        bottomUpQuantificationService.getApproveFacilityForecastingStats(programId);
+
+    assertEquals(3, result.getTotalFacilities());
+    assertEquals(1, result.getTotalSubmitted());
+    assertEquals(50, result.getPercentageSubmitted());
+  }
+
+  @Test
+  public void shouldReturnApproveFacilityForecastingStatsWithZeroValues() {
+    UserDto user = new UserDtoDataBuilder().buildAsDto();
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    when(userReferenceDataService.getPermissionStrings(user.getId()))
+        .thenReturn(Collections.emptyList());
+    when(bottomUpQuantificationRepository.findByFacilityIdIn(any()))
+        .thenReturn(Collections.emptyList());
+
+    ApproveFacilityForecastingStats result =
+        bottomUpQuantificationService.getApproveFacilityForecastingStats(programId);
+
+    assertEquals(0, result.getTotalFacilities());
+    assertEquals(0, result.getTotalSubmitted());
+    assertEquals(0, result.getPercentageSubmitted());
   }
 
   private void mockUpdateBottomUpQuantification(UUID bottomUpQuantificationId,
