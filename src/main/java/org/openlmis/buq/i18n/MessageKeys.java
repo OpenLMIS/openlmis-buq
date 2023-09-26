@@ -30,6 +30,8 @@ public abstract class MessageKeys {
 
   private static final String REMARK = "remark";
 
+  private static final String REJECTION = "rejection";
+
   private static final String ID = "id";
   private static final String NAME = "name";
   private static final String SERVICE = "service";
@@ -74,6 +76,7 @@ public abstract class MessageKeys {
   public static final String ERROR_REMARK_NAME_DUPLICATED =
       join(ERROR_PREFIX, REMARK, NAME, DUPLICATED);
   public static final String ERROR_REMARK_NOT_FOUND = join(ERROR_PREFIX, REMARK, NOT_FOUND);
+  public static final String ERROR_REJECTION_NOT_FOUND = join(ERROR_PREFIX, REJECTION, NOT_FOUND);
   public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION, USER,
       "canNotBeFound");
   public static final String ERROR_SERVICE_REQUIRED = join(ERROR_PREFIX, SERVICE, REQUIRED);

@@ -45,8 +45,8 @@ public class RejectionServiceImpl implements RejectionService {
 
   @Override
   public Rejection findByStatusChange(BottomUpQuantificationStatusChange statusChange) {
-    Message errorMessage = new Message(MessageKeys.ERROR_REMARK_NOT_FOUND);
-    return rejectionRepository.findByStatusChange(statusChange.getId())
+    Message errorMessage = new Message(MessageKeys.ERROR_REJECTION_NOT_FOUND);
+    return rejectionRepository.findByStatusChange(statusChange)
             .orElseThrow(() -> new NotFoundException(errorMessage));
   }
 

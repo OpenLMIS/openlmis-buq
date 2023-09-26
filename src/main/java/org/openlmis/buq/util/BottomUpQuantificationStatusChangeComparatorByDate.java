@@ -18,11 +18,14 @@ package org.openlmis.buq.util;
 import java.util.Comparator;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 
-
+/**
+ * Sorts BottomUpQuantificationStatusChange List by the occured date desc.
+ * (from the latest to the oldest).
+ */
 public class BottomUpQuantificationStatusChangeComparatorByDate
         implements Comparator<BottomUpQuantificationStatusChange> {
   @Override
   public int compare(BottomUpQuantificationStatusChange o1, BottomUpQuantificationStatusChange o2) {
-    return o1.getOccurredDate().compareTo(o2.getOccurredDate());
+    return o2.getOccurredDate().compareTo(o1.getOccurredDate());
   }
 }

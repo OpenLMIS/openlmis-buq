@@ -285,15 +285,18 @@ public class BottomUpQuantificationController extends BaseController {
   public RejectionDto getMostRecentRejection(@PathVariable("id") UUID bottomUpQuantificationId) {
     BottomUpQuantification bottomUpQuantification =
             bottomUpQuantificationService.findBottomUpQuantification(bottomUpQuantificationId);
-    BottomUpQuantificationStatusChange latestRejection = bottomUpQuantification
+    List<BottomUpQuantificationStatusChange> rejectedStatuses = bottomUpQuantification
             .getStatusChanges()
             .stream()
             .filter(bottomUpQuantificationStatusChange ->
                     bottomUpQuantificationStatusChange.getStatus()
                             == BottomUpQuantificationStatus.REJECTED)
             .sorted(new BottomUpQuantificationStatusChangeComparatorByDate())
-            .collect(Collectors.toList())
-            .get(0);
+            .collect(Collectors.toList());
+    BottomUpQuantificationStatusChange latestRejection = null;
+    if (!rejectedStatuses.isEmpty()) {
+      latestRejection = rejectedStatuses.get(0);
+    }
     Rejection rejection = rejectionService.findByStatusChange(latestRejection);
     return RejectionDto.newInstance(rejection);
   }

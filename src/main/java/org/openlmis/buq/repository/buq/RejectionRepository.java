@@ -17,15 +17,10 @@ package org.openlmis.buq.repository.buq;
 
 import java.util.Optional;
 import java.util.UUID;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 public interface RejectionRepository extends JpaRepository<Rejection, UUID> {
-  @Query("SELECT r FROM Rejection r "
-          + "inner join BottomUpQuantificationStatusChange bsc on "
-          + "r.statusChange.id = bsc.id "
-          + "where bsc.id = ?1"
-  )
-  Optional<Rejection> findByStatusChange(UUID statusChangeId);
+  Optional<Rejection> findByStatusChange(BottomUpQuantificationStatusChange statusChange);
 }
