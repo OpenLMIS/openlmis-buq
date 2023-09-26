@@ -54,7 +54,7 @@ public class Rejection extends BaseTimestampedEntity {
   private String generalComments;
 
   @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-  BottomUpQuantificationStatusChange statusChange;
+  private BottomUpQuantificationStatusChange statusChange;
 
 
   /**
