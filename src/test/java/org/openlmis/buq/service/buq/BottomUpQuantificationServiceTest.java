@@ -52,8 +52,10 @@ import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
+import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
+import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
@@ -66,6 +68,7 @@ import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
 import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
@@ -105,6 +108,12 @@ public class BottomUpQuantificationServiceTest {
 
   @Mock
   private OrderableReferenceDataService orderableReferenceDataService;
+
+  @Mock
+  private BottomUpQuantificationStatusChangeRepository bottomUpQuantificationStatusChangeRepository;
+
+  @Mock
+  private RejectionService rejectionService;
 
   @Mock
   private CsvService csvService;
@@ -359,6 +368,37 @@ public class BottomUpQuantificationServiceTest {
     assertEquals(BottomUpQuantificationStatus.AUTHORIZED,
         resultStatusChanges.get(resultStatusChanges.size() - 1).getStatus());
     assertEquals(BottomUpQuantificationStatus.AUTHORIZED, result.getStatus());
+  }
+
+  @Test
+  public void shouldRejectBottomUpQuantification() {
+    UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+            .withId(bottomUpQuantificationId).build();
+    BottomUpQuantificationDto bottomUpQuantificationDto = BottomUpQuantificationDto
+            .newInstance(bottomUpQuantification);
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
+    BottomUpQuantificationStatusChange statusChange = new BottomUpQuantificationStatusChange();
+    statusChange.setStatus(BottomUpQuantificationStatus.REJECTED);
+    doNothing().when(validator).validateCanBeRejected(bottomUpQuantification);
+    when(bottomUpQuantificationRepository.save(any())).thenReturn(new BottomUpQuantification());
+    when(bottomUpQuantificationStatusChangeRepository.save(any()))
+            .thenReturn(statusChange);
+    when(rejectionService.save(any())).thenReturn(new Rejection());
+
+    mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
+
+    Rejection rejection = new Rejection();
+    RejectionDto rejectionDto = RejectionDto.newInstance(rejection);
+    BottomUpQuantification result = bottomUpQuantificationService
+            .reject(bottomUpQuantificationId, rejectionDto);
+    List<BottomUpQuantificationStatusChange> resultStatusChanges = result.getStatusChanges();
+
+    assertNotNull(result);
+    assertEquals(bottomUpQuantification, result);
+    assertEquals(BottomUpQuantificationStatus.REJECTED,
+            resultStatusChanges.get(resultStatusChanges.size() - 1).getStatus());
+    assertEquals(BottomUpQuantificationStatus.REJECTED, result.getStatus());
   }
 
   @Test(expected = ValidationMessageException.class)
