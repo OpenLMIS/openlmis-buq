@@ -210,6 +210,27 @@ public class BottomUpQuantificationController extends BaseController {
   }
 
   /**
+   * Approve given bottom-up quantification.
+   *
+   * @param bottomUpQuantificationId UUID of BottomUpQuantification to approve.
+   * @return approved BottomUpQuantification.
+   */
+  @PostMapping("/{id}/approve")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public BottomUpQuantificationDto approve(@PathVariable("id") UUID bottomUpQuantificationId,
+      @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
+    if (!bottomUpQuantificationRepository.existsById(bottomUpQuantificationId)) {
+      throw new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND);
+    }
+
+    BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
+        .approve(bottomUpQuantificationDto, bottomUpQuantificationId);
+
+    return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
+  }
+
+  /**
    * Retrieves statistics related to the approval of facility forecasting for a specific program.
    * The statistics include total facilities number, the number and percentage of bottom-up
    * quantifications submitted.

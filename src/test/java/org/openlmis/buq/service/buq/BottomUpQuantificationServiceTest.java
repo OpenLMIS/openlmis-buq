@@ -362,7 +362,7 @@ public class BottomUpQuantificationServiceTest {
   }
 
   @Test(expected = ValidationMessageException.class)
-  public void shouldThrowValidationMessageExceptionIfBuqIsInvalid() {
+  public void shouldThrowValidationMessageExceptionIfBuqIsInvalidForAuthorize() {
     UUID invalidBottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
         .withId(invalidBottomUpQuantificationId).build();
@@ -397,6 +397,48 @@ public class BottomUpQuantificationServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
 
     bottomUpQuantificationService.delete(bottomUpQuantification);
+  }
+
+  @Test
+  public void shouldApproveBottomUpQuantification() {
+    UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .withId(bottomUpQuantificationId).build();
+    BottomUpQuantificationDto bottomUpQuantificationDto = BottomUpQuantificationDto
+        .newInstance(bottomUpQuantification);
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
+    doNothing().when(validator).validateCanBeApproved(bottomUpQuantificationDto,
+        bottomUpQuantificationId);
+    when(bottomUpQuantificationRepository.save(any())).thenReturn(new BottomUpQuantification());
+
+    mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
+
+    BottomUpQuantification result = bottomUpQuantificationService
+        .approve(bottomUpQuantificationDto, bottomUpQuantificationId);
+    List<BottomUpQuantificationStatusChange> resultStatusChanges = result.getStatusChanges();
+
+    assertNotNull(result);
+    assertEquals(bottomUpQuantification, result);
+    assertEquals(BottomUpQuantificationStatus.APPROVED,
+        resultStatusChanges.get(resultStatusChanges.size() - 1).getStatus());
+    assertEquals(BottomUpQuantificationStatus.APPROVED, result.getStatus());
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowValidationMessageExceptionIfBuqIsInvalidForApprove() {
+    UUID invalidBottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .withId(invalidBottomUpQuantificationId).build();
+    BottomUpQuantificationDto invalidBottomUpQuantificationDto = BottomUpQuantificationDto
+        .newInstance(bottomUpQuantification);
+    mockUserHomeFacilityPermission(invalidBottomUpQuantificationDto);
+
+    doThrow(ValidationMessageException.class).when(validator)
+        .validateCanBeApproved(invalidBottomUpQuantificationDto,
+            invalidBottomUpQuantificationId);
+
+    bottomUpQuantificationService.approve(invalidBottomUpQuantificationDto,
+        invalidBottomUpQuantificationId);
   }
 
   @Test

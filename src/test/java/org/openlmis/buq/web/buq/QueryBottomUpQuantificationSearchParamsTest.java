@@ -80,7 +80,7 @@ public class QueryBottomUpQuantificationSearchParamsTest {
     exception.expect(ValidationMessageException.class);
     exception.expectMessage(ERROR_INVALID_PARAMETER_BOTTOM_UP_QUANTIFICATION_STATUS);
 
-    queryMap.add(STATUS, BottomUpQuantificationStatus.APPROVED_BY_DP.toString());
+    queryMap.add(STATUS, BottomUpQuantificationStatus.IN_APPROVAL.toString());
     queryMap.add(STATUS, "INVALID_STATUS");
     QueryBottomUpQuantificationSearchParams params =
         new QueryBottomUpQuantificationSearchParams(queryMap);

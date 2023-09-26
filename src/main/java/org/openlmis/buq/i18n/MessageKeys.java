@@ -55,6 +55,7 @@ public abstract class MessageKeys {
   private static final String PREPARE = "prepare";
   private static final String SUBMIT = "submit";
   private static final String AUTHORIZE = "authorize";
+  private static final String APPROVE = "approve";
   private static final String PERIOD_FACILITY_UNIQUE = "periodAndFacilityUnique";
   private static final String AND = "and";
 
@@ -97,7 +98,9 @@ public abstract class MessageKeys {
   public static final String ERROR_MUST_BE_DRAFT_TO_BE_SUBMITTED = join(ERROR_PREFIX, SUBMIT,
       "mustBeDraftToBeSubmitted");
   public static final String ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED = join(ERROR_PREFIX,
-      AUTHORIZE, "mustBeSubmittedToBeAuthorize");
+      AUTHORIZE, "mustBeSubmittedToBeAuthorized");
+  public static final String ERROR_MUST_BE_AUTHORIZED_TO_BE_APPROVED = join(ERROR_PREFIX,
+      APPROVE, "mustBeAuthorizedToBeApproved");
   public static final String ERROR_LINE_ITEM_FIELD_REQUIRED = join(ERROR_PREFIX, LINE_ITEM, FIELD,
       REQUIRED);
   public static final String ERROR_LINE_ITEM_FIELD_MUST_BE_NON_NEGATIVE = join(ERROR_PREFIX,

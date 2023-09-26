@@ -69,14 +69,15 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String DOWNLOAD_URL = ID_URL + "/download";
   private static final String AUTHORIZE_URL = ID_URL + "/authorize";
   private static final String SUBMIT_URL = ID_URL + "/submit";
+  private static final String APPROVE_URL = ID_URL + "/approve";
   private static final String APPROVE_FACILITY_FORECASTING_STATUS_URL = RESOURCE_URL
       + "/approveFacilityForecastingStats";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String STATUS = "status";
-  public static final String PROGRAM_ID = "programId";
-  public static final String FACILITY_ID = "facilityId";
-  public static final String PROCESSING_PERIOD_ID = "processingPeriodId";
+  private static final String PROGRAM_ID = "programId";
+  private static final String FACILITY_ID = "facilityId";
+  private static final String PROCESSING_PERIOD_ID = "processingPeriodId";
 
   private final BottomUpQuantification bottomUpQuantification =
       new BottomUpQuantificationDataBuilder().build();
@@ -224,7 +225,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   public void shouldUpdateBottomUpQuantification() {
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
         .willReturn(true);
-    given(bottomUpQuantificationService.authorize(any(BottomUpQuantificationDto.class),
+    given(bottomUpQuantificationService.save(any(BottomUpQuantificationDto.class),
         eq(bottomUpQuantificationDto.getId())))
         .willReturn(bottomUpQuantification);
 
@@ -235,7 +236,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .pathParam(ID, bottomUpQuantificationDto.getId().toString())
         .body(bottomUpQuantificationDto)
         .when()
-        .post(AUTHORIZE_URL)
+        .put(ID_URL)
         .then()
         .statusCode(HttpStatus.SC_OK)
         .body(ID, Matchers.is(bottomUpQuantification.getId().toString()))
@@ -333,9 +334,31 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   }
 
   @Test
-  public void shouldSubmitBottomUpQuantification() {
+  public void shouldApproveBottomUpQuantification() {
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
-            .willReturn(true);
+        .willReturn(true);
+    given(bottomUpQuantificationService.approve(any(BottomUpQuantificationDto.class),
+        eq(bottomUpQuantificationDto.getId())))
+        .willReturn(bottomUpQuantification);
+
+    restAssured
+        .given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .pathParam(ID, bottomUpQuantificationDto.getId().toString())
+        .body(bottomUpQuantificationDto)
+        .when()
+        .post(APPROVE_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body(ID, Matchers.is(bottomUpQuantification.getId().toString()))
+        .body(STATUS, Matchers.is(bottomUpQuantification.getStatus().toString()));
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldSubmitBottomUpQuantification() {
     given(bottomUpQuantificationService
             .submitBottomUpQuantification(any(BottomUpQuantificationDto.class),
             eq(bottomUpQuantificationDto.getId())))
