@@ -19,11 +19,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.repository.BaseCustomRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
@@ -71,6 +74,19 @@ public class BottomUpQuantificationRepositoryImpl
         getEntities(bottomUpQuantificationCriteriaQuery, pageable);
     return Pagination.getPage(bottomUpQuantifications, pageable, count);
   }
+
+  /**
+   * Get all bottom-up quantifications that match any of the program/supervisoryNode pairs, that
+   * can be approved (AUTHORIZED, IN_APPROVAL). Pairs must not be null.
+   *
+   * @param programNodePairs program / supervisoryNode pairs.
+   * @return matching bottom-up quantifications.
+   */
+  public Page<BottomUpQuantification> searchApprovableByProgramSupervisoryNodePairs(
+      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable) {
+    return null;
+  }
+
 
   private <T> CriteriaQuery<T> prepareQuery(CriteriaBuilder builder,
       CriteriaQuery<T> query, BottomUpQuantificationSearchParams params, boolean count,

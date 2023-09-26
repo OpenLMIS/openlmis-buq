@@ -15,6 +15,9 @@
 
 package org.openlmis.buq.repository.buq.custom;
 
+import java.util.Set;
+import java.util.UUID;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
 import org.springframework.data.domain.Page;
@@ -24,5 +27,8 @@ public interface BottomUpQuantificationRepositoryCustom {
 
   Page<BottomUpQuantification> search(BottomUpQuantificationSearchParams searchParams,
       Pageable pageable);
+
+  Page<BottomUpQuantification> searchApprovableByProgramSupervisoryNodePairs(
+      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable);
 
 }

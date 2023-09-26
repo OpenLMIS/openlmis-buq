@@ -15,6 +15,8 @@
 
 package org.openlmis.buq.service.buq;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_ID_MISMATCH;
@@ -28,15 +30,19 @@ import java.time.ZonedDateTime;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
@@ -51,9 +57,11 @@ import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
+import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
+import org.openlmis.buq.dto.referencedata.RightDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
 import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
 import org.openlmis.buq.exception.BindingResultException;
@@ -69,14 +77,20 @@ import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.referencedata.RightReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
+import org.openlmis.buq.service.referencedata.UserRoleAssignmentsReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 import org.openlmis.buq.util.Message;
+import org.openlmis.buq.util.Pagination;
 import org.openlmis.buq.validate.BottomUpQuantificationValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -131,6 +145,12 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private BottomUpQuantificationStatusChangeRepository bottomUpQuantificationStatusChangeRepository;
+
+  @Autowired
+  private RightReferenceDataService rightReferenceDataService;
+
+  @Autowired
+  private UserRoleAssignmentsReferenceDataService userRoleAssignmentsReferenceDataService;
 
   private static final String MESSAGE_SEPARATOR = ":";
 
@@ -394,6 +414,39 @@ public class BottomUpQuantificationService {
 
     return new ApproveFacilityForecastingStats(totalFacilities, submittedBottomUpQuantifications,
         percentageOfSubmittedBottomUpQuantifications);
+  }
+
+  /**
+   * Get bottom-up quantifications to approve for the specified user.
+   */
+  public Page<BottomUpQuantification> getBottomUpQuantificationsForApproval(UUID programId,
+      Pageable pageable) {
+    UserDto user = authenticationHelper.getCurrentUser();
+
+    Page<BottomUpQuantification> bottomUpQuantificationsForApproval = Pagination.getPage(
+        Collections.emptyList(), pageable);
+    RightDto right = rightReferenceDataService.findRight(APPROVE_BUQ_RIGHT_NAME);
+    List<DetailedRoleAssignmentDto> roleAssignments = userRoleAssignmentsReferenceDataService
+        .getRoleAssignments(user.getId())
+        .stream()
+        .filter(r -> r.getRole().getRights().contains(right))
+        .collect(toList());
+
+    if (!CollectionUtils.isEmpty(roleAssignments)) {
+      Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
+          .stream()
+          .filter(item -> Objects.nonNull(item.getRole().getId()))
+          .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
+          .filter(item -> Objects.nonNull(item.getProgramId()))
+          .filter(item -> null == programId || programId.equals(item.getProgramId()))
+          .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
+          .collect(toSet());
+
+      bottomUpQuantificationsForApproval = bottomUpQuantificationRepository
+          .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
+    }
+
+    return bottomUpQuantificationsForApproval;
   }
 
   Map<String, Message> getErrors(BindingResult bindingResult) {
