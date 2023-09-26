@@ -21,13 +21,19 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
+import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
+import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
 import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
+import org.openlmis.buq.service.buq.RejectionService;
+import org.openlmis.buq.util.BottomUpQuantificationStatusChangeComparatorByDate;
 import org.openlmis.buq.util.Pagination;
 import org.openlmis.buq.web.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +77,9 @@ public class BottomUpQuantificationController extends BaseController {
 
   @Autowired
   private BottomUpQuantificationDtoBuilder bottomUpQuantificationDtoBuilder;
+
+  @Autowired
+  private RejectionService rejectionService;
 
   /**
    * Retrieves all BottomUpQuantifications that match the parameters passed.
@@ -245,6 +254,55 @@ public class BottomUpQuantificationController extends BaseController {
   public ApproveFacilityForecastingStats getApproveFacilityForecastingStats(
       @RequestParam(value = "programId") UUID programId) {
     return bottomUpQuantificationService.getApproveFacilityForecastingStats(programId);
+  }
+
+  /**
+   * Rejects given bottom-up quantification.
+   *
+   * @param bottomUpQuantificationId UUID of BottomUpQuantification to authorize.
+   * @param rejectionDto DTO of Rejection
+   * @return rejected BottomUpQuantification.
+   */
+  @PostMapping("/{id}/reject")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public BottomUpQuantificationDto reject(@PathVariable("id") UUID bottomUpQuantificationId,
+      @RequestBody RejectionDto rejectionDto) {
+    BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
+            .reject(bottomUpQuantificationId, rejectionDto);
+    return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
+  }
+
+  /**
+   * Returns the latest rejection.
+   *
+   * @param bottomUpQuantificationId UUID of BottomUpQuantification to authorize.
+   * @return rejectionDto
+   */
+  @GetMapping("/{id}/mostRecentRejection")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public RejectionDto getMostRecentRejection(@PathVariable("id") UUID bottomUpQuantificationId) {
+    BottomUpQuantification bottomUpQuantification =
+            bottomUpQuantificationService.findBottomUpQuantification(bottomUpQuantificationId);
+    BottomUpQuantificationStatusChange latestRejection = bottomUpQuantification
+            .getStatusChanges()
+            .stream()
+            .filter(bottomUpQuantificationStatusChange ->
+                    bottomUpQuantificationStatusChange.getStatus()
+                            == BottomUpQuantificationStatus.REJECTED)
+            .sorted(new BottomUpQuantificationStatusChangeComparatorByDate())
+            .collect(Collectors.toList())
+            .get(0);
+    Rejection rejection = rejectionService.findByStatusChange(latestRejection);
+    return RejectionDto.newInstance(rejection);
+  }
+
+  @GetMapping("/rejections")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public List<Rejection> getRejections() {
+    return rejectionService.findAll();
   }
 
   /**
