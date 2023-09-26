@@ -301,13 +301,6 @@ public class BottomUpQuantificationController extends BaseController {
     return RejectionDto.newInstance(rejection);
   }
 
-  @GetMapping("/rejections")
-  @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
-  public List<Rejection> getRejections() {
-    return rejectionService.findAll();
-  }
-
   /**
    * Retrieves audit information related to the specified bottom-up quantification.
    *
