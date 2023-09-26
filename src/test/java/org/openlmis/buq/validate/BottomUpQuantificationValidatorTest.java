@@ -78,7 +78,7 @@ public class BottomUpQuantificationValidatorTest {
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionIfStatusIsNotAuthorizedForRejection() {
     BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
-            .withStatus(BottomUpQuantificationStatus.APPROVED_BY_DP)
+            .withStatus(BottomUpQuantificationStatus.IN_APPROVAL)
             .build();
 
     validator.validateCanBeRejected(target);

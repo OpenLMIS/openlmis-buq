@@ -105,7 +105,6 @@ public abstract class MessageKeys {
       AUTHORIZE, "mustBeSubmittedToBeAuthorized");
   public static final String ERROR_MUST_BE_AUTHORIZED_TO_BE_APPROVED = join(ERROR_PREFIX,
       APPROVE, "mustBeAuthorizedToBeApproved");
-      AUTHORIZE, "mustBeSubmittedToBeAuthorize");
   public static final String ERROR_MUST_BE_AUTHORIZED_TO_BE_REJECTED = join(ERROR_PREFIX,
       REJECT, "mustBeAuthorizedToBeRejected");
   public static final String ERROR_LINE_ITEM_FIELD_REQUIRED = join(ERROR_PREFIX, LINE_ITEM, FIELD,

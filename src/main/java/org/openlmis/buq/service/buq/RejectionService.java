@@ -16,6 +16,7 @@
 package org.openlmis.buq.service.buq;
 
 import java.util.List;
+import java.util.UUID;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
 
@@ -26,4 +27,6 @@ public interface RejectionService {
   Rejection findByStatusChange(BottomUpQuantificationStatusChange statusChange);
 
   List<Rejection> findAll();
+
+  Rejection getLatestRejection(UUID bottomUpQuantificationId);
 }

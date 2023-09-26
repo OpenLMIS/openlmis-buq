@@ -21,8 +21,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
@@ -33,7 +31,6 @@ import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
 import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 import org.openlmis.buq.service.buq.RejectionService;
-import org.openlmis.buq.util.BottomUpQuantificationStatusChangeComparatorByDate;
 import org.openlmis.buq.util.Pagination;
 import org.openlmis.buq.web.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -283,22 +280,8 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public RejectionDto getMostRecentRejection(@PathVariable("id") UUID bottomUpQuantificationId) {
-    BottomUpQuantification bottomUpQuantification =
-            bottomUpQuantificationService.findBottomUpQuantification(bottomUpQuantificationId);
-    List<BottomUpQuantificationStatusChange> rejectedStatuses = bottomUpQuantification
-            .getStatusChanges()
-            .stream()
-            .filter(bottomUpQuantificationStatusChange ->
-                    bottomUpQuantificationStatusChange.getStatus()
-                            == BottomUpQuantificationStatus.REJECTED)
-            .sorted(new BottomUpQuantificationStatusChangeComparatorByDate())
-            .collect(Collectors.toList());
-    BottomUpQuantificationStatusChange latestRejection = null;
-    if (!rejectedStatuses.isEmpty()) {
-      latestRejection = rejectedStatuses.get(0);
-    }
-    Rejection rejection = rejectionService.findByStatusChange(latestRejection);
-    return RejectionDto.newInstance(rejection);
+    Rejection latestRejection = rejectionService.getLatestRejection(bottomUpQuantificationId);
+    return RejectionDto.newInstance(latestRejection);
   }
 
   /**

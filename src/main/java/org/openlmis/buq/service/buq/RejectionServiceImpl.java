@@ -16,13 +16,19 @@
 package org.openlmis.buq.service.buq;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.RejectionRepository;
+import org.openlmis.buq.util.BottomUpQuantificationStatusChangeComparatorByDate;
 import org.openlmis.buq.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,9 +39,13 @@ public class RejectionServiceImpl implements RejectionService {
 
   private final RejectionRepository rejectionRepository;
 
+  private final BottomUpQuantificationService bottomUpQuantificationService;
+
   @Autowired
-  RejectionServiceImpl(RejectionRepository rejectionRepository) {
+  RejectionServiceImpl(RejectionRepository rejectionRepository,
+       @Lazy BottomUpQuantificationService bottomUpQuantificationService) {
     this.rejectionRepository = rejectionRepository;
+    this.bottomUpQuantificationService = bottomUpQuantificationService;
   }
 
   @Override
@@ -53,5 +63,24 @@ public class RejectionServiceImpl implements RejectionService {
   @Override
   public List<Rejection> findAll() {
     return rejectionRepository.findAll();
+  }
+
+  @Override
+  public Rejection getLatestRejection(UUID bottomUpQuantificationId) {
+    BottomUpQuantification bottomUpQuantification =
+            bottomUpQuantificationService.findBottomUpQuantification(bottomUpQuantificationId);
+    List<BottomUpQuantificationStatusChange> rejectedStatuses = bottomUpQuantification
+            .getStatusChanges()
+            .stream()
+            .filter(bottomUpQuantificationStatusChange ->
+                    bottomUpQuantificationStatusChange.getStatus()
+                            == BottomUpQuantificationStatus.REJECTED)
+            .sorted(new BottomUpQuantificationStatusChangeComparatorByDate())
+            .collect(Collectors.toList());
+    BottomUpQuantificationStatusChange latestRejection = null;
+    if (!rejectedStatuses.isEmpty()) {
+      latestRejection = rejectedStatuses.get(0);
+    }
+    return findByStatusChange(latestRejection);
   }
 }
