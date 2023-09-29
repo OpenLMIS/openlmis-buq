@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Rejection",
+  "description": "Rejection",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "generalComments": {
+      "type": "string",
+      "title": "generalComments"
+    },
+    "createdDate": {
+      "type": "string",
+      "title": "createdDate"
+    },
+    "modifiedDate": {
+      "type": "string",
+      "title": "modifiedDate"
+    }
+  },
+  "required": [
+    "id"
+  ]
+}

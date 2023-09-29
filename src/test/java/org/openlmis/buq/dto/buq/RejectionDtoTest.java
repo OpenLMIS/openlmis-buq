@@ -13,37 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.domain.buq;
+package org.openlmis.buq.dto.buq;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
+import org.junit.Test;
+import org.openlmis.buq.ToStringTestUtils;
 
-@AllArgsConstructor
-public enum BottomUpQuantificationStatus {
+public class RejectionDtoTest {
 
-  DRAFT(1),
-  REJECTED(1),
-  SUBMITTED(2),
-  AUTHORIZED(3),
-  IN_APPROVAL(3),
-  APPROVED(4),
-  APPROVED_BY_NQT(5);
-
-  private int value;
-
-  @JsonIgnore
-  public boolean duringApproval() {
-    return value == 3;
+  @Test
+  public void shouldImplementToString() {
+    RejectionDto rejectionDto = new RejectionDto();
+    ToStringTestUtils.verify(RejectionDto.class, rejectionDto);
   }
-
-  @JsonIgnore
-  public boolean isPreAuthorize() {
-    return value == 1 || value == 2;
-  }
-
-  @JsonIgnore
-  public boolean isPostSubmitted() {
-    return value >= 2;
-  }
-
 }

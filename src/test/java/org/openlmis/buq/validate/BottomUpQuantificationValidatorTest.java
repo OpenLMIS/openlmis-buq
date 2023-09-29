@@ -76,6 +76,15 @@ public class BottomUpQuantificationValidatorTest {
   }
 
   @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionIfStatusIsNotAuthorizedForRejection() {
+    BottomUpQuantification target = new BottomUpQuantificationDataBuilder()
+            .withStatus(BottomUpQuantificationStatus.IN_APPROVAL)
+            .build();
+
+    validator.validateCanBeRejected(target);
+  }
+
+  @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionIfAnnualAdjustedConsumptionIsNullForSubmission() {
     UUID targetId = UUID.randomUUID();
     BottomUpQuantification target = new BottomUpQuantificationDataBuilder()

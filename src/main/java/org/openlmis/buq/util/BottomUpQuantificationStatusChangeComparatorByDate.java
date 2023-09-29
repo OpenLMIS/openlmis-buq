@@ -13,37 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.domain.buq;
+package org.openlmis.buq.util;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
+import java.util.Comparator;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 
-@AllArgsConstructor
-public enum BottomUpQuantificationStatus {
-
-  DRAFT(1),
-  REJECTED(1),
-  SUBMITTED(2),
-  AUTHORIZED(3),
-  IN_APPROVAL(3),
-  APPROVED(4),
-  APPROVED_BY_NQT(5);
-
-  private int value;
-
-  @JsonIgnore
-  public boolean duringApproval() {
-    return value == 3;
+/**
+ * Sorts BottomUpQuantificationStatusChange List by the occured date desc.
+ * (from the latest to the oldest).
+ */
+public class BottomUpQuantificationStatusChangeComparatorByDate
+        implements Comparator<BottomUpQuantificationStatusChange> {
+  @Override
+  public int compare(BottomUpQuantificationStatusChange o1, BottomUpQuantificationStatusChange o2) {
+    return o2.getOccurredDate().compareTo(o1.getOccurredDate());
   }
-
-  @JsonIgnore
-  public boolean isPreAuthorize() {
-    return value == 1 || value == 2;
-  }
-
-  @JsonIgnore
-  public boolean isPostSubmitted() {
-    return value >= 2;
-  }
-
 }

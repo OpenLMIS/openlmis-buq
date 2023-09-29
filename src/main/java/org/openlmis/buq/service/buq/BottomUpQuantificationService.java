@@ -45,8 +45,10 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
+import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
+import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
@@ -59,6 +61,7 @@ import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
@@ -121,6 +124,12 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private UserReferenceDataService userReferenceDataService;
+
+  @Autowired
+  private RejectionService rejectionService;
+
+  @Autowired
+  private BottomUpQuantificationStatusChangeRepository bottomUpQuantificationStatusChangeRepository;
 
   private static final String MESSAGE_SEPARATOR = ":";
 
@@ -224,6 +233,35 @@ public class BottomUpQuantificationService {
     bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
 
     return updatedBottomUpQuantification;
+  }
+
+  /**
+   * Rejects a bottomUpQuantification.
+   *
+   * @param rejectionDto DTO of rejection
+   * @param bottomUpQuantificationId id of bottomUpQuantification
+   * @return Bottom-up quantification dto with new data.
+   */
+  public BottomUpQuantification reject(UUID bottomUpQuantificationId, RejectionDto rejectionDto) {
+    BottomUpQuantification bottomUpQuantification =
+            findBottomUpQuantification(bottomUpQuantificationId);
+    validator.validateCanBeRejected(bottomUpQuantification);
+    bottomUpQuantification.setStatus(BottomUpQuantificationStatus.REJECTED);
+    BottomUpQuantificationStatusChange statusChange =
+            BottomUpQuantificationStatusChange.newInstance(
+              bottomUpQuantification,
+              authenticationHelper.getCurrentUser().getId(),
+              bottomUpQuantification.getStatus());
+
+    BottomUpQuantificationStatusChange persistedStatusChange =
+            bottomUpQuantificationStatusChangeRepository.save(statusChange);
+    Rejection rejection = Rejection.newInstance(rejectionDto);
+    bottomUpQuantification.getStatusChanges().add(persistedStatusChange);
+    rejection.setStatusChange(persistedStatusChange);
+    bottomUpQuantificationRepository.save(bottomUpQuantification);
+    rejectionService.save(rejection);
+    return bottomUpQuantification;
+
   }
 
   /**

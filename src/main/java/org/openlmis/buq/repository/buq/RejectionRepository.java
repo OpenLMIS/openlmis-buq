@@ -13,37 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.domain.buq;
+package org.openlmis.buq.repository.buq;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
+import java.util.Optional;
+import java.util.UUID;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
+import org.openlmis.buq.domain.buq.Rejection;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@AllArgsConstructor
-public enum BottomUpQuantificationStatus {
-
-  DRAFT(1),
-  REJECTED(1),
-  SUBMITTED(2),
-  AUTHORIZED(3),
-  IN_APPROVAL(3),
-  APPROVED(4),
-  APPROVED_BY_NQT(5);
-
-  private int value;
-
-  @JsonIgnore
-  public boolean duringApproval() {
-    return value == 3;
-  }
-
-  @JsonIgnore
-  public boolean isPreAuthorize() {
-    return value == 1 || value == 2;
-  }
-
-  @JsonIgnore
-  public boolean isPostSubmitted() {
-    return value >= 2;
-  }
-
+public interface RejectionRepository extends JpaRepository<Rejection, UUID> {
+  Optional<Rejection> findByStatusChange(BottomUpQuantificationStatusChange statusChange);
 }
