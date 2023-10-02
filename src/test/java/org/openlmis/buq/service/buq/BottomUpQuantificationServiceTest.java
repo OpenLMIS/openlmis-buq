@@ -70,6 +70,7 @@ import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
 import org.openlmis.buq.service.CsvService;
+import org.openlmis.buq.service.RequestParameters;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
@@ -218,24 +219,27 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationDto.setId(bottomUpQuantificationId);
     bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
     mockUserHomeFacilityPermission(bottomUpQuantificationDto);
+    List<BasicOrderableDto> orderables = new ArrayList<>();
+    orderables.add(new BasicOrderableDto());
+    orderables.add(new BasicOrderableDto());
+    when(orderableReferenceDataService
+        .findAll(RequestParameters.init().set("id", any(UUID.class))))
+        .thenReturn(orderables);
     BottomUpQuantificationLineItem lineItem1 =
-        new BottomUpQuantificationLineItemDataBuilder().build();
+            new BottomUpQuantificationLineItemDataBuilder().build();
     BottomUpQuantificationLineItem lineItem2 =
-        new BottomUpQuantificationLineItemDataBuilder().withRemark(null).build();
-    BottomUpQuantificationLineItemDto lineItemDto1 = BottomUpQuantificationLineItemDto
-        .newInstance(lineItem1);
-    BottomUpQuantificationLineItemDto lineItemDto2 = BottomUpQuantificationLineItemDto
-        .newInstance(lineItem2);
-    when(orderableReferenceDataService.findOne(any(UUID.class)))
-        .thenReturn(new BasicOrderableDto());
+            new BottomUpQuantificationLineItemDataBuilder().withRemark(null).build();
     when(remarkService.findOne(lineItem1.getRemark().getId()))
         .thenReturn(lineItem1.getRemark());
+    BottomUpQuantificationLineItemDto lineItemDto1 = BottomUpQuantificationLineItemDto
+            .newInstance(lineItem1);
+    BottomUpQuantificationLineItemDto lineItemDto2 = BottomUpQuantificationLineItemDto
+            .newInstance(lineItem2);
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Arrays.asList(lineItemDto1, lineItemDto2));
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
-
     BottomUpQuantification result = bottomUpQuantificationService.save(bottomUpQuantificationDto,
         bottomUpQuantificationId);
 
