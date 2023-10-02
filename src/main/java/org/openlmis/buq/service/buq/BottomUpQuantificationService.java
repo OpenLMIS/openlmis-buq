@@ -41,6 +41,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
@@ -423,8 +425,6 @@ public class BottomUpQuantificationService {
       Pageable pageable) {
     UserDto user = authenticationHelper.getCurrentUser();
 
-    Page<BottomUpQuantification> bottomUpQuantificationsForApproval = Pagination.getPage(
-        Collections.emptyList(), pageable);
     RightDto right = rightReferenceDataService.findRight(APPROVE_BUQ_RIGHT_NAME);
     List<DetailedRoleAssignmentDto> roleAssignments = userRoleAssignmentsReferenceDataService
         .getRoleAssignments(user.getId())
@@ -432,24 +432,24 @@ public class BottomUpQuantificationService {
         .filter(r -> r.getRole().getRights().contains(right))
         .collect(toList());
 
-    if (!CollectionUtils.isEmpty(roleAssignments)) {
-      Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
-          .stream()
-          .filter(item -> Objects.nonNull(item.getRole().getId()))
-          .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
-          .filter(item -> Objects.nonNull(item.getProgramId()))
-          .filter(item -> null == programId || programId.equals(item.getProgramId()))
-          .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
-          .collect(toSet());
-
-      bottomUpQuantificationsForApproval = bottomUpQuantificationRepository
-          .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
+    if (CollectionUtils.isEmpty(roleAssignments)) {
+      return Pagination.getPage(Collections.emptyList(), pageable);
     }
 
-    return bottomUpQuantificationsForApproval;
+    Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
+        .stream()
+        .filter(item -> Objects.nonNull(item.getRole().getId()))
+        .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
+        .filter(item -> Objects.nonNull(item.getProgramId()))
+        .filter(item -> null == programId || programId.equals(item.getProgramId()))
+        .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
+        .collect(toSet());
+
+    return bottomUpQuantificationRepository
+        .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
   }
 
-  Map<String, Message> getErrors(BindingResult bindingResult) {
+  private Map<String, Message> getErrors(BindingResult bindingResult) {
     Map<String, Message> errors = new HashMap<>();
 
     for (FieldError error : bindingResult.getFieldErrors()) {
