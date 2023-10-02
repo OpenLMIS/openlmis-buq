@@ -223,7 +223,7 @@ public class BottomUpQuantificationServiceTest {
     orderables.add(new BasicOrderableDto());
     orderables.add(new BasicOrderableDto());
     when(orderableReferenceDataService
-        .findAll(RequestParameters.init().set("id", any(UUID.class))))
+        .findAll(any(RequestParameters.class)))
         .thenReturn(orderables);
     BottomUpQuantificationLineItem lineItem1 =
             new BottomUpQuantificationLineItemDataBuilder().build();
@@ -269,10 +269,13 @@ public class BottomUpQuantificationServiceTest {
         new BottomUpQuantificationLineItemDataBuilder().build();
     when(remarkService.findOne(lineItem.getRemark().getId()))
         .thenThrow(NotFoundException.class);
-    final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
+    BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
         .newInstance(lineItem);
-    when(orderableReferenceDataService.findOne(lineItemDto.getOrderableId()))
-        .thenReturn(new BasicOrderableDto());
+    List<BasicOrderableDto> orderables = new ArrayList<>();
+    orderables.add(new BasicOrderableDto());
+    when(orderableReferenceDataService
+            .findAll(any(RequestParameters.class)))
+            .thenReturn(orderables);
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Collections.singletonList(lineItemDto)
     );
@@ -296,8 +299,9 @@ public class BottomUpQuantificationServiceTest {
         new BottomUpQuantificationLineItemDataBuilder().build();
     final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
         .newInstance(lineItem);
-    when(orderableReferenceDataService.findOne(lineItemDto.getOrderableId()))
-        .thenThrow(ContentNotFoundMessageException.class);
+    when(orderableReferenceDataService
+            .findAll(any(RequestParameters.class)))
+            .thenThrow(ContentNotFoundMessageException.class);
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Collections.singletonList(lineItemDto)
     );
