@@ -15,6 +15,7 @@
 
 package org.openlmis.buq.domain.buq;
 
+import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -108,13 +109,28 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
    * Updates data.
    */
   public void updateFrom(BottomUpQuantificationLineItem item) {
-    this.setAnnualAdjustedConsumption(item.getAnnualAdjustedConsumption());
-    this.setBottomUpQuantification(item.getBottomUpQuantification());
-    this.setForecastedDemand(item.getForecastedDemand());
-    this.setOrderableId(item.getOrderableId());
-    this.setRemark(item.getRemark());
-    this.setTotalCost(item.getTotalCost());
-    this.setVerifiedAnnualAdjustedConsumption(item.getVerifiedAnnualAdjustedConsumption());
+    if (!Objects.equals(getAnnualAdjustedConsumption(), item.getAnnualAdjustedConsumption())) {
+      this.setAnnualAdjustedConsumption(item.getAnnualAdjustedConsumption());
+    }
+    if (!Objects.equals(getBottomUpQuantification(), item.getBottomUpQuantification())) {
+      this.setBottomUpQuantification(item.getBottomUpQuantification());
+    }
+    if (!Objects.equals(getForecastedDemand(), item.getForecastedDemand())) {
+      this.setForecastedDemand(item.getForecastedDemand());
+    }
+    if (!Objects.equals(getOrderableId(), item.getOrderableId())) {
+      this.setOrderableId(item.getOrderableId());
+    }
+    if (!Objects.equals(getRemark(), item.getRemark())) {
+      this.setRemark(item.getRemark());
+    }
+    if (!Objects.equals(getTotalCost(), item.getTotalCost())) {
+      this.setTotalCost(item.getTotalCost());
+    }
+    if (!Objects.equals(getVerifiedAnnualAdjustedConsumption(),
+        item.getVerifiedAnnualAdjustedConsumption())) {
+      this.setVerifiedAnnualAdjustedConsumption(item.getVerifiedAnnualAdjustedConsumption());
+    }
   }
 
   public interface Exporter extends BaseExporter {
