@@ -17,7 +17,6 @@ package org.openlmis.buq.domain.buq;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -151,6 +150,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
         }
       }
 
+      bottomUpQuantificationLineItems.addAll(newItems);
       bottomUpQuantificationLineItems.removeAll(removedItems);
     }
     setModifiedDate(ZonedDateTime.now());
