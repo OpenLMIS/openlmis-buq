@@ -475,39 +475,26 @@ public class BottomUpQuantificationService {
     if (orderableDtos.size() != orderableIds.size()) {
       throw new ContentNotFoundMessageException(ERROR_ORDERABLE_NOT_FOUND);
     }
-    List<BottomUpQuantificationLineItem> itemsToUpdate = new ArrayList<>();
-    bottomUpQuantificationDto
+    List<BottomUpQuantificationLineItem> updatedLineItems = bottomUpQuantificationDto
         .getBottomUpQuantificationLineItems()
-        .forEach(lineItemDto -> {
+        .stream()
+        .map(lineItemDto -> {
           BottomUpQuantificationLineItem lineItem = BottomUpQuantificationLineItem
                   .newInstance(lineItemDto);
           lineItem.setBottomUpQuantification(bottomUpQuantificationToUpdate);
-          if (lineItemDto.getId() == null) {
-            lineItem.setId(lineItemDto.getId());
-            if (lineItemDto.getRemark() != null) {
-              Remark remark = remarkService.findOne(lineItemDto.getRemark().getId());
-              lineItem.setRemark(remark);
-            }
-            itemsToUpdate.add(lineItem);
-            return;
+          lineItem.setId(lineItemDto.getId());
+          if (lineItemDto.getRemark() != null) {
+            Remark remark = remarkService.findOne(lineItemDto.getRemark().getId());
+            lineItem.setRemark(remark);
           }
-          BottomUpQuantificationLineItem item = bottomUpQuantificationToUpdate
-                  .getBottomUpQuantificationLineItems()
-                  .stream()
-                  .filter(originalItem -> originalItem.getId().equals(lineItemDto.getId()))
-                  .findFirst()
-                  .orElse(null);
-          if (item != null && item.equals(lineItem)) {
-            itemsToUpdate.add(item);
-            return;
-          }
-          itemsToUpdate.add(lineItem);
 
-        });
+          return lineItem;
+        })
+        .collect(Collectors.toList());
 
     if (bottomUpQuantificationDto.getFundingDetails() != null) {
       BottomUpQuantificationFundingDetails fundingDetails = bottomUpQuantificationToUpdate
-          .getFundingDetails();
+              .getFundingDetails();
       fundingDetails.updateFrom(bottomUpQuantificationDto.getFundingDetails());
 
       List<BottomUpQuantificationSourceOfFund> updatedSourcesOfFunds = bottomUpQuantificationDto
@@ -515,7 +502,7 @@ public class BottomUpQuantificationService {
           .stream()
           .map(sourceOfFundsDto -> {
             BottomUpQuantificationSourceOfFund sourceOfFunds = BottomUpQuantificationSourceOfFund
-                .newInstance(sourceOfFundsDto);
+                    .newInstance(sourceOfFundsDto);
             sourceOfFunds.setFundingDetails(fundingDetails);
             sourceOfFunds.setId(sourceOfFundsDto.getId());
             if (sourceOfFundsDto.getSourceOfFund() != null) {
@@ -532,7 +519,7 @@ public class BottomUpQuantificationService {
       bottomUpQuantificationToUpdate.setFundingDetails(fundingDetails);
     }
 
-    bottomUpQuantificationToUpdate.updateFrom(itemsToUpdate);
+    bottomUpQuantificationToUpdate.updateFrom(updatedLineItems);
 
     return bottomUpQuantificationToUpdate;
   }

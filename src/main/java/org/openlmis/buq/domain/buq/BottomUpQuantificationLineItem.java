@@ -104,6 +104,9 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
     exporter.setRemark(remark);
   }
 
+  /**
+   * Updates data.
+   */
   public void updateFrom(BottomUpQuantificationLineItem item) {
     this.setAnnualAdjustedConsumption(item.getAnnualAdjustedConsumption());
     this.setBottomUpQuantification(item.getBottomUpQuantification());

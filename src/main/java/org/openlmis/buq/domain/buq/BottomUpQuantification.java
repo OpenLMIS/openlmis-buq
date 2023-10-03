@@ -141,9 +141,10 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
       final List<BottomUpQuantificationLineItem> removedItems = new ArrayList<>();
 
       for (BottomUpQuantificationLineItem existingItem : bottomUpQuantificationLineItems) {
-        final Optional<BottomUpQuantificationLineItem> updatedItemOpt = removeSameItem(existingItem, newItems);
+        final Optional<BottomUpQuantificationLineItem> updatedItemOpt =
+                removeSameItem(existingItem, newItems);
 
-        if( updatedItemOpt.isPresent() ) {
+        if (updatedItemOpt.isPresent()) {
           existingItem.updateFrom(updatedItemOpt.get());
         } else {
           removedItems.add(existingItem);
@@ -156,10 +157,12 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     setModifiedDate(ZonedDateTime.now());
   }
 
-  private Optional<BottomUpQuantificationLineItem> removeSameItem(BottomUpQuantificationLineItem item,
-                                                                  List<BottomUpQuantificationLineItem> items) {
-    final Iterator<BottomUpQuantificationLineItem> updatedItemIterator = items.iterator();
-    while ( updatedItemIterator.hasNext()) {
+  private Optional<BottomUpQuantificationLineItem> removeSameItem(
+      BottomUpQuantificationLineItem item,
+      List<BottomUpQuantificationLineItem> items) {
+    final Iterator<BottomUpQuantificationLineItem> updatedItemIterator =
+            items.iterator();
+    while (updatedItemIterator.hasNext()) {
       final BottomUpQuantificationLineItem updatedItem = updatedItemIterator.next();
 
       if (item.getId().equals(updatedItem.getId())) {
@@ -167,7 +170,6 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
         return Optional.of(updatedItem);
       }
     }
-
     return Optional.empty();
   }
 
