@@ -104,6 +104,16 @@ public class BottomUpQuantificationLineItem extends BaseEntity {
     exporter.setRemark(remark);
   }
 
+  public void updateFrom(BottomUpQuantificationLineItem item) {
+    this.setAnnualAdjustedConsumption(item.getAnnualAdjustedConsumption());
+    this.setBottomUpQuantification(item.getBottomUpQuantification());
+    this.setForecastedDemand(item.getForecastedDemand());
+    this.setOrderableId(item.getOrderableId());
+    this.setRemark(item.getRemark());
+    this.setTotalCost(item.getTotalCost());
+    this.setVerifiedAnnualAdjustedConsumption(item.getVerifiedAnnualAdjustedConsumption());
+  }
+
   public interface Exporter extends BaseExporter {
 
     void setOrderableId(UUID orderableId);
