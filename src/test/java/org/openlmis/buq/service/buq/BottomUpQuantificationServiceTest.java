@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -258,7 +257,6 @@ public class BottomUpQuantificationServiceTest {
   }
 
   @Test(expected = NotFoundException.class)
-  @Ignore
   public void shouldNotSaveBottomUpQuantificationWithInvalidRemarkId() {
     UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
