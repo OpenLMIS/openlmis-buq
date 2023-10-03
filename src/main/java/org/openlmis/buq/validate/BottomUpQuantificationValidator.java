@@ -76,8 +76,12 @@ public class BottomUpQuantificationValidator extends BaseValidator {
    * @throws ValidationMessageException If the target cannot be submitted.
    */
   public void validateCanBeSubmitted(BottomUpQuantificationDto target, UUID targetId) {
-    if (!bottomUpQuantificationService.findBottomUpQuantification(targetId).getStatus()
-        .equals(BottomUpQuantificationStatus.DRAFT)) {
+    BottomUpQuantificationStatus buqStatus =
+            bottomUpQuantificationService
+                    .findBottomUpQuantification(targetId)
+                    .getStatus();
+    if (!buqStatus.equals(BottomUpQuantificationStatus.DRAFT)
+        && !buqStatus.equals(BottomUpQuantificationStatus.REJECTED)) {
       throw new ValidationMessageException(new Message(ERROR_MUST_BE_DRAFT_TO_BE_SUBMITTED));
     } else {
       validateCanChangeStatus(target);
