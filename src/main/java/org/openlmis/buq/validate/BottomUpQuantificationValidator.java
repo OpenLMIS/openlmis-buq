@@ -20,7 +20,7 @@ import static org.openlmis.buq.i18n.MessageKeys.ERROR_LINE_ITEM_FIELD_REQUIRED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_LINE_ITEM_REMARK_REQUIRED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_MUST_BE_AUTHORIZED_TO_BE_APPROVED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_MUST_BE_AUTHORIZED_TO_BE_REJECTED;
-import static org.openlmis.buq.i18n.MessageKeys.ERROR_MUST_BE_DRAFT_TO_BE_SUBMITTED;
+import static org.openlmis.buq.i18n.MessageKeys.ERROR_MUST_BE_DRAFT_OR_REJECTED_TO_BE_SUBMITTED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PERIOD_FACILITY_PAIR_UNIQUE;
 
@@ -76,9 +76,14 @@ public class BottomUpQuantificationValidator extends BaseValidator {
    * @throws ValidationMessageException If the target cannot be submitted.
    */
   public void validateCanBeSubmitted(BottomUpQuantificationDto target, UUID targetId) {
-    if (!bottomUpQuantificationService.findBottomUpQuantification(targetId).getStatus()
-        .equals(BottomUpQuantificationStatus.DRAFT)) {
-      throw new ValidationMessageException(new Message(ERROR_MUST_BE_DRAFT_TO_BE_SUBMITTED));
+    BottomUpQuantificationStatus buqStatus =
+            bottomUpQuantificationService
+                    .findBottomUpQuantification(targetId)
+                    .getStatus();
+    if (!buqStatus.equals(BottomUpQuantificationStatus.DRAFT)
+        && !buqStatus.equals(BottomUpQuantificationStatus.REJECTED)) {
+      throw new ValidationMessageException(
+              new Message(ERROR_MUST_BE_DRAFT_OR_REJECTED_TO_BE_SUBMITTED));
     } else {
       validateCanChangeStatus(target);
     }
