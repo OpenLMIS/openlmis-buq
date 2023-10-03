@@ -475,24 +475,35 @@ public class BottomUpQuantificationService {
     if (orderableDtos.size() != orderableIds.size()) {
       throw new ContentNotFoundMessageException(ERROR_ORDERABLE_NOT_FOUND);
     }
-
-    List<BottomUpQuantificationLineItem> updatedLineItems = bottomUpQuantificationDto
+    List<BottomUpQuantificationLineItem> itemsToUpdate = new ArrayList<>();
+    bottomUpQuantificationDto
         .getBottomUpQuantificationLineItems()
-        .stream()
-        .map(lineItemDto -> {
-
+        .forEach(lineItemDto -> {
           BottomUpQuantificationLineItem lineItem = BottomUpQuantificationLineItem
-              .newInstance(lineItemDto);
+                  .newInstance(lineItemDto);
           lineItem.setBottomUpQuantification(bottomUpQuantificationToUpdate);
-          lineItem.setId(lineItemDto.getId());
-          if (lineItemDto.getRemark() != null) {
-            Remark remark = remarkService.findOne(lineItemDto.getRemark().getId());
-            lineItem.setRemark(remark);
+          if (lineItemDto.getId() == null) {
+            lineItem.setId(lineItemDto.getId());
+            if (lineItemDto.getRemark() != null) {
+              Remark remark = remarkService.findOne(lineItemDto.getRemark().getId());
+              lineItem.setRemark(remark);
+            }
+            itemsToUpdate.add(lineItem);
+            return;
           }
+          BottomUpQuantificationLineItem item = bottomUpQuantificationToUpdate
+                  .getBottomUpQuantificationLineItems()
+                  .stream()
+                  .filter(originalItem -> originalItem.getId().equals(lineItemDto.getId()))
+                  .findFirst()
+                  .orElse(null);
+          if (item != null && item.equals(lineItem)) {
+            itemsToUpdate.add(item);
+            return;
+          }
+          itemsToUpdate.add(lineItem);
 
-          return lineItem;
-        })
-        .collect(Collectors.toList());
+        });
 
     if (bottomUpQuantificationDto.getFundingDetails() != null) {
       BottomUpQuantificationFundingDetails fundingDetails = bottomUpQuantificationToUpdate
@@ -521,7 +532,7 @@ public class BottomUpQuantificationService {
       bottomUpQuantificationToUpdate.setFundingDetails(fundingDetails);
     }
 
-    bottomUpQuantificationToUpdate.updateFrom(updatedLineItems);
+    bottomUpQuantificationToUpdate.updateFrom(itemsToUpdate);
 
     return bottomUpQuantificationToUpdate;
   }

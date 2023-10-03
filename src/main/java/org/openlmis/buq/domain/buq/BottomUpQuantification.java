@@ -137,9 +137,10 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     if (lineItems != null) {
       bottomUpQuantificationLineItems.clear();
       bottomUpQuantificationLineItems.addAll(lineItems);
-      setModifiedDate(ZonedDateTime.now());
     }
+    setModifiedDate(ZonedDateTime.now());
   }
+
 
   /**
    * Check if the bottom-up quantification is post-submitted.
