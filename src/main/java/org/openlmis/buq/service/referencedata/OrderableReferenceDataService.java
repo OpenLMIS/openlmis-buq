@@ -44,6 +44,10 @@ public class OrderableReferenceDataService
     return getPage(RequestParameters.init()).getContent();
   }
 
+  public List<BasicOrderableDto> findAll(RequestParameters parameters) {
+    return getPage(parameters).getContent();
+  }
+
 
   /**
    * Returns the number of packs of product based on a given data.

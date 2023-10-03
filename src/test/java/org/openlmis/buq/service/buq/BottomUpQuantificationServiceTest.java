@@ -70,6 +70,7 @@ import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
 import org.openlmis.buq.service.CsvService;
+import org.openlmis.buq.service.RequestParameters;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
@@ -218,24 +219,25 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationDto.setId(bottomUpQuantificationId);
     bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
     mockUserHomeFacilityPermission(bottomUpQuantificationDto);
+    List<BasicOrderableDto> orderables = new ArrayList<>();
+    orderables.add(new BasicOrderableDto());
+    orderables.add(new BasicOrderableDto());
+    when(orderableReferenceDataService
+        .findAll(any(RequestParameters.class)))
+        .thenReturn(orderables);
     BottomUpQuantificationLineItem lineItem1 =
-        new BottomUpQuantificationLineItemDataBuilder().build();
+            new BottomUpQuantificationLineItemDataBuilder().build();
     BottomUpQuantificationLineItem lineItem2 =
-        new BottomUpQuantificationLineItemDataBuilder().withRemark(null).build();
+            new BottomUpQuantificationLineItemDataBuilder().withRemark(null).build();
     BottomUpQuantificationLineItemDto lineItemDto1 = BottomUpQuantificationLineItemDto
-        .newInstance(lineItem1);
+            .newInstance(lineItem1);
     BottomUpQuantificationLineItemDto lineItemDto2 = BottomUpQuantificationLineItemDto
-        .newInstance(lineItem2);
-    when(orderableReferenceDataService.findOne(any(UUID.class)))
-        .thenReturn(new BasicOrderableDto());
-    when(remarkService.findOne(lineItem1.getRemark().getId()))
-        .thenReturn(lineItem1.getRemark());
+            .newInstance(lineItem2);
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Arrays.asList(lineItemDto1, lineItemDto2));
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
-
     BottomUpQuantification result = bottomUpQuantificationService.save(bottomUpQuantificationDto,
         bottomUpQuantificationId);
 
@@ -265,10 +267,13 @@ public class BottomUpQuantificationServiceTest {
         new BottomUpQuantificationLineItemDataBuilder().build();
     when(remarkService.findOne(lineItem.getRemark().getId()))
         .thenThrow(NotFoundException.class);
-    final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
+    BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
         .newInstance(lineItem);
-    when(orderableReferenceDataService.findOne(lineItemDto.getOrderableId()))
-        .thenReturn(new BasicOrderableDto());
+    List<BasicOrderableDto> orderables = new ArrayList<>();
+    orderables.add(new BasicOrderableDto());
+    when(orderableReferenceDataService
+            .findAll(any(RequestParameters.class)))
+            .thenReturn(orderables);
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Collections.singletonList(lineItemDto)
     );
@@ -292,8 +297,9 @@ public class BottomUpQuantificationServiceTest {
         new BottomUpQuantificationLineItemDataBuilder().build();
     final BottomUpQuantificationLineItemDto lineItemDto = BottomUpQuantificationLineItemDto
         .newInstance(lineItem);
-    when(orderableReferenceDataService.findOne(lineItemDto.getOrderableId()))
-        .thenThrow(ContentNotFoundMessageException.class);
+    when(orderableReferenceDataService
+            .findAll(any(RequestParameters.class)))
+            .thenThrow(ContentNotFoundMessageException.class);
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Collections.singletonList(lineItemDto)
     );

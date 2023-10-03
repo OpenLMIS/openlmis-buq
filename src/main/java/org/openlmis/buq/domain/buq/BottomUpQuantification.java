@@ -17,7 +17,9 @@ package org.openlmis.buq.domain.buq;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -135,11 +137,42 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
    */
   public void updateFrom(List<BottomUpQuantificationLineItem> lineItems) {
     if (lineItems != null) {
-      bottomUpQuantificationLineItems.clear();
-      bottomUpQuantificationLineItems.addAll(lineItems);
-      setModifiedDate(ZonedDateTime.now());
+      final List<BottomUpQuantificationLineItem> newItems = new ArrayList<>(lineItems);
+      final List<BottomUpQuantificationLineItem> removedItems = new ArrayList<>();
+
+      for (BottomUpQuantificationLineItem existingItem : bottomUpQuantificationLineItems) {
+        final Optional<BottomUpQuantificationLineItem> updatedItemOpt =
+                removeSameItem(existingItem, newItems);
+
+        if (updatedItemOpt.isPresent()) {
+          existingItem.updateFrom(updatedItemOpt.get());
+        } else {
+          removedItems.add(existingItem);
+        }
+      }
+
+      bottomUpQuantificationLineItems.addAll(newItems);
+      bottomUpQuantificationLineItems.removeAll(removedItems);
     }
+    setModifiedDate(ZonedDateTime.now());
   }
+
+  private Optional<BottomUpQuantificationLineItem> removeSameItem(
+      BottomUpQuantificationLineItem item,
+      List<BottomUpQuantificationLineItem> items) {
+    final Iterator<BottomUpQuantificationLineItem> updatedItemIterator =
+            items.iterator();
+    while (updatedItemIterator.hasNext()) {
+      final BottomUpQuantificationLineItem updatedItem = updatedItemIterator.next();
+
+      if (item.getId().equals(updatedItem.getId())) {
+        updatedItemIterator.remove();
+        return Optional.of(updatedItem);
+      }
+    }
+    return Optional.empty();
+  }
+
 
   /**
    * Check if the bottom-up quantification is post-submitted.

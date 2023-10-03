@@ -64,6 +64,7 @@ import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.CsvService;
+import org.openlmis.buq.service.RequestParameters;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
@@ -465,15 +466,21 @@ public class BottomUpQuantificationService {
 
     BottomUpQuantification bottomUpQuantificationToUpdate =
         findBottomUpQuantification(bottomUpQuantificationId);
-
+    List<UUID> orderableIds = new ArrayList<>();
+    bottomUpQuantificationDto
+            .getBottomUpQuantificationLineItems()
+            .forEach(lineItemDto ->
+                orderableIds.add(lineItemDto.getOrderableId()));
+    List<BasicOrderableDto> orderableDtos = findOrderables(orderableIds);
+    if (orderableDtos.size() != orderableIds.size()) {
+      throw new ContentNotFoundMessageException(ERROR_ORDERABLE_NOT_FOUND);
+    }
     List<BottomUpQuantificationLineItem> updatedLineItems = bottomUpQuantificationDto
         .getBottomUpQuantificationLineItems()
         .stream()
         .map(lineItemDto -> {
-          findOrderable(lineItemDto.getOrderableId());
-
           BottomUpQuantificationLineItem lineItem = BottomUpQuantificationLineItem
-              .newInstance(lineItemDto);
+                  .newInstance(lineItemDto);
           lineItem.setBottomUpQuantification(bottomUpQuantificationToUpdate);
           lineItem.setId(lineItemDto.getId());
           if (lineItemDto.getRemark() != null) {
@@ -487,7 +494,7 @@ public class BottomUpQuantificationService {
 
     if (bottomUpQuantificationDto.getFundingDetails() != null) {
       BottomUpQuantificationFundingDetails fundingDetails = bottomUpQuantificationToUpdate
-          .getFundingDetails();
+              .getFundingDetails();
       fundingDetails.updateFrom(bottomUpQuantificationDto.getFundingDetails());
 
       List<BottomUpQuantificationSourceOfFund> updatedSourcesOfFunds = bottomUpQuantificationDto
@@ -495,7 +502,7 @@ public class BottomUpQuantificationService {
           .stream()
           .map(sourceOfFundsDto -> {
             BottomUpQuantificationSourceOfFund sourceOfFunds = BottomUpQuantificationSourceOfFund
-                .newInstance(sourceOfFundsDto);
+                    .newInstance(sourceOfFundsDto);
             sourceOfFunds.setFundingDetails(fundingDetails);
             sourceOfFunds.setId(sourceOfFundsDto.getId());
             if (sourceOfFundsDto.getSourceOfFund() != null) {
@@ -535,6 +542,13 @@ public class BottomUpQuantificationService {
   private BasicOrderableDto findOrderable(UUID orderableId) {
     return findResource(orderableId, orderableReferenceDataService::findOne,
         ERROR_ORDERABLE_NOT_FOUND);
+  }
+
+  private List<BasicOrderableDto> findOrderables(List<UUID> orderableIds) {
+    RequestParameters requestParameters = RequestParameters
+            .init()
+            .set("id", orderableIds);
+    return orderableReferenceDataService.findAll(requestParameters);
   }
 
   private <R> R findResource(UUID id, Function<UUID, R> finder, String errorMessage) {
