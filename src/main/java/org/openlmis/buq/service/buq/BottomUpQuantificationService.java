@@ -48,6 +48,7 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
+import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
@@ -278,7 +279,16 @@ public class BottomUpQuantificationService {
     validator.validateCanBeSubmitted(bottomUpQuantificationDto, id);
 
     BottomUpQuantification bottomUpQuantification = save(bottomUpQuantificationDto, id);
-    changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.SUBMITTED);
+    bottomUpQuantification.setStatus(BottomUpQuantificationStatus.SUBMITTED);
+    BottomUpQuantificationStatusChange statusChange =
+            BottomUpQuantificationStatusChange.newInstance(
+                    bottomUpQuantification,
+                    authenticationHelper.getCurrentUser().getId(),
+                    bottomUpQuantification.getStatus());
+
+    bottomUpQuantification.getStatusChanges().add(statusChange);
+
+
     return bottomUpQuantificationDtoBuilder
         .buildDto(bottomUpQuantification);
   }
@@ -466,14 +476,18 @@ public class BottomUpQuantificationService {
 
     BottomUpQuantification bottomUpQuantificationToUpdate =
         findBottomUpQuantification(bottomUpQuantificationId);
-    List<UUID> orderableIds = new ArrayList<>();
-    bottomUpQuantificationDto
-            .getBottomUpQuantificationLineItems()
-            .forEach(lineItemDto ->
-                orderableIds.add(lineItemDto.getOrderableId()));
-    List<BasicOrderableDto> orderableDtos = findOrderables(orderableIds);
-    if (orderableDtos.size() != orderableIds.size()) {
-      throw new ContentNotFoundMessageException(ERROR_ORDERABLE_NOT_FOUND);
+    List<BottomUpQuantificationLineItemDto> buqDtoLineItems =
+            bottomUpQuantificationDto.getBottomUpQuantificationLineItems();
+    if (!buqDtoLineItems.isEmpty()) {
+      List<UUID> orderableIds = new ArrayList<>();
+      bottomUpQuantificationDto
+              .getBottomUpQuantificationLineItems()
+              .forEach(lineItemDto ->
+                      orderableIds.add(lineItemDto.getOrderableId()));
+      List<BasicOrderableDto> orderableDtos = findOrderables(orderableIds);
+      if (orderableDtos.size() != orderableIds.size()) {
+        throw new ContentNotFoundMessageException(ERROR_ORDERABLE_NOT_FOUND);
+      }
     }
     List<BottomUpQuantificationLineItem> updatedLineItems = bottomUpQuantificationDto
         .getBottomUpQuantificationLineItems()
