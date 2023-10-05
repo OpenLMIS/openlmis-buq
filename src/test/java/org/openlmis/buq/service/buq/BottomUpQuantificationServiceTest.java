@@ -61,6 +61,7 @@ import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
+import org.openlmis.buq.dto.referencedata.SupervisoryNodeDto;
 import org.openlmis.buq.dto.referencedata.SupportedProgramDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
 import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
@@ -75,6 +76,7 @@ import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
@@ -127,6 +129,9 @@ public class BottomUpQuantificationServiceTest {
 
   @Mock
   private UserReferenceDataService userReferenceDataService;
+
+  @Mock
+  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
 
   public UUID facilityId = UUID.randomUUID();
   public UUID programId = UUID.randomUUID();
@@ -218,6 +223,7 @@ public class BottomUpQuantificationServiceTest {
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
     bottomUpQuantificationDto.setId(bottomUpQuantificationId);
     bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
+    bottomUpQuantificationDto.setStatus(BottomUpQuantificationStatus.DRAFT);
     mockUserHomeFacilityPermission(bottomUpQuantificationDto);
     List<BasicOrderableDto> orderables = new ArrayList<>();
     orderables.add(new BasicOrderableDto());
@@ -236,6 +242,7 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Arrays.asList(lineItemDto1, lineItemDto2));
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
     BottomUpQuantification result = bottomUpQuantificationService.save(bottomUpQuantificationDto,
@@ -452,10 +459,17 @@ public class BottomUpQuantificationServiceTest {
         .withId(bottomUpQuantificationId).build();
     BottomUpQuantificationDto bottomUpQuantificationDto = BottomUpQuantificationDto
         .newInstance(bottomUpQuantification);
+    bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
+    bottomUpQuantificationDto.setStatus(BottomUpQuantificationStatus.DRAFT);
     mockUserHomeFacilityPermission(bottomUpQuantificationDto);
     doNothing().when(validator).validateCanBeApproved(bottomUpQuantificationDto,
         bottomUpQuantificationId);
-    when(bottomUpQuantificationRepository.save(any())).thenReturn(new BottomUpQuantification());
+    BottomUpQuantification buq = new BottomUpQuantification();
+    buq.setStatus(BottomUpQuantificationStatus.DRAFT);
+    when(bottomUpQuantificationRepository.save(any())).thenReturn(buq);
+    when(supervisoryNodeReferenceDataService
+            .findSupervisoryNode(any(UUID.class), any(UUID.class)))
+            .thenReturn(new SupervisoryNodeDto());
 
     mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
 
