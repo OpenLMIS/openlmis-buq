@@ -13,22 +13,40 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.repository.buq.custom;
+package org.openlmis.buq.dto.referencedata;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.commons.lang3.tuple.Pair;
-import org.openlmis.buq.domain.buq.BottomUpQuantification;
-import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.openlmis.buq.dto.BaseDto;
 
-public interface BottomUpQuantificationRepositoryCustom {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public final class RequisitionGroupDto extends BaseDto {
 
-  Page<BottomUpQuantification> search(BottomUpQuantificationSearchParams searchParams,
-      Pageable pageable);
+  private String code;
+  private String name;
+  private String description;
+  private SupervisoryNodeDto supervisoryNode;
+  private Set<FacilityDto> memberFacilities;
 
-  Page<BottomUpQuantification> searchApprovableByProgramSupervisoryNodePairs(
-      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable);
+  /**
+   * Checks if there is a facility with the given ID in this requisition group.
+   */
+  public boolean hasFacility(UUID facilityId) {
+    return memberFacilities
+        .stream()
+        .anyMatch(facility -> Objects.equals(facilityId, facility.getId()));
+  }
 
 }

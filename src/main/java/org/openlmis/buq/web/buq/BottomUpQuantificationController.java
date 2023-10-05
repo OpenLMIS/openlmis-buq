@@ -254,6 +254,30 @@ public class BottomUpQuantificationController extends BaseController {
   }
 
   /**
+   * Get bottom-up quantifications to approve for right supervisor.
+   *
+   * @param pageable object used to encapsulate the pagination related values: page, size and sort.
+   * @return List of bottom-up quantifications to approve.
+   */
+  @GetMapping(value = "/forApproval")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public Page<BottomUpQuantificationDto> getForApproval(Pageable pageable,
+      @RequestParam(value = "programId") UUID programId) {
+    Page<BottomUpQuantification> bottomUpQuantificationsForApproval =
+        bottomUpQuantificationService.getBottomUpQuantificationsForApproval(programId, pageable);
+
+    List<BottomUpQuantificationDto> content = bottomUpQuantificationsForApproval
+        .getContent()
+        .stream()
+        .map(buq -> bottomUpQuantificationDtoBuilder.buildDto(buq))
+        .collect(Collectors.toList());
+
+    return Pagination.getPage(content, pageable,
+        bottomUpQuantificationsForApproval.getTotalElements());
+  }
+
+  /**
    * Rejects given bottom-up quantification.
    *
    * @param bottomUpQuantificationId UUID of BottomUpQuantification to authorize.

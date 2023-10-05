@@ -13,20 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.repository.buq;
+package org.openlmis.buq.dto.referencedata;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 
-@Repository
-public interface BottomUpQuantificationStatusChangeRepository
-    extends JpaRepository<BottomUpQuantificationStatusChange, UUID> {
+import java.util.Set;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
+import org.junit.Test;
 
-  List<BottomUpQuantificationStatusChange> findByBottomUpQuantificationIdIn(
-      Collection<UUID> bottomUpQuantificationIds);
+public class RightDtoTest {
+
+  @Test
+  public void equalsContract() {
+    RightDto right = new RightDto();
+
+    EqualsVerifier
+        .forClass(RightDto.class)
+        .withPrefabValues(Set.class, emptySet(), singleton(right))
+        .withRedefinedSuperclass()
+        .suppress(Warning.NONFINAL_FIELDS) // fields in DTO cannot be final
+        .verify();
+  }
 
 }

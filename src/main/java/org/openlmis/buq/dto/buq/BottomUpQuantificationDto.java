@@ -84,6 +84,10 @@ public final class BottomUpQuantificationDto extends BaseDto
   @Setter
   private BottomUpQuantificationFundingDetailsDto fundingDetails;
 
+  @Getter
+  @Setter
+  private UUID supervisoryNodeId;
+
   /**
    * Creates new instance based on domain object.
    */

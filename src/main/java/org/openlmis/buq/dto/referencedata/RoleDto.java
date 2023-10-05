@@ -13,20 +13,27 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.repository.buq;
+package org.openlmis.buq.dto.referencedata;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.openlmis.buq.dto.BaseDto;
 
-@Repository
-public interface BottomUpQuantificationStatusChangeRepository
-    extends JpaRepository<BottomUpQuantificationStatusChange, UUID> {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public final class RoleDto extends BaseDto {
 
-  List<BottomUpQuantificationStatusChange> findByBottomUpQuantificationIdIn(
-      Collection<UUID> bottomUpQuantificationIds);
+  private String name;
+  private String description;
+  private Set<RightDto> rights;
 
 }

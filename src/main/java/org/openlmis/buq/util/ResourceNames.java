@@ -13,20 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.repository.buq;
+package org.openlmis.buq.util;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+public class ResourceNames {
 
-@Repository
-public interface BottomUpQuantificationStatusChangeRepository
-    extends JpaRepository<BottomUpQuantificationStatusChange, UUID> {
+  public static final String SEPARATOR = "/";
+  public static final String BASE_PATH = "/api";
 
-  List<BottomUpQuantificationStatusChange> findByBottomUpQuantificationIdIn(
-      Collection<UUID> bottomUpQuantificationIds);
+  private ResourceNames() {
+    throw new UnsupportedOperationException();
+  }
 
 }

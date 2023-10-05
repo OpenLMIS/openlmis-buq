@@ -43,6 +43,8 @@ public class BottomUpQuantificationDataBuilder {
       Lists.newArrayList();
   private BottomUpQuantificationFundingDetails fundingDetails = null;
 
+  private UUID supervisoryNodeId = UUID.randomUUID();
+
   /**
    * Creates new instance of {@link BottomUpQuantification}.
    */
@@ -60,7 +62,8 @@ public class BottomUpQuantificationDataBuilder {
   public BottomUpQuantification buildAsNew() {
     BottomUpQuantification buq = new BottomUpQuantification(
         facilityId, programId, processingPeriodId, targetYear,
-        buqStatus, buqLineItems, statusChanges, fundingDetails
+        buqStatus, buqLineItems, statusChanges, fundingDetails,
+        supervisoryNodeId
     );
     buq.setCreatedDate(createdDate);
     buq.setModifiedDate(modifiedDate);

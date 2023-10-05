@@ -13,43 +13,47 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.domain;
+package org.openlmis.buq.dto.referencedata;
+
+import static org.apache.commons.lang3.StringUtils.joinWith;
+import static org.openlmis.buq.util.ResourceNames.BASE_PATH;
+import static org.openlmis.buq.util.ResourceNames.SEPARATOR;
 
 import java.util.UUID;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
+import org.openlmis.buq.dto.BaseDto;
 
-@MappedSuperclass
-@EqualsAndHashCode
+@Getter
+@EqualsAndHashCode(callSuper = true)
 @ToString
-public abstract class BaseEntity {
+public class ObjectReferenceDto extends BaseDto {
 
-  private static final String UUID_TYPE = "pg-uuid";
-
-  public static final String CREATED_DATE = "createdDate";
-
-  @Id
-  @GeneratedValue(generator = "uuid-gen")
-  @GenericGenerator(name = "uuid-gen",
-      strategy = "org.openlmis.buq.domain.ConditionalUuidGenerator")
-  @Type(type = UUID_TYPE)
-  @Getter
   @Setter
-  private UUID id;
+  private String href;
 
-  public interface BaseExporter {
-    void setId(UUID id);
+  public ObjectReferenceDto() {
+    this(null);
   }
 
-  public interface BaseImporter {
-    UUID getId();
+  public ObjectReferenceDto(UUID id) {
+    this(id, null);
+  }
+
+  /**
+   * Returns new object reference.
+   *
+   * @param id   object id
+   */
+  public ObjectReferenceDto(UUID id, String serviceUrl, String resourceName) {
+    this(id, joinWith(SEPARATOR, serviceUrl + BASE_PATH, resourceName, id));
+  }
+
+  private ObjectReferenceDto(UUID id, String href) {
+    super(id);
+    this.href = href;
   }
 
 }

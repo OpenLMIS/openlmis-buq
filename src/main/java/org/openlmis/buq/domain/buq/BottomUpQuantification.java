@@ -48,6 +48,12 @@ import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 @ToString(callSuper = true)
 public class BottomUpQuantification extends BaseTimestampedEntity {
 
+  public static final String STATUS = "status";
+  public static final String FACILITY_ID = "facilityId";
+  public static final String PROGRAM_ID = "programId";
+  public static final String SUPERVISORY_NODE_ID = "supervisoryNodeId";
+  public static final String STATUS_CHANGES = "statusChanges";
+
   @NotNull
   @Getter
   @Setter
@@ -96,6 +102,10 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
   @Getter
   @Setter
   private BottomUpQuantificationFundingDetails fundingDetails;
+
+  @Getter
+  @Setter
+  private UUID supervisoryNodeId;
 
   /**
    * Constructor.
@@ -182,6 +192,10 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     return status.isPostSubmitted();
   }
 
+  public boolean isApprovable() {
+    return status.duringApproval();
+  }
+
   /**
    * Export this object to the specified exporter (DTO).
    *
@@ -197,6 +211,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     exporter.setTargetYear(targetYear);
     exporter.setStatus(status);
     exporter.setFundingDetails(fundingDetails);
+    exporter.setSupervisoryNodeId(supervisoryNodeId);
   }
 
   public interface Exporter extends BaseTimestampedExporter {
@@ -213,6 +228,8 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
 
     void setFundingDetails(BottomUpQuantificationFundingDetails fundingDetails);
 
+    void setSupervisoryNodeId(UUID supervisoryNodeId);
+
   }
 
   public interface Importer extends BaseTimestampedImporter {
@@ -228,6 +245,8 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     BottomUpQuantificationStatus getStatus();
 
     List<BottomUpQuantificationLineItemDto> getBottomUpQuantificationLineItems();
+
+    UUID getSupervisoryNodeId();
 
   }
 

@@ -13,20 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.repository.buq;
+package org.openlmis.buq.service.referencedata;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.openlmis.buq.dto.referencedata.RequisitionGroupDto;
+import org.springframework.stereotype.Service;
 
-@Repository
-public interface BottomUpQuantificationStatusChangeRepository
-    extends JpaRepository<BottomUpQuantificationStatusChange, UUID> {
+@Service
+public class RequisitionGroupReferenceDataService
+    extends BaseReferenceDataService<RequisitionGroupDto> {
 
-  List<BottomUpQuantificationStatusChange> findByBottomUpQuantificationIdIn(
-      Collection<UUID> bottomUpQuantificationIds);
+  @Override
+  protected String getUrl() {
+    return "/api/requisitionGroups/";
+  }
+
+  @Override
+  protected Class<RequisitionGroupDto> getResultClass() {
+    return RequisitionGroupDto.class;
+  }
+
+  @Override
+  protected Class<RequisitionGroupDto[]> getArrayResultClass() {
+    return RequisitionGroupDto[].class;
+  }
 
 }
