@@ -97,6 +97,10 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
   @Setter
   private BottomUpQuantificationFundingDetails fundingDetails;
 
+  @Getter
+  @Setter
+  private UUID supervisoryNodeId;
+
   /**
    * Constructor.
    *
@@ -182,6 +186,10 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     return status.isPostSubmitted();
   }
 
+  public boolean isApprovable() {
+    return status.duringApproval();
+  }
+
   /**
    * Export this object to the specified exporter (DTO).
    *
@@ -197,6 +205,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     exporter.setTargetYear(targetYear);
     exporter.setStatus(status);
     exporter.setFundingDetails(fundingDetails);
+    exporter.setSupervisoryNodeId(supervisoryNodeId);
   }
 
   public interface Exporter extends BaseTimestampedExporter {
@@ -213,6 +222,8 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
 
     void setFundingDetails(BottomUpQuantificationFundingDetails fundingDetails);
 
+    void setSupervisoryNodeId(UUID supervisoryNodeId);
+
   }
 
   public interface Importer extends BaseTimestampedImporter {
@@ -228,6 +239,8 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     BottomUpQuantificationStatus getStatus();
 
     List<BottomUpQuantificationLineItemDto> getBottomUpQuantificationLineItems();
+
+    UUID getSupervisoryNodeId();
 
   }
 
