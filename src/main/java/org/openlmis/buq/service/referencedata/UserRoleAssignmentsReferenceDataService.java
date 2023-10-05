@@ -15,12 +15,15 @@
 
 package org.openlmis.buq.service.referencedata;
 
+import static java.util.stream.Collectors.toList;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.RightDto;
+import org.openlmis.buq.dto.referencedata.UserDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -100,6 +103,19 @@ public class UserRoleAssignmentsReferenceDataService extends
                                            List<UUID> facilitySupervisoryNodesIds) {
     return supervisoryNodeId == null
         || facilitySupervisoryNodesIds.contains(role.getSupervisoryNodeId());
+  }
+
+  /**
+   * Filters user roles by provided right.
+   *
+   * @param right             right to be checked
+   * @param user              UserDto to be checked
+   */
+  public List<DetailedRoleAssignmentDto> hasRight(UserDto user, RightDto right) {
+    return getRoleAssignments(user.getId())
+            .stream()
+            .filter(r -> r.getRole().getRights().contains(right))
+            .collect(toList());
   }
 
 }

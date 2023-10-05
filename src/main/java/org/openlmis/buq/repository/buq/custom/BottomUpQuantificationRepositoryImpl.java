@@ -15,6 +15,15 @@
 
 package org.openlmis.buq.repository.buq.custom;
 
+import static org.openlmis.buq.domain.BaseEntity.CREATED_DATE;
+import static org.openlmis.buq.domain.buq.BottomUpQuantification.FACILITY_ID;
+import static org.openlmis.buq.domain.buq.BottomUpQuantification.PROGRAM_ID;
+import static org.openlmis.buq.domain.buq.BottomUpQuantification.STATUS;
+import static org.openlmis.buq.domain.buq.BottomUpQuantification.STATUS_CHANGES;
+import static org.openlmis.buq.domain.buq.BottomUpQuantification.SUPERVISORY_NODE_ID;
+import static org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange.BOTTOM_UP_QUANTIFICATION;
+import static org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange.OCCURED_DATE;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,14 +58,6 @@ public class BottomUpQuantificationRepositoryImpl
     extends BaseCustomRepository<BottomUpQuantification>
     implements BottomUpQuantificationRepositoryCustom {
 
-  private static final String CREATED_DATE = "createdDate";
-  private static final String OCCURED_DATE = "occurredDate";
-  private static final String STATUS = "status";
-  private static final String BOTTOM_UP_QUANTIFICATION = "bottomUpQuantification";
-  private static final String FACILITY_ID = "facilityId";
-  private static final String PROGRAM_ID = "programId";
-  private static final String SUPERVISORY_NODE_ID = "supervisoryNodeId";
-  private static final String STATUS_CHANGES = "statusChanges";
   private static final String AUTHORIZED_DATE = "authorizedDate";
 
   @PersistenceContext

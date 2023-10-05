@@ -48,6 +48,12 @@ import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 @ToString(callSuper = true)
 public class BottomUpQuantification extends BaseTimestampedEntity {
 
+  public static final String STATUS = "status";
+  public static final String FACILITY_ID = "facilityId";
+  public static final String PROGRAM_ID = "programId";
+  public static final String SUPERVISORY_NODE_ID = "supervisoryNodeId";
+  public static final String STATUS_CHANGES = "statusChanges";
+
   @NotNull
   @Getter
   @Setter

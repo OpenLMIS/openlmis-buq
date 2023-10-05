@@ -39,6 +39,9 @@ import org.openlmis.buq.domain.BaseEntity;
 @AllArgsConstructor
 public class BottomUpQuantificationStatusChange extends BaseEntity {
 
+  public static final String OCCURED_DATE = "occurredDate";
+  public static final String BOTTOM_UP_QUANTIFICATION = "bottomUpQuantification";
+
   @ManyToOne(cascade = {CascadeType.REFRESH})
   @JoinColumn(name = "bottomUpQuantificationId", nullable = false)
   @Getter

@@ -33,6 +33,8 @@ public abstract class BaseEntity {
 
   private static final String UUID_TYPE = "pg-uuid";
 
+  public static final String CREATED_DATE = "createdDate";
+
   @Id
   @GeneratedValue(generator = "uuid-gen")
   @GenericGenerator(name = "uuid-gen",

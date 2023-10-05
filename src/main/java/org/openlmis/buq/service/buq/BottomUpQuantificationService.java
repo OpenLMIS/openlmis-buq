@@ -15,7 +15,6 @@
 
 package org.openlmis.buq.service.buq;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
@@ -449,10 +448,7 @@ public class BottomUpQuantificationService {
 
     RightDto right = rightReferenceDataService.findRight(APPROVE_BUQ_RIGHT_NAME);
     List<DetailedRoleAssignmentDto> roleAssignments = userRoleAssignmentsReferenceDataService
-        .getRoleAssignments(user.getId())
-        .stream()
-        .filter(r -> r.getRole().getRights().contains(right))
-        .collect(toList());
+        .hasRight(user, right);
 
     if (CollectionUtils.isEmpty(roleAssignments)) {
       return Pagination.getPage(Collections.emptyList(), pageable);
