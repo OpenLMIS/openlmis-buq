@@ -41,8 +41,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
@@ -80,6 +78,7 @@ import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.service.referencedata.RightReferenceDataService;
+import org.openlmis.buq.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserRoleAssignmentsReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
@@ -154,6 +153,9 @@ public class BottomUpQuantificationService {
   @Autowired
   private UserRoleAssignmentsReferenceDataService userRoleAssignmentsReferenceDataService;
 
+  @Autowired
+  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+
   private static final String MESSAGE_SEPARATOR = ":";
 
   private static final String PARAMETER_SEPARATOR = ",";
@@ -206,9 +208,21 @@ public class BottomUpQuantificationService {
     checkFacilityPermission(bottomUpQuantificationImporter.getFacilityId());
     BottomUpQuantification updatedBottomUpQuantification =
         updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
+
+    assignInitialSupervisoryNode(updatedBottomUpQuantification);
     bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
 
     return updatedBottomUpQuantification;
+  }
+
+  private void assignInitialSupervisoryNode(BottomUpQuantification bottomUpQuantification) {
+    if (bottomUpQuantification.isApprovable()
+            && bottomUpQuantification.getSupervisoryNodeId() == null) {
+      UUID supervisoryNode = supervisoryNodeReferenceDataService.findSupervisoryNode(
+              bottomUpQuantification.getProgramId(),
+              bottomUpQuantification.getFacilityId()).getId();
+      bottomUpQuantification.setSupervisoryNodeId(supervisoryNode);
+    }
   }
 
   /**
@@ -253,6 +267,7 @@ public class BottomUpQuantificationService {
         updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
     updatedBottomUpQuantification.setStatus(BottomUpQuantificationStatus.AUTHORIZED);
     addNewStatusChange(updatedBottomUpQuantification);
+    assignInitialSupervisoryNode(updatedBottomUpQuantification);
     bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
 
     return updatedBottomUpQuantification;
@@ -281,6 +296,8 @@ public class BottomUpQuantificationService {
     Rejection rejection = Rejection.newInstance(rejectionDto);
     bottomUpQuantification.getStatusChanges().add(persistedStatusChange);
     rejection.setStatusChange(persistedStatusChange);
+
+    bottomUpQuantification.setSupervisoryNodeId(null);
     bottomUpQuantificationRepository.save(bottomUpQuantification);
     rejectionService.save(rejection);
     return bottomUpQuantification;
@@ -373,6 +390,11 @@ public class BottomUpQuantificationService {
 
     updatedBottomUpQuantification.setStatus(BottomUpQuantificationStatus.APPROVED);
     addNewStatusChange(updatedBottomUpQuantification);
+    UUID supervisoryNodeId = supervisoryNodeReferenceDataService
+            .findSupervisoryNode(
+                  updatedBottomUpQuantification.getProgramId(),
+                  updatedBottomUpQuantification.getFacilityId()).getId();
+    updatedBottomUpQuantification.setSupervisoryNodeId(supervisoryNodeId);
     bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
 
     return updatedBottomUpQuantification;

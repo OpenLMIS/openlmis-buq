@@ -15,21 +15,13 @@
 
 package org.openlmis.buq.repository.buq.custom;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.openlmis.buq.domain.BaseEntity;
-import org.openlmis.buq.domain.buq.BottomUpQuantification;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
-import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
-import org.openlmis.buq.repository.BaseCustomRepository;
-import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
-import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
-import org.openlmis.buq.util.PageableUtil;
-import org.openlmis.buq.util.Pagination;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -41,21 +33,24 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
+import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
+import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
+import org.openlmis.buq.repository.BaseCustomRepository;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
+import org.openlmis.buq.util.PageableUtil;
+import org.openlmis.buq.util.Pagination;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 public class BottomUpQuantificationRepositoryImpl
     extends BaseCustomRepository<BottomUpQuantification>
     implements BottomUpQuantificationRepositoryCustom {
 
   private static final String CREATED_DATE = "createdDate";
+  private static final String OCCURED_DATE = "occurredDate";
   private static final String STATUS = "status";
   private static final String BOTTOM_UP_QUANTIFICATION = "bottomUpQuantification";
   private static final String FACILITY_ID = "facilityId";
@@ -67,9 +62,6 @@ public class BottomUpQuantificationRepositoryImpl
   @PersistenceContext
   private EntityManager entityManager;
 
-  @Autowired
-  private BottomUpQuantificationStatusChangeRepository
-      bottomUpQuantificationStatusChangeRepository;
 
   /**
    * This method is supposed to retrieve all bottom-up quantifications with matched parameters.
@@ -120,30 +112,13 @@ public class BottomUpQuantificationRepositoryImpl
     }
 
     final Pair<Integer, Integer> maxAndFirst = PageableUtil.querysMaxAndFirstResult(pageable);
-    CriteriaQuery<BottomUpQuantification> query = prepareApprovableQuery(programNodePairs, pageable);
+    CriteriaQuery<BottomUpQuantification> query =
+            prepareApprovableQuery(programNodePairs, pageable);
 
     List<BottomUpQuantification> bottomUpQuantifications = entityManager.createQuery(query)
         .setMaxResults(maxAndFirst.getLeft())
         .setFirstResult(maxAndFirst.getRight())
         .getResultList();
-
-    Set<UUID> bottomUpQuantificationIds = bottomUpQuantifications
-        .stream()
-        .map(BaseEntity::getId)
-        .collect(Collectors.toSet());
-
-    Map<UUID, List<BottomUpQuantificationStatusChange>> allStatusChanges =
-        bottomUpQuantificationStatusChangeRepository
-        .findByBottomUpQuantificationIdIn(bottomUpQuantificationIds)
-        .stream()
-        .collect(Collectors.groupingBy(status -> status.getBottomUpQuantification().getId()));
-
-    bottomUpQuantifications
-        .forEach(buq -> {
-          List<BottomUpQuantificationStatusChange> statusChanges =
-              allStatusChanges.get(buq.getId());
-          buq.setStatusChanges(statusChanges);
-        });
 
     return Pagination.getPage(bottomUpQuantifications, pageable, count);
   }
@@ -154,31 +129,41 @@ public class BottomUpQuantificationRepositoryImpl
 
     final Root<BottomUpQuantification> root = countQuery.from(BottomUpQuantification.class);
 
-    final List<Predicate> queryPredicates = getCommonApprovableQueryPredicates(builder, root, programNodePairs);
+    countQuery.select(builder.count(root));
+
+    final List<Predicate> queryPredicates =
+            getCommonApprovableQueryPredicates(builder, root, programNodePairs);
 
     return countQuery.where(queryPredicates.toArray(new Predicate[0]));
   }
 
-  private CriteriaQuery<BottomUpQuantification> prepareApprovableQuery(Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable) {
+  private CriteriaQuery<BottomUpQuantification> prepareApprovableQuery(
+          Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable) {
     final CriteriaBuilder builder = getCriteriaBuilder();
-    final CriteriaQuery<BottomUpQuantification> query = builder.createQuery(BottomUpQuantification.class);
+    final CriteriaQuery<BottomUpQuantification> query =
+            builder.createQuery(BottomUpQuantification.class);
 
     final Root<BottomUpQuantification> root = query.from(BottomUpQuantification.class);
 
-    final List<Predicate> queryPredicates = getCommonApprovableQueryPredicates(builder, root, programNodePairs);
+    final List<Predicate> queryPredicates =
+            getCommonApprovableQueryPredicates(builder, root, programNodePairs);
     queryPredicates.add(createStatusChangePredicate(builder, query, root));
 
-    query.orderBy(createSortProperties(builder,root,pageable));
+    query.orderBy(createSortProperties(builder, root, pageable));
 
     return query.where(queryPredicates.toArray(new Predicate[0]));
   }
 
-  private List<Predicate> getCommonApprovableQueryPredicates(CriteriaBuilder builder, Root<BottomUpQuantification> root,
-                                                             Set<Pair<UUID, UUID>> programNodePairs) {
+  private List<Predicate> getCommonApprovableQueryPredicates(
+      CriteriaBuilder builder,
+      Root<BottomUpQuantification> root,
+      Set<Pair<UUID, UUID>> programNodePairs) {
     final List<Predicate> queryPredicates = new ArrayList<>();
     queryPredicates.add(createProgramNodePairPredicate(builder, root, programNodePairs));
     queryPredicates.add(
-        root.get(STATUS).in(BottomUpQuantificationStatus.AUTHORIZED, BottomUpQuantificationStatus.IN_APPROVAL));
+        root
+          .get(STATUS)
+          .in(BottomUpQuantificationStatus.AUTHORIZED, BottomUpQuantificationStatus.IN_APPROVAL));
     return queryPredicates;
   }
 
@@ -204,7 +189,7 @@ public class BottomUpQuantificationRepositoryImpl
     final Root<BottomUpQuantificationStatusChange> statusChangeSubRoot =
         subquery.from(BottomUpQuantificationStatusChange.class);
 
-    subquery.select(builder.greatest(statusChangeSubRoot.get(CREATED_DATE)));
+    subquery.select(builder.greatest(statusChangeSubRoot.<ZonedDateTime>get(OCCURED_DATE)));
     subquery.where(builder.and(
         builder.equal(statusChangeSubRoot.get(STATUS), BottomUpQuantificationStatus.AUTHORIZED),
         builder.equal(statusChangeSubRoot.get(BOTTOM_UP_QUANTIFICATION), quantificationRoot)));
@@ -212,13 +197,17 @@ public class BottomUpQuantificationRepositoryImpl
     ListJoin<Object, Object> statusChanges = quantificationRoot
         .joinList(STATUS_CHANGES, JoinType.LEFT);
 
-    statusChanges.on(builder.equal(statusChanges.get(STATUS), BottomUpQuantificationStatus.AUTHORIZED));
+    statusChanges
+            .on(builder.equal(statusChanges.get(STATUS), BottomUpQuantificationStatus.AUTHORIZED));
 
-    return builder.or(statusChanges.isNull(), statusChanges.get(CREATED_DATE).in(subquery));
+    return builder
+            .or(statusChanges.isNull(), statusChanges.get(OCCURED_DATE).in(subquery));
   }
 
-  private List<Order> createSortProperties(CriteriaBuilder builder, Root<BottomUpQuantification> root,
-                                                 Pageable pageable) {
+  private List<Order> createSortProperties(
+          CriteriaBuilder builder,
+          Root<BottomUpQuantification> root,
+          Pageable pageable) {
     List<Order> orders = new ArrayList<>();
     Iterator<Sort.Order> iterator = pageable.getSort().iterator();
     Sort.Order order;

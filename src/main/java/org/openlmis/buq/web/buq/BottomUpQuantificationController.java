@@ -270,7 +270,7 @@ public class BottomUpQuantificationController extends BaseController {
     List<BottomUpQuantificationDto> content = bottomUpQuantificationsForApproval
         .getContent()
         .stream()
-        .map(bottomUpQuantificationDtoBuilder::buildDto)
+        .map(buq -> bottomUpQuantificationDtoBuilder.buildDto(buq))
         .collect(Collectors.toList());
 
     return Pagination.getPage(content, pageable,
