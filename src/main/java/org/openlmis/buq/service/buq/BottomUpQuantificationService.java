@@ -59,9 +59,12 @@ import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
+import org.openlmis.buq.dto.referencedata.ObjectReferenceDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.dto.referencedata.RightDto;
+import org.openlmis.buq.dto.referencedata.SupervisoryNodeDto;
+import org.openlmis.buq.dto.referencedata.SupplyLineDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
 import org.openlmis.buq.dto.requisition.RequisitionLineItemDataProjection;
 import org.openlmis.buq.exception.BindingResultException;
@@ -79,6 +82,7 @@ import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.service.referencedata.RightReferenceDataService;
 import org.openlmis.buq.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.buq.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserRoleAssignmentsReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
@@ -87,6 +91,7 @@ import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 import org.openlmis.buq.util.Message;
 import org.openlmis.buq.util.Pagination;
 import org.openlmis.buq.validate.BottomUpQuantificationValidator;
+import org.openlmis.buq.web.buq.ApproveParams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -156,6 +161,9 @@ public class BottomUpQuantificationService {
   @Autowired
   private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
 
+  @Autowired
+  private SupplyLineReferenceDataService supplyLineReferenceDataService;
+
   private static final String MESSAGE_SEPARATOR = ":";
 
   private static final String PARAMETER_SEPARATOR = ",";
@@ -218,10 +226,14 @@ public class BottomUpQuantificationService {
   private void assignInitialSupervisoryNode(BottomUpQuantification bottomUpQuantification) {
     if (bottomUpQuantification.isApprovable()
             && bottomUpQuantification.getSupervisoryNodeId() == null) {
-      UUID supervisoryNode = supervisoryNodeReferenceDataService.findSupervisoryNode(
+      SupervisoryNodeDto supervisoryNode = supervisoryNodeReferenceDataService.findSupervisoryNode(
               bottomUpQuantification.getProgramId(),
-              bottomUpQuantification.getFacilityId()).getId();
-      bottomUpQuantification.setSupervisoryNodeId(supervisoryNode);
+              bottomUpQuantification.getFacilityId());
+      if (supervisoryNode != null) {
+        bottomUpQuantification.setSupervisoryNodeId(supervisoryNode.getId());
+        return;
+      }
+      bottomUpQuantification.setSupervisoryNodeId(null);
     }
   }
 
@@ -397,17 +409,43 @@ public class BottomUpQuantificationService {
     BottomUpQuantification updatedBottomUpQuantification =
         updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
 
-    updatedBottomUpQuantification.setStatus(BottomUpQuantificationStatus.APPROVED);
-    addNewStatusChange(updatedBottomUpQuantification);
-    UUID supervisoryNodeId = supervisoryNodeReferenceDataService
-            .findSupervisoryNode(
-                  updatedBottomUpQuantification.getProgramId(),
-                  updatedBottomUpQuantification.getFacilityId()).getId();
-    updatedBottomUpQuantification.setSupervisoryNodeId(supervisoryNodeId);
+    UserDto user = authenticationHelper.getCurrentUser();
+
+    SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService
+            .findOne(updatedBottomUpQuantification.getSupervisoryNodeId());
+    ProcessingPeriodDto period = periodReferenceDataService
+            .findOne(updatedBottomUpQuantification.getProcessingPeriodId());
+    List<SupplyLineDto> supplyLines = period.isReportOnly()
+            ? Collections.emptyList()
+            : supplyLineReferenceDataService
+              .search(updatedBottomUpQuantification.getProgramId(),
+                      updatedBottomUpQuantification.getSupervisoryNodeId());
+    ApproveParams approveParams =
+            new ApproveParams(user, supervisoryNodeDto, supplyLines, period);
+    doApprove(updatedBottomUpQuantification, approveParams);
+
     bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
 
     return updatedBottomUpQuantification;
   }
+
+  private void doApprove(BottomUpQuantification bottomUpQuantification,
+       ApproveParams approveParams) {
+    ObjectReferenceDto parentNode = null;
+    UUID parentNodeId = null;
+    if (approveParams.getSupervisoryNode() != null) {
+      parentNode = approveParams.getSupervisoryNode().getParentNode();
+    }
+
+    if (parentNode != null) {
+      parentNodeId = parentNode.getId();
+    }
+
+    bottomUpQuantification.approve(parentNodeId,
+            approveParams.getSupplyLines(),
+            approveParams.getUser().getId());
+  }
+
 
   /**
    * Calculates and retrieves statistics related to the approval of facility forecasting for a

@@ -38,6 +38,7 @@ import lombok.ToString;
 import org.javers.core.metamodel.annotation.TypeName;
 import org.openlmis.buq.domain.BaseTimestampedEntity;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
+import org.openlmis.buq.dto.referencedata.SupplyLineDto;
 
 @Entity
 @TypeName("BottomUpQuantification")
@@ -194,6 +195,29 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
 
   public boolean isApprovable() {
     return status.duringApproval();
+  }
+
+  /**
+   * Approve a bottom-up quantification.
+   *
+   */
+  public void approve(UUID parentNodeId,
+      List<SupplyLineDto> supplyLines,
+      UUID approver) {
+    setApprovalStatus(supplyLines, parentNodeId);
+    setModifiedDate(ZonedDateTime.now());
+    BottomUpQuantificationStatusChange statusChange =
+            BottomUpQuantificationStatusChange.newInstance(this, approver, this.getStatus());
+    statusChanges.add(statusChange);
+  }
+
+  private void setApprovalStatus(List<SupplyLineDto> supplyLines, UUID parentNodeId) {
+    if (supplyLines.isEmpty() && parentNodeId != null) {
+      status = BottomUpQuantificationStatus.IN_APPROVAL;
+      supervisoryNodeId = parentNodeId;
+      return;
+    }
+    status = BottomUpQuantificationStatus.APPROVED;
   }
 
   /**
