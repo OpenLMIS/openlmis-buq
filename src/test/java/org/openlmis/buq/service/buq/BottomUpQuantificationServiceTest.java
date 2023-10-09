@@ -39,6 +39,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
@@ -77,6 +78,7 @@ import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.buq.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
 import org.openlmis.buq.util.AuthenticationHelper;
@@ -132,6 +134,9 @@ public class BottomUpQuantificationServiceTest {
 
   @Mock
   private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+
+  @Mock
+  private SupplyLineReferenceDataService supplyLineReferenceDataService;
 
   public UUID facilityId = UUID.randomUUID();
   public UUID programId = UUID.randomUUID();
@@ -467,9 +472,15 @@ public class BottomUpQuantificationServiceTest {
     BottomUpQuantification buq = new BottomUpQuantification();
     buq.setStatus(BottomUpQuantificationStatus.DRAFT);
     when(bottomUpQuantificationRepository.save(any())).thenReturn(buq);
-    when(supervisoryNodeReferenceDataService
-            .findSupervisoryNode(any(UUID.class), any(UUID.class)))
+    Mockito.lenient().when(supervisoryNodeReferenceDataService
+            .findSupervisoryNode(buq.getProgramId(), buq.getFacilityId()))
             .thenReturn(new SupervisoryNodeDto());
+    ProcessingPeriodDto processingPeriodDto = new ProcessingPeriodDto();
+    processingPeriodDto.setId(any(UUID.class));
+    when(periodReferenceDataService.findOne(buq.getProcessingPeriodId()))
+            .thenReturn(processingPeriodDto);
+    when(supplyLineReferenceDataService.search(any(UUID.class), any(UUID.class)))
+            .thenReturn(Collections.emptyList());
 
     mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
 
