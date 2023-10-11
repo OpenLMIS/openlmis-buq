@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
+import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
@@ -392,6 +393,15 @@ public class BottomUpQuantificationService {
   public void delete(BottomUpQuantification bottomUpQuantification) {
     checkFacilityPermission(bottomUpQuantification.getFacilityId());
 
+    List<BottomUpQuantificationStatusChange> statusChanges =
+            bottomUpQuantification.getStatusChanges();
+
+    List<UUID> statusChangeIds = statusChanges.stream()
+            .filter(status -> status.getStatus().equals(BottomUpQuantificationStatus.REJECTED))
+            .map(BaseEntity::getId)
+            .collect(Collectors.toList());
+
+    rejectionService.deleteByStatusChangeIdIn(statusChangeIds);
     bottomUpQuantificationRepository.deleteById(bottomUpQuantification.getId());
   }
 
