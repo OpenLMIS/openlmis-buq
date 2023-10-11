@@ -13,16 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.web.sourceoffund;
+package org.openlmis.buq.web.productgroup;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willReturn;
-import static org.mockito.Matchers.any;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -44,9 +44,9 @@ import org.javers.repository.jql.JqlQuery;
 import org.joda.time.LocalDateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.openlmis.buq.builder.SourceOfFundDataBuilder;
-import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
-import org.openlmis.buq.dto.sourceoffund.SourceOfFundDto;
+import org.openlmis.buq.builder.ProductGroupDataBuilder;
+import org.openlmis.buq.domain.productgroup.ProductGroup;
+import org.openlmis.buq.dto.productgroup.ProductGroupDto;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.web.BaseWebIntegrationTest;
 import org.springframework.data.domain.PageImpl;
@@ -55,18 +55,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 @SuppressWarnings("PMD.TooManyMethods")
-public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTest {
+public class ProductGroupControllerIntegrationTest extends BaseWebIntegrationTest {
 
-  private static final String RESOURCE_URL = SourceOfFundController.RESOURCE_PATH;
+  private static final String RESOURCE_URL = ProductGroupController.RESOURCE_PATH;
   private static final String ID_URL = RESOURCE_URL + "/{id}";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String NAME = "name";
 
-  private final SourceOfFund sourceOfFund = new SourceOfFundDataBuilder().build();
-  private final SourceOfFundDto sourceOfFundDto = SourceOfFundDto.newInstance(sourceOfFund);
+  private final ProductGroup productGroup = new ProductGroupDataBuilder().build();
+  private final ProductGroupDto productGroupDto = ProductGroupDto.newInstance(productGroup);
 
-  private final GlobalId globalId = new UnboundedValueObjectId(SourceOfFund.class.getSimpleName());
+  private final GlobalId globalId = new UnboundedValueObjectId(ProductGroup.class.getSimpleName());
   private final ValueChange change = new ValueChange(globalId, NAME, "name1", "name2");
 
   private final CommitId commitId = new CommitId(1, 0);
@@ -75,15 +75,15 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
 
   @Before
   public void setUp() {
-    given(sourceOfFundRepository.saveAndFlush(any(SourceOfFund.class)))
+    given(productGroupRepository.save(any(ProductGroup.class)))
         .willAnswer(new SaveAnswer<>());
     change.bindToCommit(commitMetadata);
   }
 
   @Test
-  public void shouldReturnPageOfSourcesOfFunds() {
-    given(sourceOfFundRepository.findAll(any(Pageable.class)))
-        .willReturn(new PageImpl<>(Collections.singletonList(sourceOfFund)));
+  public void shouldReturnPageOfProductGroups() {
+    given(productGroupRepository.findAll(any(Pageable.class)))
+        .willReturn(new PageImpl<>(Collections.singletonList(productGroup)));
 
     restAssured.given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
@@ -94,14 +94,14 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
         .then()
         .statusCode(HttpStatus.SC_OK)
         .body("content", hasSize(1))
-        .body("content[0].id", is(sourceOfFund.getId().toString()))
-        .body("content[0].name", is(sourceOfFund.getName()));
+        .body("content[0].id", is(productGroup.getId().toString()))
+        .body("content[0].name", is(productGroup.getName()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
-  public void shouldReturnUnauthorizedForAllSourcesOfFundsEndpointIfUserIsNotAuthorized() {
+  public void shouldReturnUnauthorizedForAllProductGroupsEndpointIfUserIsNotAuthorized() {
     restAssured.given()
         .when()
         .get(RESOURCE_URL)
@@ -112,28 +112,28 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   }
 
   @Test
-  public void shouldCreateSourceOfFund() {
+  public void shouldCreateProductGroup() {
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .body(sourceOfFundDto)
+        .body(productGroupDto)
         .when()
         .post(RESOURCE_URL)
         .then()
         .statusCode(HttpStatus.SC_CREATED)
         .body(ID, is(notNullValue()))
-        .body(NAME, is(sourceOfFundDto.getName()));
+        .body(NAME, is(productGroupDto.getName()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
-  public void shouldReturnUnauthorizedForCreateSourceOfFundEndpointIfUserIsNotAuthorized() {
+  public void shouldReturnUnauthorizedForCreateProductGroupEndpointIfUserIsNotAuthorized() {
     restAssured
         .given()
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .body(sourceOfFundDto)
+        .body(productGroupDto)
         .when()
         .post(RESOURCE_URL)
         .then()
@@ -143,46 +143,46 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   }
 
   @Test
-  public void shouldReturnGivenSourceOfFund() {
-    given(sourceOfFundRepository.findById(sourceOfFundDto.getId()))
-        .willReturn(Optional.of(sourceOfFund));
+  public void shouldReturnGivenProductGroup() {
+    given(productGroupRepository.findById(productGroupDto.getId()))
+        .willReturn(Optional.of(productGroup));
 
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .get(ID_URL)
         .then()
         .statusCode(HttpStatus.SC_OK)
-        .body(ID, is(sourceOfFundDto.getId().toString()))
-        .body(NAME, is(sourceOfFundDto.getName()));
+        .body(ID, is(productGroupDto.getId().toString()))
+        .body(NAME, is(productGroupDto.getName()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
-  public void shouldReturnNotFoundMessageIfSourceOfFundDoesNotExistForGivenSourceOfFundEndpoint() {
-    given(sourceOfFundRepository.findById(sourceOfFundDto.getId())).willReturn(Optional.empty());
+  public void shouldReturnNotFoundMessageIfProductGroupDoesNotExistForGivenProductGroupEndpoint() {
+    given(productGroupRepository.findById(productGroupDto.getId())).willReturn(Optional.empty());
 
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .get(ID_URL)
         .then()
         .statusCode(HttpStatus.SC_NOT_FOUND)
-        .body(MESSAGE_KEY, is(MessageKeys.ERROR_SOURCE_OF_FUND_NOT_FOUND));
+        .body(MESSAGE_KEY, is(MessageKeys.ERROR_PRODUCT_GROUP_NOT_FOUND));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
-  public void shouldReturnUnauthorizedForGetSourceOfFundEndpointIfUserIsNotAuthorized() {
+  public void shouldReturnUnauthorizedForGetProductGroupEndpointIfUserIsNotAuthorized() {
     restAssured
         .given()
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .get(ID_URL)
         .then()
@@ -192,36 +192,36 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   }
 
   @Test
-  public void shouldUpdateSourceOfFund() {
-    given(sourceOfFundRepository.findById(sourceOfFundDto.getId()))
-        .willReturn(Optional.of(sourceOfFund));
+  public void shouldUpdateProductGroup() {
+    given(productGroupRepository.findById(productGroupDto.getId()))
+        .willReturn(Optional.of(productGroup));
 
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .pathParam(ID, sourceOfFundDto.getId().toString())
-        .body(sourceOfFundDto)
+        .pathParam(ID, productGroupDto.getId().toString())
+        .body(productGroupDto)
         .when()
         .put(ID_URL)
         .then()
         .statusCode(HttpStatus.SC_OK)
-        .body(ID, is(sourceOfFundDto.getId().toString()))
-        .body(NAME, is(sourceOfFundDto.getName()));
+        .body(ID, is(productGroupDto.getId().toString()))
+        .body(NAME, is(productGroupDto.getName()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
-  public void shouldCreateSourceOfFundIfSourceOfFundDoesNotExistForUpdateSourceOfFundEndpoint()
+  public void shouldCreateProductGroupIfProductGroupDoesNotExistForUpdateProductGroupEndpoint()
       throws JsonProcessingException {
-    String sofJson = "{\"description\":\"" + sourceOfFundDto.getDescription() + "\",\"name\":\""
-        + sourceOfFundDto.getName() + "\"}";
+    String sofJson = "{\"code\":\"" + productGroupDto.getCode() + "\",\"name\":\""
+        + productGroupDto.getName() + "\"}";
     Map<String, String> widgetMap = new ObjectMapper().readValue(sofJson,
         new TypeReference<Map<String, String>>() {
         });
     UUID pathId = UUID.randomUUID();
-    given(sourceOfFundRepository.findById(pathId)).willReturn(Optional.empty());
+    given(productGroupRepository.findById(pathId)).willReturn(Optional.empty());
 
     restAssured
         .given()
@@ -234,35 +234,35 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
         .then()
         .statusCode(HttpStatus.SC_OK)
         .body(ID, is(pathId.toString()))
-        .body(NAME, is(sourceOfFundDto.getName()));
+        .body(NAME, is(productGroupDto.getName()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
-  public void shouldReturnBadRequestMessageIfSourceOfFundCannotBeUpdated() {
+  public void shouldReturnBadRequestMessageIfProductGroupCannotBeUpdated() {
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .pathParam(ID, UUID.randomUUID().toString())
-        .body(sourceOfFundDto)
+        .body(productGroupDto)
         .when()
         .put(ID_URL)
         .then()
         .statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(MESSAGE_KEY, is(MessageKeys.ERROR_SOURCE_OF_FUND_ID_MISMATCH));
+        .body(MESSAGE_KEY, is(MessageKeys.ERROR_PRODUCT_GROUP_ID_MISMATCH));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
-  public void shouldReturnUnauthorizedForUpdateSourceOfFundEndpointIfUserIsNotAuthorized() {
+  public void shouldReturnUnauthorizedForUpdateProductGroupEndpointIfUserIsNotAuthorized() {
     restAssured
         .given()
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .pathParam(ID, sourceOfFundDto.getId().toString())
-        .body(sourceOfFundDto)
+        .pathParam(ID, productGroupDto.getId().toString())
+        .body(productGroupDto)
         .when()
         .put(ID_URL)
         .then()
@@ -272,13 +272,13 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   }
 
   @Test
-  public void shouldDeleteSourceOfFund() {
-    given(sourceOfFundRepository.existsById(sourceOfFundDto.getId())).willReturn(true);
+  public void shouldDeleteProductGroup() {
+    given(productGroupRepository.existsById(productGroupDto.getId())).willReturn(true);
 
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .delete(ID_URL)
         .then()
@@ -288,27 +288,27 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   }
 
   @Test
-  public void shouldReturnNotFoundMessageIfSourceOfFundDoesNotExistForDeleteSourceOfFundEndpoint() {
-    given(sourceOfFundRepository.existsById(sourceOfFundDto.getId())).willReturn(false);
+  public void shouldReturnNotFoundMessageIfProductGroupDoesNotExistForDeleteProductGroupEndpoint() {
+    given(productGroupRepository.existsById(productGroupDto.getId())).willReturn(false);
 
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .delete(ID_URL)
         .then()
         .statusCode(HttpStatus.SC_NOT_FOUND)
-        .body(MESSAGE_KEY, is(MessageKeys.ERROR_SOURCE_OF_FUND_NOT_FOUND));
+        .body(MESSAGE_KEY, is(MessageKeys.ERROR_PRODUCT_GROUP_NOT_FOUND));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
-  public void shouldReturnUnauthorizedForDeleteSourceOfFundEndpointIfUserIsNotAuthorized() {
+  public void shouldReturnUnauthorizedForDeleteProductGroupEndpointIfUserIsNotAuthorized() {
     restAssured
         .given()
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .delete(ID_URL)
         .then()
@@ -319,20 +319,20 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
 
   @Test
   public void shouldRetrieveAuditLogs() {
-    given(sourceOfFundRepository.existsById(sourceOfFundDto.getId())).willReturn(true);
+    given(productGroupRepository.existsById(productGroupDto.getId())).willReturn(true);
     willReturn(Lists.newArrayList(change)).given(javers).findChanges(any(JqlQuery.class));
 
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .get(AUDIT_LOG_URL)
         .then()
         .statusCode(HttpStatus.SC_OK)
         .body("", hasSize(1))
         .body("changeType", hasItem(change.getClass().getSimpleName()))
-        .body("globalId.valueObject", hasItem(SourceOfFund.class.getSimpleName()))
+        .body("globalId.valueObject", hasItem(ProductGroup.class.getSimpleName()))
         .body("commitMetadata.author", hasItem(commitMetadata.getAuthor()))
         .body("commitMetadata.properties", hasItem(hasSize(0)))
         .body("commitMetadata.commitDate", hasItem(commitMetadata.getCommitDate().toString()))
@@ -346,13 +346,13 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
 
   @Test
   public void shouldRetrieveAuditLogsWithParameters() {
-    given(sourceOfFundRepository.existsById(sourceOfFundDto.getId())).willReturn(true);
+    given(productGroupRepository.existsById(productGroupDto.getId())).willReturn(true);
     willReturn(Lists.newArrayList(change)).given(javers).findChanges(any(JqlQuery.class));
 
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .queryParam("author", commitMetadata.getAuthor())
         .queryParam("changedPropertyName", change.getPropertyName())
         .when()
@@ -361,7 +361,7 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
         .statusCode(HttpStatus.SC_OK)
         .body("", hasSize(1))
         .body("changeType", hasItem(change.getClass().getSimpleName()))
-        .body("globalId.valueObject", hasItem(SourceOfFund.class.getSimpleName()))
+        .body("globalId.valueObject", hasItem(ProductGroup.class.getSimpleName()))
         .body("commitMetadata.author", hasItem(commitMetadata.getAuthor()))
         .body("commitMetadata.properties", hasItem(hasSize(0)))
         .body("commitMetadata.commitDate", hasItem(commitMetadata.getCommitDate().toString()))
@@ -374,13 +374,13 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   }
 
   @Test
-  public void shouldReturnNotFoundMessageIfSourceOfFundDoesNotExistForAuditLogEndpoint() {
-    given(sourceOfFundRepository.existsById(sourceOfFundDto.getId())).willReturn(false);
+  public void shouldReturnNotFoundMessageIfProductGroupDoesNotExistForAuditLogEndpoint() {
+    given(productGroupRepository.existsById(productGroupDto.getId())).willReturn(false);
 
     restAssured
         .given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .get(AUDIT_LOG_URL)
         .then()
@@ -393,7 +393,7 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   public void shouldReturnUnauthorizedForAuditLogEndpointIfUserIsNotAuthorized() {
     restAssured
         .given()
-        .pathParam(ID, sourceOfFundDto.getId().toString())
+        .pathParam(ID, productGroupDto.getId().toString())
         .when()
         .get(AUDIT_LOG_URL)
         .then()
