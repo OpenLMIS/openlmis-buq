@@ -103,10 +103,12 @@ public abstract class MessageKeys {
           join(ERROR_PREFIX, SUBMIT, "mustBeDraftOrRejectedToBeSubmitted");
   public static final String ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED = join(ERROR_PREFIX,
       AUTHORIZE, "mustBeSubmittedToBeAuthorized");
-  public static final String ERROR_MUST_BE_AUTHORIZED_TO_BE_APPROVED = join(ERROR_PREFIX,
-      APPROVE, "mustBeAuthorizedToBeApproved");
-  public static final String ERROR_MUST_BE_AUTHORIZED_TO_BE_REJECTED = join(ERROR_PREFIX,
-      REJECT, "mustBeAuthorizedToBeRejected");
+  public static final String ERROR_MUST_BE_AUTHORIZED_OR_IN_APPROVAL_TO_BE_APPROVED =
+          join(ERROR_PREFIX,
+      APPROVE, "mustBeAuthorizedOrInApprovalToBeApproved");
+  public static final String ERROR_MUST_BE_AUTHORIZED_OR_IN_APPROVAL_TO_BE_REJECTED =
+          join(ERROR_PREFIX,
+      REJECT, "mustBeAuthorizedOrInApprovalToBeRejected");
   public static final String ERROR_LINE_ITEM_FIELD_REQUIRED = join(ERROR_PREFIX, LINE_ITEM, FIELD,
       REQUIRED);
   public static final String ERROR_LINE_ITEM_FIELD_MUST_BE_NON_NEGATIVE = join(ERROR_PREFIX,
