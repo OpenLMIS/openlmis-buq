@@ -70,7 +70,7 @@ public class ProductGroupController extends BaseController {
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public ProductGroupDto createProductGroup(@RequestBody ProductGroupDto productGroup) {
-    LOGGER.debug("Creating new product group");
+    LOGGER.debug("Creating new product group with code {}", productGroup.getCode());
     ProductGroup newProductGroup = ProductGroup.newInstance(productGroup);
     newProductGroup.setId(null);
     newProductGroup = productGroupRepository.save(newProductGroup);
@@ -90,7 +90,7 @@ public class ProductGroupController extends BaseController {
       throw new ValidationMessageException(MessageKeys.ERROR_PRODUCT_GROUP_ID_MISMATCH);
     }
 
-    LOGGER.debug("Updating product group");
+    LOGGER.debug("Updating product group with code {}", productGroup.getCode());
     ProductGroup db;
     Optional<ProductGroup> productGroupOptional = productGroupRepository.findById(id);
     if (productGroupOptional.isPresent()) {
