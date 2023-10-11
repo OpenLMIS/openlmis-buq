@@ -46,6 +46,7 @@ public abstract class MessageKeys {
   private static final String FIELD = "field";
   private static final String BOOLEAN = "boolean";
   private static final String USER = "user";
+  private static final String PRODUCT_GROUP = "productGroup";
 
   private static final String MISMATCH = "mismatch";
   private static final String NOT_FOUND = "notFound";
@@ -116,6 +117,10 @@ public abstract class MessageKeys {
   public static final String ERROR_USER_HOME_FACILITY_AND_BUQ_FACILITY_MISMATCH =
       join(ERROR_PREFIX, USER, "home", FACILITY, AND, BOTTOM_UP_QUANTIFICATION, FACILITY,
           MISMATCH);
+  public static final String ERROR_PRODUCT_GROUP_NOT_FOUND = join(ERROR_PREFIX, PRODUCT_GROUP,
+      NOT_FOUND);
+  public static final String ERROR_PRODUCT_GROUP_ID_MISMATCH = join(ERROR_PREFIX, PRODUCT_GROUP,
+      ID, MISMATCH);
   public static final String ERROR_JAVERS_EXISTING_ENTRY =
       join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
 
