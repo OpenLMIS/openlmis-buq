@@ -101,8 +101,9 @@ public abstract class MessageKeys {
       join(ERROR_PREFIX, INVALID, PARAMETER, BOTTOM_UP_QUANTIFICATION_STATUS);
   public static final String ERROR_MUST_BE_DRAFT_OR_REJECTED_TO_BE_SUBMITTED =
           join(ERROR_PREFIX, SUBMIT, "mustBeDraftOrRejectedToBeSubmitted");
-  public static final String ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED = join(ERROR_PREFIX,
-      AUTHORIZE, "mustBeSubmittedToBeAuthorized");
+  public static final String ERROR_MUST_BE_SUBMITTED_OR_REJECTED_TO_BE_AUTHORIZED =
+          join(ERROR_PREFIX,
+      AUTHORIZE, "mustBeSubmittedOrRejectedToBeAuthorized");
   public static final String ERROR_MUST_BE_AUTHORIZED_OR_IN_APPROVAL_TO_BE_APPROVED =
           join(ERROR_PREFIX,
       APPROVE, "mustBeAuthorizedOrInApprovalToBeApproved");
