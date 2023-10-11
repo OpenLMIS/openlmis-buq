@@ -75,7 +75,7 @@ public class ProductGroupControllerIntegrationTest extends BaseWebIntegrationTes
 
   @Before
   public void setUp() {
-    given(productGroupRepository.saveAndFlush(any(ProductGroup.class)))
+    given(productGroupRepository.save(any(ProductGroup.class)))
         .willAnswer(new SaveAnswer<>());
     change.bindToCommit(commitMetadata);
   }

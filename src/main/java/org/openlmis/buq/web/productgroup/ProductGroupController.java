@@ -73,7 +73,7 @@ public class ProductGroupController extends BaseController {
     LOGGER.debug("Creating new product group");
     ProductGroup newProductGroup = ProductGroup.newInstance(productGroup);
     newProductGroup.setId(null);
-    newProductGroup = productGroupRepository.saveAndFlush(newProductGroup);
+    newProductGroup = productGroupRepository.save(newProductGroup);
 
     return ProductGroupDto.newInstance(newProductGroup);
   }
@@ -101,7 +101,7 @@ public class ProductGroupController extends BaseController {
       db.setId(id);
     }
 
-    productGroupRepository.saveAndFlush(db);
+    productGroupRepository.save(db);
 
     return ProductGroupDto.newInstance(db);
   }
