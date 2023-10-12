@@ -515,6 +515,15 @@ public class BottomUpQuantificationService {
         .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
   }
 
+  /**
+   * Final approve a bottomUpQuantification.
+   */
+  public BottomUpQuantification finalApproveBottomUpQuantification(UUID id) {
+    BottomUpQuantification bottomUpQuantification =
+            findBottomUpQuantification(id);
+    return changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.APPROVED);
+  }
+
   private Map<String, Message> getErrors(BindingResult bindingResult) {
     Map<String, Message> errors = new HashMap<>();
 
@@ -720,12 +729,12 @@ public class BottomUpQuantificationService {
    * @param bottomUpQuantification entity of bottomUpQuantification
    * @param status status to be applied to bottomUpQuantification
    */
-  private void changeStatus(
+  private BottomUpQuantification changeStatus(
       BottomUpQuantification bottomUpQuantification,
       BottomUpQuantificationStatus status) {
     bottomUpQuantification.setStatus(status);
     addNewStatusChange(bottomUpQuantification);
-    bottomUpQuantificationRepository.save(bottomUpQuantification);
+    return bottomUpQuantificationRepository.save(bottomUpQuantification);
   }
 
 }

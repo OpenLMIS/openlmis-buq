@@ -352,4 +352,19 @@ public class BottomUpQuantificationController extends BaseController {
             .submitBottomUpQuantification(bottomUpQuantificationDto, id);
   }
 
+  /**
+   * Endpoint to final approve a bottomUpQuantification.
+   *
+   * @param id UUID of bottom-up quantification which we want to update.
+   * @return updated bottom-up quantification dto.
+   */
+  @PostMapping("/{id}/finalApprove")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public BottomUpQuantificationDto finalApproveBottomUpQuantification(
+          @PathVariable("id") UUID id) {
+    return bottomUpQuantificationDtoBuilder
+            .buildDto(bottomUpQuantificationService.finalApproveBottomUpQuantification(id));
+  }
+
 }
