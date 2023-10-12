@@ -66,6 +66,11 @@ public class RejectionServiceImpl implements RejectionService {
   }
 
   @Override
+  public void deleteByStatusChangeIdIn(List<UUID> statusChangeIds) {
+    rejectionRepository.deleteByStatusChangeIdIn(statusChangeIds);
+  }
+
+  @Override
   public Rejection getLatestRejection(UUID bottomUpQuantificationId) {
     BottomUpQuantification bottomUpQuantification =
             bottomUpQuantificationService.findBottomUpQuantification(bottomUpQuantificationId);
