@@ -574,21 +574,6 @@ resourceTypes:
               body:
                 application/json:
                   schema: bottomUpQuantification
-      /finalApprove:
-        post:
-          is: [ secured ]
-          description: Final approve bottomUpQuantification
-          body:
-            application/json:
-              schema: bottomUpQuantification
-          responses:
-            200:
-              description: The request is valid and the given bottom-up quantification will be approved.
-              headers:
-                Keep-Alive:
-              body:
-                application/json:
-                  schema: bottomUpQuantification
     /prepare:
       post:
         is: [ secured ]
@@ -636,6 +621,21 @@ resourceTypes:
             body:
               application/json:
                 schema: localizedMessage
+    /finalApprove:
+      post:
+        is: [ secured ]
+        description: Final approve bottomUpQuantification
+        body:
+          application/json:
+            schema: bottomUpQuantification
+        responses:
+          200:
+            description: The request is valid and the given bottom-up quantification will be approved.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: bottomUpQuantification
     /approveFacilityForecastingStats:
       get:
         is: [ secured ]

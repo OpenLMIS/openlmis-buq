@@ -518,10 +518,15 @@ public class BottomUpQuantificationService {
   /**
    * Final approve a bottomUpQuantification.
    */
-  public BottomUpQuantification finalApproveBottomUpQuantification(UUID id) {
-    BottomUpQuantification bottomUpQuantification =
-            findBottomUpQuantification(id);
-    return changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.APPROVED);
+  public List<BottomUpQuantification> finalApproveBottomUpQuantification(List<UUID> ids) {
+    List<BottomUpQuantification> updatedBottomUpQuantifications = new ArrayList<>();
+    ids.forEach(id -> {
+      BottomUpQuantification bottomUpQuantification =
+              findBottomUpQuantification(id);
+      updatedBottomUpQuantifications
+          .add(changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.APPROVED_BY_NQT));
+    });
+    return updatedBottomUpQuantifications;
   }
 
   private Map<String, Message> getErrors(BindingResult bindingResult) {
