@@ -34,7 +34,7 @@ public final class FacilityDto extends MinimalFacilityDto {
   private Boolean openLmisAccessible;
   private List<SupportedProgramDto> supportedPrograms;
   private FacilityOperatorDto operator;
-
+  private GeographicZoneDto geographicZone;
 
   public interface Exporter extends MinimalFacilityDto.Exporter {
     void setDescription(String description);
@@ -56,6 +56,9 @@ public final class FacilityDto extends MinimalFacilityDto {
     void setOperator(FacilityOperatorDto operator);
 
     void setType(FacilityTypeDto type);
+
+    void setGeographicZone(GeographicZoneDto geographicZone);
+
   }
 
   /**
@@ -75,6 +78,7 @@ public final class FacilityDto extends MinimalFacilityDto {
     exporter.setSupportedPrograms(supportedPrograms);
     exporter.setOperator(operator);
     exporter.setType(type);
+    exporter.setGeographicZone(geographicZone);
   }
 
 }

@@ -60,6 +60,7 @@ import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
+import org.openlmis.buq.dto.referencedata.GeographicZoneDto;
 import org.openlmis.buq.dto.referencedata.ObjectReferenceDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
@@ -107,6 +108,8 @@ import org.springframework.validation.FieldError;
 public class BottomUpQuantificationService {
 
   public static final String APPROVE_BUQ_RIGHT_NAME = "APPROVE_BUQ";
+  public static final String MOH_APPROVAL_RIGHT_NAME = "MOH_APPROVAL";
+  public static final String PORALG_APPROVAL_RIGHT_NAME = "PORALG_APPROVAL";
 
   @Autowired
   private AuthenticationHelper authenticationHelper;
@@ -456,7 +459,6 @@ public class BottomUpQuantificationService {
             approveParams.getUser().getId());
   }
 
-
   /**
    * Calculates and retrieves statistics related to the approval of facility forecasting for a
    * given program.
@@ -465,17 +467,8 @@ public class BottomUpQuantificationService {
    * @return {@link ApproveFacilityForecastingStats} containing the calculated data.
    */
   public ApproveFacilityForecastingStats getApproveFacilityForecastingStats(UUID programId) {
-    UserDto currentUser = authenticationHelper.getCurrentUser();
-    List<String> userPermissionStrings = userReferenceDataService
-        .getPermissionStrings(currentUser.getId());
-
-    List<UUID> userSupervisedFacilities = userPermissionStrings.stream()
-        .filter(p -> p.length() - p.replace("|", "").length() == 2
-            && APPROVE_BUQ_RIGHT_NAME.equals(p.substring(0, p.indexOf('|'))))
-        .map(p -> p.split("\\|"))
-        .filter(p -> programId.equals(UUID.fromString(p[2])))
-        .map(p -> UUID.fromString(p[1]))
-        .collect(Collectors.toList());
+    List<UUID> userSupervisedFacilities = getUserSupervisedFacilities(
+        programId, APPROVE_BUQ_RIGHT_NAME);
     int totalFacilities = userSupervisedFacilities.size();
 
     List<BottomUpQuantification> bottomUpQuantifications =
@@ -523,6 +516,71 @@ public class BottomUpQuantificationService {
 
     return bottomUpQuantificationRepository
         .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
+  }
+
+  /**
+   * Retrieves a supervised geographic zones for a given program.
+   * This method fetches the geographic zones supervised by the current user for a specific
+   * program. It organizes these zones into a hierarchical map, grouped by their level in the
+   * geographic zone hierarchy.
+   *
+   * @param programId The UUID of the program.
+   * @return A hierarchical map of supervised geographic zones, organized by level.
+   */
+  public Map<UUID, Map<UUID, Map<UUID, List<UUID>>>> getSupervisedGeographicZones(UUID programId) {
+    List<UUID> userSupervisedFacilities = Stream
+        .concat(getUserSupervisedFacilities(programId, MOH_APPROVAL_RIGHT_NAME).stream(),
+            getUserSupervisedFacilities(programId, PORALG_APPROVAL_RIGHT_NAME).stream())
+        .collect(Collectors.toList());
+    Map<UUID, Map<UUID, Map<UUID, List<UUID>>>> zones = new HashMap<>();
+
+    for (UUID facilityId : userSupervisedFacilities) {
+      FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
+      GeographicZoneDto geographicZone = facilityDto.getGeographicZone();
+      int levelNumber = geographicZone.getLevel().getLevelNumber();
+
+      if (levelNumber == 1) {
+        UUID countryId = geographicZone.getId();
+        zones.computeIfAbsent(countryId, k -> new HashMap<>());
+      } else if (levelNumber == 2) {
+        UUID countryId = geographicZone.getParent().getId();
+        UUID zoneId = geographicZone.getId();
+        zones.computeIfAbsent(countryId, k -> new HashMap<>())
+            .computeIfAbsent(zoneId, k -> new HashMap<>());
+      } else if (levelNumber == 3) {
+        UUID countryId = geographicZone.getParent().getParent().getId();
+        UUID zoneId = geographicZone.getParent().getId();
+        UUID regionId = geographicZone.getId();
+        zones.computeIfAbsent(countryId, k -> new HashMap<>())
+            .computeIfAbsent(zoneId, k -> new HashMap<>())
+            .computeIfAbsent(regionId, k -> new ArrayList<>());
+      } else if (levelNumber == 4) {
+        UUID countryId = geographicZone.getParent().getParent().getParent().getId();
+        UUID zoneId = geographicZone.getParent().getParent().getId();
+        UUID regionId = geographicZone.getParent().getId();
+        UUID districtId = geographicZone.getId();
+        zones.computeIfAbsent(countryId, k -> new HashMap<>())
+            .computeIfAbsent(zoneId, k -> new HashMap<>())
+            .computeIfAbsent(regionId, k -> new ArrayList<>())
+            .add(districtId);
+      }
+    }
+
+    return zones;
+  }
+
+  private List<UUID> getUserSupervisedFacilities(UUID programId, String rightName) {
+    UserDto currentUser = authenticationHelper.getCurrentUser();
+    List<String> userPermissionStrings = userReferenceDataService
+        .getPermissionStrings(currentUser.getId());
+
+    return userPermissionStrings.stream()
+        .filter(p -> p.length() - p.replace("|", "").length() == 2
+            && rightName.equals(p.substring(0, p.indexOf('|'))))
+        .map(p -> p.split("\\|"))
+        .filter(p -> programId.equals(UUID.fromString(p[2])))
+        .map(p -> UUID.fromString(p[1]))
+        .collect(Collectors.toList());
   }
 
   /**
