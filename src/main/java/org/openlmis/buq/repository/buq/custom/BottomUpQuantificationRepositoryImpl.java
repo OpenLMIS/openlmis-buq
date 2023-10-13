@@ -17,6 +17,7 @@ package org.openlmis.buq.repository.buq.custom;
 
 import static org.openlmis.buq.domain.BaseEntity.CREATED_DATE;
 import static org.openlmis.buq.domain.buq.BottomUpQuantification.FACILITY_ID;
+import static org.openlmis.buq.domain.buq.BottomUpQuantification.PROCESSING_PERIOD_ID;
 import static org.openlmis.buq.domain.buq.BottomUpQuantification.PROGRAM_ID;
 import static org.openlmis.buq.domain.buq.BottomUpQuantification.STATUS;
 import static org.openlmis.buq.domain.buq.BottomUpQuantification.STATUS_CHANGES;
@@ -138,6 +139,28 @@ public class BottomUpQuantificationRepositoryImpl
     return countQuery.where(queryPredicates.toArray(new Predicate[0]));
   }
 
+  private CriteriaQuery<Long> prepareCostCalculationCountQuery(
+      UUID processingPeriodId,
+      UUID geographicalZoneId,
+      Set<Pair<UUID, UUID>> programNodePairs) {
+    final CriteriaBuilder builder = getCriteriaBuilder();
+    final CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+
+    final Root<BottomUpQuantification> root = countQuery.from(BottomUpQuantification.class);
+
+    countQuery.select(builder.count(root));
+
+    final List<Predicate> queryPredicates =
+            getCommonCostCalculationQueryPredicates(
+                builder,
+                root,
+                processingPeriodId,
+                geographicalZoneId,
+                programNodePairs);
+
+    return countQuery.where(queryPredicates.toArray(new Predicate[0]));
+  }
+
   private CriteriaQuery<BottomUpQuantification> prepareApprovableQuery(
           Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable) {
     final CriteriaBuilder builder = getCriteriaBuilder();
@@ -165,6 +188,23 @@ public class BottomUpQuantificationRepositoryImpl
         root
           .get(STATUS)
           .in(BottomUpQuantificationStatus.AUTHORIZED, BottomUpQuantificationStatus.IN_APPROVAL));
+    return queryPredicates;
+  }
+
+  private List<Predicate> getCommonCostCalculationQueryPredicates(
+      CriteriaBuilder builder,
+      Root<BottomUpQuantification> root,
+      UUID processingPeriodId,
+      UUID geographicalZoneId,
+      Set<Pair<UUID, UUID>> programNodePairs) {
+    final List<Predicate> queryPredicates = new ArrayList<>();
+    queryPredicates.add(createProgramNodePairPredicate(builder, root, programNodePairs));
+
+    Predicate predicate = builder.conjunction();
+    queryPredicates.add(
+            addEqualFilter(predicate, builder, root, PROCESSING_PERIOD_ID, processingPeriodId)
+    );
+
     return queryPredicates;
   }
 
@@ -279,4 +319,28 @@ public class BottomUpQuantificationRepositoryImpl
     return query;
   }
 
+  @Override
+  public Page<BottomUpQuantification> searchCostCalculationForProductGroups(
+          UUID processingPeriodId,
+          UUID geographicalZoneId,
+          Set<Pair<UUID, UUID>> programNodePairs,
+          Pageable pageable) {
+    CriteriaQuery<Long> countQuery = prepareApprovableCountQuery(programNodePairs);
+
+    Long count = countEntities(countQuery);
+    if (isZeroEntities(count)) {
+      return Pagination.getPage(Collections.emptyList(), pageable, count);
+    }
+
+    final Pair<Integer, Integer> maxAndFirst = PageableUtil.querysMaxAndFirstResult(pageable);
+    CriteriaQuery<BottomUpQuantification> query =
+            prepareApprovableQuery(programNodePairs, pageable);
+
+    List<BottomUpQuantification> bottomUpQuantifications = entityManager.createQuery(query)
+            .setMaxResults(maxAndFirst.getLeft())
+            .setFirstResult(maxAndFirst.getRight())
+            .getResultList();
+
+    return Pagination.getPage(bottomUpQuantifications, pageable, count);
+  }
 }

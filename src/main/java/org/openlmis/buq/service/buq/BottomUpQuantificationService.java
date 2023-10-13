@@ -108,6 +108,10 @@ public class BottomUpQuantificationService {
 
   public static final String APPROVE_BUQ_RIGHT_NAME = "APPROVE_BUQ";
 
+  private static final String MOH_APPROVAL_RIGHT_NAME = "MOH_APPROVAL";
+
+  private static final String PORALG_APPROVAL_RIGHT_NAME = "PORALG_APPROVAL";
+
   @Autowired
   private AuthenticationHelper authenticationHelper;
 
@@ -523,6 +527,54 @@ public class BottomUpQuantificationService {
 
     return bottomUpQuantificationRepository
         .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
+  }
+
+  public Page<BottomUpQuantification> getBottomUpQuantificationsForCostCalculation(
+      UUID processingPeriodId,
+      UUID programId,
+      UUID geographicalZoneId,
+      Pageable pageable) {
+    UserDto user = authenticationHelper.getCurrentUser();
+    List<String> allowedRightNames = new ArrayList<>();
+    allowedRightNames.add(MOH_APPROVAL_RIGHT_NAME);
+    allowedRightNames.add(PORALG_APPROVAL_RIGHT_NAME);
+    List<RightDto> rights = rightReferenceDataService.findRights(allowedRightNames);
+    List<List<DetailedRoleAssignmentDto>> roleAssignments = new ArrayList<>();
+    rights.forEach(right -> {
+      List<DetailedRoleAssignmentDto> roleAssignment =
+              userRoleAssignmentsReferenceDataService
+                      .hasRight(user, right);
+      if (!roleAssignment.isEmpty()) {
+        roleAssignments.add(roleAssignment);
+      }
+    });
+
+    if (CollectionUtils.isEmpty(roleAssignments)) {
+      return Pagination.getPage(Collections.emptyList(), pageable);
+    }
+
+    Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
+            .stream()
+            .map(role ->
+              role
+                .stream()
+                .filter(item -> Objects.nonNull(item.getRole().getId()))
+                .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
+                .filter(item -> Objects.nonNull(item.getProgramId()))
+                .filter(item -> null == programId || programId.equals(item.getProgramId()))
+                .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
+                .collect(toSet())
+            )
+            .flatMap(Set::stream)
+            .collect(toSet());
+
+    return bottomUpQuantificationRepository
+            .searchCostCalculationForProductGroups(
+                    processingPeriodId,
+                    geographicalZoneId,
+                    programNodePairs,
+                    pageable);
+
   }
 
   private Map<String, Message> getErrors(BindingResult bindingResult) {

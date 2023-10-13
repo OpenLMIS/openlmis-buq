@@ -352,4 +352,28 @@ public class BottomUpQuantificationController extends BaseController {
             .submitBottomUpQuantification(bottomUpQuantificationDto, id);
   }
 
+  @GetMapping("/costCalculation")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public Page<BottomUpQuantificationDto> getCostCalculations(Pageable pageable,
+     @RequestParam(value = "processingPeriodId") UUID processingPeriodId,
+     @RequestParam(value = "programId") UUID programId,
+     @RequestParam(value = "geographicalZoneId") UUID geographicalZoneId) {
+    Page<BottomUpQuantification> bottomUpQuantificationsForCostCalculation =
+            bottomUpQuantificationService
+                    .getBottomUpQuantificationsForCostCalculation(
+                            processingPeriodId,
+                            programId,
+                            geographicalZoneId,
+                            pageable);
+
+    List<BottomUpQuantificationDto> content = bottomUpQuantificationsForCostCalculation
+            .getContent()
+            .stream()
+            .map(buq -> bottomUpQuantificationDtoBuilder.buildDto(buq))
+            .collect(Collectors.toList());
+
+    return Pagination.getPage(content, pageable,
+            bottomUpQuantificationsForCostCalculation.getTotalElements());
+  }
 }

@@ -31,4 +31,10 @@ public interface BottomUpQuantificationRepositoryCustom {
   Page<BottomUpQuantification> searchApprovableByProgramSupervisoryNodePairs(
       Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable);
 
+  Page<BottomUpQuantification> searchCostCalculationForProductGroups(
+          UUID processingPeriodId,
+          UUID geographicalZoneId,
+          Set<Pair<UUID, UUID>> programNodePairs,
+          Pageable pageable
+  );
 }

@@ -49,4 +49,9 @@ public class RightReferenceDataService extends BaseReferenceDataService<RightDto
     return rights.isEmpty() ? null : rights.get(0);
   }
 
+  public List<RightDto> findRights(List<String> names) {
+    List<RightDto> rights = findAll("search", RequestParameters.init().set("name", names));
+    return rights.isEmpty() ? null : rights;
+  }
+
 }
