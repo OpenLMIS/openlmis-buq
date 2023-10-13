@@ -15,12 +15,17 @@
 
 package org.openlmis.buq.repository.buq;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 
 public interface RejectionRepository extends JpaRepository<Rejection, UUID> {
   Optional<Rejection> findByStatusChange(BottomUpQuantificationStatusChange statusChange);
+
+  @Modifying
+  void deleteByStatusChangeIdIn(List<UUID> statusChangeIds);
 }

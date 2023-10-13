@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
+import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.domain.Remark;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationFundingDetails;
@@ -395,6 +396,15 @@ public class BottomUpQuantificationService {
   public void delete(BottomUpQuantification bottomUpQuantification) {
     checkFacilityPermission(bottomUpQuantification.getFacilityId());
 
+    List<BottomUpQuantificationStatusChange> statusChanges =
+            bottomUpQuantification.getStatusChanges();
+
+    List<UUID> statusChangeIds = statusChanges.stream()
+            .filter(status -> status.getStatus().equals(BottomUpQuantificationStatus.REJECTED))
+            .map(BaseEntity::getId)
+            .collect(Collectors.toList());
+
+    rejectionService.deleteByStatusChangeIdIn(statusChangeIds);
     bottomUpQuantificationRepository.deleteById(bottomUpQuantification.getId());
   }
 
@@ -571,6 +581,20 @@ public class BottomUpQuantificationService {
         .filter(p -> programId.equals(UUID.fromString(p[2])))
         .map(p -> UUID.fromString(p[1]))
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Final approve a bottomUpQuantification.
+   */
+  public List<BottomUpQuantification> finalApproveBottomUpQuantification(List<UUID> ids) {
+    List<BottomUpQuantification> updatedBottomUpQuantifications = new ArrayList<>();
+    ids.forEach(id -> {
+      BottomUpQuantification bottomUpQuantification =
+              findBottomUpQuantification(id);
+      updatedBottomUpQuantifications
+          .add(changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.APPROVED_BY_NQT));
+    });
+    return updatedBottomUpQuantifications;
   }
 
   private Map<String, Message> getErrors(BindingResult bindingResult) {
@@ -778,12 +802,12 @@ public class BottomUpQuantificationService {
    * @param bottomUpQuantification entity of bottomUpQuantification
    * @param status status to be applied to bottomUpQuantification
    */
-  private void changeStatus(
+  private BottomUpQuantification changeStatus(
       BottomUpQuantification bottomUpQuantification,
       BottomUpQuantificationStatus status) {
     bottomUpQuantification.setStatus(status);
     addNewStatusChange(bottomUpQuantification);
-    bottomUpQuantificationRepository.save(bottomUpQuantification);
+    return bottomUpQuantificationRepository.save(bottomUpQuantification);
   }
 
 }

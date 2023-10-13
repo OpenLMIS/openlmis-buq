@@ -29,4 +29,6 @@ public interface RejectionService {
   List<Rejection> findAll();
 
   Rejection getLatestRejection(UUID bottomUpQuantificationId);
+
+  void deleteByStatusChangeIdIn(List<UUID> statusChangeIds);
 }

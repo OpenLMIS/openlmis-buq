@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +50,7 @@ import org.openlmis.buq.builder.FacilityDtoDataBuilder;
 import org.openlmis.buq.builder.ProcessingPeriodDtoDataBuilder;
 import org.openlmis.buq.builder.ProgramDtoDataBuilder;
 import org.openlmis.buq.builder.UserDtoDataBuilder;
+import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
@@ -442,8 +444,17 @@ public class BottomUpQuantificationServiceTest {
         .build();
     mockUserHomeFacilityPermission(BottomUpQuantificationDto.newInstance(bottomUpQuantification));
 
+    List<BottomUpQuantificationStatusChange> statusChanges =
+            bottomUpQuantification.getStatusChanges();
+
+    List<UUID> statusChangeIds = statusChanges.stream()
+            .filter(status -> status.getStatus().equals(BottomUpQuantificationStatus.REJECTED))
+            .map(BaseEntity::getId)
+            .collect(Collectors.toList());
+
     bottomUpQuantificationService.delete(bottomUpQuantification);
 
+    verify(rejectionService).deleteByStatusChangeIdIn(statusChangeIds);
     verify(bottomUpQuantificationRepository).deleteById(bottomUpQuantification.getId());
   }
 
