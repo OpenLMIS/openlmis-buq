@@ -48,7 +48,7 @@ public class PermissionService {
 
   public static final List<String> ALL_BUQ_RIGHTS = Arrays.asList(
           CREATE_FORECASTING, AUTHORIZE_FORECASTING, APPROVE_BUQ, PREPARE_BUQ,
-          PORALG_APPROVAL, PORALG_APPROVAL, MANAGE_BUQ);
+          PORALG_APPROVAL, MOH_APPROVAL, MANAGE_BUQ);
 
   public static final List<String> RECENT_REJECTION_RIGHTS = Arrays.asList(
           CREATE_FORECASTING, AUTHORIZE_FORECASTING, MOH_APPROVAL, PORALG_APPROVAL);
