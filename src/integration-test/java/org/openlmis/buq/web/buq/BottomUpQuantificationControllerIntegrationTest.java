@@ -15,7 +15,10 @@
 
 package org.openlmis.buq.web.buq;
 
+import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,7 +36,10 @@ import com.jayway.restassured.response.Response;
 import guru.nidi.ramltester.junit.RamlMatchers;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
@@ -72,6 +78,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String APPROVE_URL = ID_URL + "/approve";
   private static final String APPROVE_FACILITY_FORECASTING_STATUS_URL = RESOURCE_URL
       + "/approveFacilityForecastingStats";
+  private static final String SUPERVISED_GEOGRAPHIC_ZONES_URL = RESOURCE_URL
+      + "/supervisedGeographicZones";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String STATUS = "status";
@@ -442,6 +450,29 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .body("totalFacilities", Matchers.is(10))
         .body("totalSubmitted", Matchers.is(3))
         .body("percentageSubmitted", Matchers.is(30));
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnSupervisedGeographicZones() {
+    final UUID programId = UUID.randomUUID();
+    final UUID geoZoneId = UUID.randomUUID();
+    Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> zones = new HashMap<>();
+    zones.put(geoZoneId, new HashMap<>());
+    given(bottomUpQuantificationService.getSupervisedGeographicZones(programId))
+        .willReturn(zones);
+
+    restAssured
+        .given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam(PROGRAM_ID, programId)
+        .when()
+        .get(SUPERVISED_GEOGRAPHIC_ZONES_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body("$", hasKey(geoZoneId.toString()))
+        .body(geoZoneId.toString(), is(anEmptyMap()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }

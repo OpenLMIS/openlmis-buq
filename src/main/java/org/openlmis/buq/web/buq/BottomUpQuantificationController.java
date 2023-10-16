@@ -17,6 +17,8 @@ package org.openlmis.buq.web.buq;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
@@ -66,6 +68,7 @@ public class BottomUpQuantificationController extends BaseController {
   public static final String RESOURCE_PATH = API_PATH + "/bottomUpQuantifications";
   public static final String TEXT_CSV_MEDIA_TYPE = "text/csv";
   public static final String BUQ_FORM_CSV_FILENAME = "buq_quantification_preparation_report";
+  public static final String PROGRAM_ID = "programId";
 
   @Autowired
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
@@ -144,7 +147,7 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto prepare(
       @RequestParam(value = "facilityId") UUID facilityId,
-      @RequestParam(value = "programId") UUID programId,
+      @RequestParam(value = PROGRAM_ID) UUID programId,
       @RequestParam(value = "processingPeriodId") UUID processingPeriodId) {
     BottomUpQuantification bottomUpQuantification = bottomUpQuantificationService
         .prepare(facilityId, programId, processingPeriodId);
@@ -250,7 +253,7 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public ApproveFacilityForecastingStats getApproveFacilityForecastingStats(
-      @RequestParam(value = "programId") UUID programId) {
+      @RequestParam(value = PROGRAM_ID) UUID programId) {
     return bottomUpQuantificationService.getApproveFacilityForecastingStats(programId);
   }
 
@@ -264,7 +267,7 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public Page<BottomUpQuantificationDto> getForApproval(Pageable pageable,
-      @RequestParam(value = "programId") UUID programId) {
+      @RequestParam(value = PROGRAM_ID) UUID programId) {
     Page<BottomUpQuantification> bottomUpQuantificationsForApproval =
         bottomUpQuantificationService.getBottomUpQuantificationsForApproval(programId, pageable);
 
@@ -307,6 +310,14 @@ public class BottomUpQuantificationController extends BaseController {
   public RejectionDto getMostRecentRejection(@PathVariable("id") UUID bottomUpQuantificationId) {
     Rejection latestRejection = rejectionService.getLatestRejection(bottomUpQuantificationId);
     return RejectionDto.newInstance(latestRejection);
+  }
+
+  @GetMapping(value = "/supervisedGeographicZones")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> getSupervisedGeographicZones(
+      @RequestParam(value = PROGRAM_ID) UUID programId) {
+    return bottomUpQuantificationService.getSupervisedGeographicZones(programId);
   }
 
   /**
@@ -368,4 +379,24 @@ public class BottomUpQuantificationController extends BaseController {
 
     return calculatedCosts;
   }
+  /**
+   * Endpoint to final approve a bottomUpQuantification.
+   *
+   * @param ids list of UUIDs of bottom-up quantification which we want to update.
+   * @return updated bottom-up quantification dto.
+   */
+  @PostMapping("/finalApprove")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public List<BottomUpQuantificationDto> finalApproveBottomUpQuantification(
+          @RequestParam("id") List<UUID> ids) {
+    List<BottomUpQuantification> updatedBottomUpQuantifications =
+            bottomUpQuantificationService.finalApproveBottomUpQuantification(ids);
+    return updatedBottomUpQuantifications
+            .stream()
+            .map(bottomUpQuantificationDtoBuilder::buildDto)
+            .collect(Collectors.toList());
+
+  }
+
 }

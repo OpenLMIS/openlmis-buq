@@ -15,25 +15,20 @@
 
 package org.openlmis.buq.dto.referencedata;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.openlmis.buq.dto.EqualsContractTest;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public class FacilityDtoTest extends EqualsContractTest<FacilityDto> {
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+public class GeographicLevelDto {
 
-  @Override
-  protected Class<FacilityDto> getTestClass() {
-    return FacilityDto.class;
-  }
-
-  @Override
-  protected void prepare(EqualsVerifier<FacilityDto> verifier) {
-    GeographicZoneDto gz1 = new GeographicZoneDto();
-    gz1.setCode("A");
-    GeographicZoneDto gz2 = new GeographicZoneDto();
-    gz2.setCode("B");
-
-    verifier.withPrefabValues(GeographicZoneDto.class, gz1, gz2);
-    verifier.withRedefinedSuperclass();
-  }
+  private UUID id;
+  private String code;
+  private String name;
+  private Integer levelNumber;
 
 }
+
