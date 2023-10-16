@@ -24,6 +24,7 @@ import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
+import org.openlmis.buq.dto.productgroup.ProductsCostResponse;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
@@ -355,25 +356,16 @@ public class BottomUpQuantificationController extends BaseController {
   @GetMapping("/costCalculation")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public Page<BottomUpQuantificationDto> getCostCalculations(Pageable pageable,
+  public ProductsCostResponse getCostCalculations(Pageable pageable,
      @RequestParam(value = "processingPeriodId") UUID processingPeriodId,
      @RequestParam(value = "programId") UUID programId,
-     @RequestParam(value = "geographicalZoneId") UUID geographicalZoneId) {
-    Page<BottomUpQuantification> bottomUpQuantificationsForCostCalculation =
-            bottomUpQuantificationService
-                    .getBottomUpQuantificationsForCostCalculation(
-                            processingPeriodId,
-                            programId,
-                            geographicalZoneId,
-                            pageable);
+     @RequestParam(value = "geographicZoneId") UUID geographicZoneId) {
+    ProductsCostResponse calculatedCosts = bottomUpQuantificationService.getProductsCostData(
+        processingPeriodId,
+        programId,
+        geographicZoneId,
+        pageable);
 
-    List<BottomUpQuantificationDto> content = bottomUpQuantificationsForCostCalculation
-            .getContent()
-            .stream()
-            .map(buq -> bottomUpQuantificationDtoBuilder.buildDto(buq))
-            .collect(Collectors.toList());
-
-    return Pagination.getPage(content, pageable,
-            bottomUpQuantificationsForCostCalculation.getTotalElements());
+    return calculatedCosts;
   }
 }

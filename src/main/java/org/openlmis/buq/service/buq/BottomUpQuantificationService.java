@@ -16,6 +16,7 @@
 package org.openlmis.buq.service.buq;
 
 import static java.util.stream.Collectors.toSet;
+import static org.openlmis.buq.CurrencyConfig.currencyCode;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_ID_MISMATCH;
@@ -42,6 +43,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.domain.Remark;
@@ -52,11 +55,13 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
+import org.openlmis.buq.domain.productgroup.ProductGroup;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
+import org.openlmis.buq.dto.productgroup.ProductsCostResponse;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
@@ -74,6 +79,7 @@ import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
+import org.openlmis.buq.repository.productgroup.ProductGroupRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.RequestParameters;
@@ -168,6 +174,9 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private SupplyLineReferenceDataService supplyLineReferenceDataService;
+
+  @Autowired
+  private ProductGroupRepository productGroupRepository;
 
   private static final String MESSAGE_SEPARATOR = ":";
 
@@ -529,6 +538,40 @@ public class BottomUpQuantificationService {
         .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
   }
 
+  public ProductsCostResponse getProductsCostData(
+      UUID processingPeriodId,
+      UUID programId,
+      UUID geographicZoneId,
+      Pageable pageable) {
+    ProductsCostResponse productsCosts = new ProductsCostResponse();
+    productsCosts.setDataSourceId(geographicZoneId);
+
+    // Get BUQ with periodPeriodId and with facilities supervised by current user
+    Page<BottomUpQuantification> bottomUpQuantificationsForCostCalculation =
+        getBottomUpQuantificationsForCostCalculation(processingPeriodId, programId,
+            geographicZoneId, pageable);
+
+    // ! Only APPROVED
+
+    // Filter only for facilities placed in geographicZone
+
+    // Calculate costs for products groups
+    List<BottomUpQuantification> bottomUpQuantificationsForCostCalculationList =
+        bottomUpQuantificationsForCostCalculation.getContent();
+
+    Map<String, Money> calculatedGroups =
+        calculateProductGroupsCost(bottomUpQuantificationsForCostCalculationList);
+    productsCosts.setCalculatedGroupsCosts(calculatedGroups);
+
+    List<UUID> bottomUpQuantificationsForCostCalculationIds =
+        bottomUpQuantificationsForCostCalculationList.stream()
+            .map(BottomUpQuantification::getId)
+            .collect(Collectors.toList());
+    productsCosts.setBottomUpQuantificationIds(bottomUpQuantificationsForCostCalculationIds);
+
+    return productsCosts;
+  }
+
   public Page<BottomUpQuantification> getBottomUpQuantificationsForCostCalculation(
       UUID processingPeriodId,
       UUID programId,
@@ -575,6 +618,42 @@ public class BottomUpQuantificationService {
                     programNodePairs,
                     pageable);
 
+  }
+
+  private Map<String, Money> calculateProductGroupsCost(
+      List<BottomUpQuantification> bottomUpQuantifications) {
+    List<ProductGroup> productGroups = productGroupRepository.findAll();
+    Map<String, Money> groupsCalculations = new HashMap<>();
+    List<String> productGroupCodes = new ArrayList<>();
+
+    for (ProductGroup group : productGroups) {
+      groupsCalculations.put(group.getName(), Money.of(CurrencyUnit.of(currencyCode), 0.00));
+      productGroupCodes.add(group.getCode());
+    }
+
+    for (BottomUpQuantification buq : bottomUpQuantifications) {
+      List<BottomUpQuantificationLineItem> lineItems = buq.getBottomUpQuantificationLineItems();
+
+      // Optimize by single request instead of findOrderable(lineItem.getOrderableId());
+      //List<UUID> orderableIds = lineItems.stream()
+      //    .map(BottomUpQuantificationLineItem::getOrderableId)
+      //    .collect(Collectors.toList());
+      //List<BasicOrderableDto> orderableDtos = findOrderables(orderableIds);
+
+      for (BottomUpQuantificationLineItem lineItem : lineItems) {
+        BasicOrderableDto orderable = findOrderable(lineItem.getOrderableId());
+        String orderableCodeSuffix = orderable.getProductCode().substring(0, 2);
+        if (productGroupCodes.contains(orderableCodeSuffix)) {
+          Money currentValue = groupsCalculations.get(orderableCodeSuffix);
+          groupsCalculations.put(orderableCodeSuffix, currentValue.plus(lineItem.getTotalCost()));
+        } else {
+          Money currentValue = groupsCalculations.get(null);
+          groupsCalculations.put(null, currentValue.plus(lineItem.getTotalCost()));
+        }
+      }
+    }
+
+    return groupsCalculations;
   }
 
   private Map<String, Message> getErrors(BindingResult bindingResult) {
