@@ -90,7 +90,7 @@ public class BottomUpQuantificationController extends BaseController {
   private RejectionService rejectionService;
 
   @Autowired
-  PermissionService permissionService;
+  private PermissionService permissionService;
 
   /**
    * Retrieves all BottomUpQuantifications that match the parameters passed.
