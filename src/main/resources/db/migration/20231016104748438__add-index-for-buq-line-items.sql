@@ -1,0 +1,1 @@
+CREATE INDEX bottom_up_quantification_line_items_bottomUpQuantificationId_idx ON bottom_up_quantification_line_items (bottomUpQuantificationId);
