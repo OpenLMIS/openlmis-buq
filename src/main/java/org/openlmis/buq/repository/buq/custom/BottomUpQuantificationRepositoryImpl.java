@@ -55,6 +55,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+@SuppressWarnings("PMD.TooManyMethods")
 public class BottomUpQuantificationRepositoryImpl
     extends BaseCustomRepository<BottomUpQuantification>
     implements BottomUpQuantificationRepositoryCustom {
@@ -178,6 +179,30 @@ public class BottomUpQuantificationRepositoryImpl
     return query.where(queryPredicates.toArray(new Predicate[0]));
   }
 
+  private CriteriaQuery<BottomUpQuantification> prepareCostCalculationQuery(
+      UUID processingPeriodId,
+      UUID geographicalZoneId,
+      Set<Pair<UUID, UUID>> programNodePairs,
+      Pageable pageable) {
+    final CriteriaBuilder builder = getCriteriaBuilder();
+    final CriteriaQuery<BottomUpQuantification> query =
+            builder.createQuery(BottomUpQuantification.class);
+
+    final Root<BottomUpQuantification> root = query.from(BottomUpQuantification.class);
+
+    final List<Predicate> queryPredicates =
+            getCommonCostCalculationQueryPredicates(
+                    builder,
+                    root,
+                    processingPeriodId,
+                    geographicalZoneId,
+                    programNodePairs);
+
+    query.orderBy(createSortProperties(builder, root, pageable));
+
+    return query.where(queryPredicates.toArray(new Predicate[0]));
+  }
+
   private List<Predicate> getCommonApprovableQueryPredicates(
       CriteriaBuilder builder,
       Root<BottomUpQuantification> root,
@@ -203,6 +228,9 @@ public class BottomUpQuantificationRepositoryImpl
     Predicate predicate = builder.conjunction();
     queryPredicates.add(
             addEqualFilter(predicate, builder, root, PROCESSING_PERIOD_ID, processingPeriodId)
+    );
+    queryPredicates.add(
+            addEqualFilter(predicate, builder, root, STATUS, BottomUpQuantificationStatus.APPROVED)
     );
 
     return queryPredicates;
@@ -325,7 +353,11 @@ public class BottomUpQuantificationRepositoryImpl
           UUID geographicalZoneId,
           Set<Pair<UUID, UUID>> programNodePairs,
           Pageable pageable) {
-    CriteriaQuery<Long> countQuery = prepareApprovableCountQuery(programNodePairs);
+    CriteriaQuery<Long> countQuery =
+            prepareCostCalculationCountQuery(
+                    processingPeriodId,
+                    geographicalZoneId,
+                    programNodePairs);
 
     Long count = countEntities(countQuery);
     if (isZeroEntities(count)) {
@@ -334,7 +366,11 @@ public class BottomUpQuantificationRepositoryImpl
 
     final Pair<Integer, Integer> maxAndFirst = PageableUtil.querysMaxAndFirstResult(pageable);
     CriteriaQuery<BottomUpQuantification> query =
-            prepareApprovableQuery(programNodePairs, pageable);
+            prepareCostCalculationQuery(
+                    processingPeriodId,
+                    geographicalZoneId,
+                    programNodePairs,
+                    pageable);
 
     List<BottomUpQuantification> bottomUpQuantifications = entityManager.createQuery(query)
             .setMaxResults(maxAndFirst.getLeft())

@@ -538,50 +538,22 @@ public class BottomUpQuantificationService {
         .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
   }
 
-  public ProductsCostResponse getProductsCostData(
-      UUID processingPeriodId,
-      UUID programId,
-      UUID geographicZoneId,
-      Pageable pageable) {
-    ProductsCostResponse productsCosts = new ProductsCostResponse();
-    productsCosts.setDataSourceId(geographicZoneId);
-
-    // Get BUQ with periodPeriodId and with facilities supervised by current user
-    Page<BottomUpQuantification> bottomUpQuantificationsForCostCalculation =
-        getBottomUpQuantificationsForCostCalculation(processingPeriodId, programId,
-            geographicZoneId, pageable);
-
-    // ! Only APPROVED
-
-    // Filter only for facilities placed in geographicZone
-
-    // Calculate costs for products groups
-    List<BottomUpQuantification> bottomUpQuantificationsForCostCalculationList =
-        bottomUpQuantificationsForCostCalculation.getContent();
-
-    Map<String, Money> calculatedGroups =
-        calculateProductGroupsCost(bottomUpQuantificationsForCostCalculationList);
-    productsCosts.setCalculatedGroupsCosts(calculatedGroups);
-
-    List<UUID> bottomUpQuantificationsForCostCalculationIds =
-        bottomUpQuantificationsForCostCalculationList.stream()
-            .map(BottomUpQuantification::getId)
-            .collect(Collectors.toList());
-    productsCosts.setBottomUpQuantificationIds(bottomUpQuantificationsForCostCalculationIds);
-
-    return productsCosts;
-  }
-
   public Page<BottomUpQuantification> getBottomUpQuantificationsForCostCalculation(
       UUID processingPeriodId,
       UUID programId,
       UUID geographicalZoneId,
       Pageable pageable) {
-    UserDto user = authenticationHelper.getCurrentUser();
     List<String> allowedRightNames = new ArrayList<>();
     allowedRightNames.add(MOH_APPROVAL_RIGHT_NAME);
     allowedRightNames.add(PORALG_APPROVAL_RIGHT_NAME);
-    List<RightDto> rights = rightReferenceDataService.findRights(allowedRightNames);
+    List<RightDto> rights = new ArrayList<>();
+    allowedRightNames.forEach(right -> {
+      RightDto rightDto = rightReferenceDataService.findRight(right);
+      if (rightDto != null) {
+        rights.add(rightDto);
+      }
+    });
+    UserDto user = authenticationHelper.getCurrentUser();
     List<List<DetailedRoleAssignmentDto>> roleAssignments = new ArrayList<>();
     rights.forEach(right -> {
       List<DetailedRoleAssignmentDto> roleAssignment =

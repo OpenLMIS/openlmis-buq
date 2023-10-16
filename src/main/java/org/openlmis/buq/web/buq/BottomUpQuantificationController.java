@@ -353,6 +353,9 @@ public class BottomUpQuantificationController extends BaseController {
             .submitBottomUpQuantification(bottomUpQuantificationDto, id);
   }
 
+  /**
+   * Get bottom-up quantifications to approve for the specified user.
+   */
   @GetMapping("/costCalculation")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
