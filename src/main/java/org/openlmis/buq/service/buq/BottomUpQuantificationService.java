@@ -61,7 +61,6 @@ import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
-import org.openlmis.buq.dto.productgroup.ProductsCostResponse;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
@@ -538,6 +537,9 @@ public class BottomUpQuantificationService {
         .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
   }
 
+  /**
+   * Get bottom-up quantifications to approve for the specified user.
+   */
   public Page<BottomUpQuantification> getBottomUpQuantificationsForCostCalculation(
       UUID processingPeriodId,
       UUID programId,
@@ -592,7 +594,10 @@ public class BottomUpQuantificationService {
 
   }
 
-  private Map<String, Money> calculateProductGroupsCost(
+  /**
+   * Get bottom-up quantifications to approve for the specified user.
+   */
+  public Map<String, Money> calculateProductGroupsCost(
       List<BottomUpQuantification> bottomUpQuantifications) {
     List<ProductGroup> productGroups = productGroupRepository.findAll();
     Map<String, Money> groupsCalculations = new HashMap<>();
@@ -606,14 +611,19 @@ public class BottomUpQuantificationService {
     for (BottomUpQuantification buq : bottomUpQuantifications) {
       List<BottomUpQuantificationLineItem> lineItems = buq.getBottomUpQuantificationLineItems();
 
-      // Optimize by single request instead of findOrderable(lineItem.getOrderableId());
-      //List<UUID> orderableIds = lineItems.stream()
-      //    .map(BottomUpQuantificationLineItem::getOrderableId)
-      //    .collect(Collectors.toList());
-      //List<BasicOrderableDto> orderableDtos = findOrderables(orderableIds);
+      List<UUID> orderableIds = lineItems.stream()
+          .map(BottomUpQuantificationLineItem::getOrderableId)
+          .collect(Collectors.toList());
+      List<BasicOrderableDto> orderableDtos = new ArrayList<>();
+      if (!orderableIds.isEmpty()) {
+        orderableDtos = findOrderables(orderableIds);
+      }
+      Map<UUID, BasicOrderableDto> orderablesMap = new HashMap<>();
+      orderableDtos.forEach(orderable ->
+              orderablesMap.put(orderable.getId(), orderable));
 
       for (BottomUpQuantificationLineItem lineItem : lineItems) {
-        BasicOrderableDto orderable = findOrderable(lineItem.getOrderableId());
+        BasicOrderableDto orderable = orderablesMap.get(lineItem.getOrderableId());
         String orderableCodeSuffix = orderable.getProductCode().substring(0, 2);
         if (productGroupCodes.contains(orderableCodeSuffix)) {
           Money currentValue = groupsCalculations.get(orderableCodeSuffix);

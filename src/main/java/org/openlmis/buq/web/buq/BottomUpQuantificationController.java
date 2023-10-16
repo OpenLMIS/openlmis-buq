@@ -17,14 +17,15 @@ package org.openlmis.buq.web.buq;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.joda.money.Money;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
-import org.openlmis.buq.dto.productgroup.ProductsCostResponse;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
@@ -359,16 +360,18 @@ public class BottomUpQuantificationController extends BaseController {
   @GetMapping("/costCalculation")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public ProductsCostResponse getCostCalculations(Pageable pageable,
-     @RequestParam(value = "processingPeriodId") UUID processingPeriodId,
-     @RequestParam(value = "programId") UUID programId,
-     @RequestParam(value = "geographicZoneId") UUID geographicZoneId) {
-    ProductsCostResponse calculatedCosts = bottomUpQuantificationService.getProductsCostData(
+  public Map<String, Money> getCostCalculations(Pageable pageable,
+      @RequestParam(value = "processingPeriodId") UUID processingPeriodId,
+      @RequestParam(value = "idProgram") UUID programId,
+      @RequestParam(value = "geographicZoneId") UUID geographicZoneId) {
+    Page<BottomUpQuantification> calculatedCosts = bottomUpQuantificationService
+            .getBottomUpQuantificationsForCostCalculation(
         processingPeriodId,
         programId,
         geographicZoneId,
         pageable);
 
-    return calculatedCosts;
+    return bottomUpQuantificationService.calculateProductGroupsCost(calculatedCosts.getContent());
+
   }
 }
