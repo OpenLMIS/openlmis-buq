@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -527,12 +528,12 @@ public class BottomUpQuantificationService {
    * @param programId The UUID of the program.
    * @return A hierarchical map of supervised geographic zones, organized by level.
    */
-  public Map<UUID, Map<UUID, Map<UUID, List<UUID>>>> getSupervisedGeographicZones(UUID programId) {
+  public Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> getSupervisedGeographicZones(UUID programId) {
     List<UUID> userSupervisedFacilities = Stream
         .concat(getUserSupervisedFacilities(programId, MOH_APPROVAL_RIGHT_NAME).stream(),
             getUserSupervisedFacilities(programId, PORALG_APPROVAL_RIGHT_NAME).stream())
         .collect(Collectors.toList());
-    Map<UUID, Map<UUID, Map<UUID, List<UUID>>>> zones = new HashMap<>();
+    Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> zones = new HashMap<>();
 
     for (UUID facilityId : userSupervisedFacilities) {
       FacilityDto facilityDto = facilityReferenceDataService.findOne(facilityId);
@@ -553,7 +554,7 @@ public class BottomUpQuantificationService {
         UUID regionId = geographicZone.getId();
         zones.computeIfAbsent(countryId, k -> new HashMap<>())
             .computeIfAbsent(zoneId, k -> new HashMap<>())
-            .computeIfAbsent(regionId, k -> new ArrayList<>());
+            .computeIfAbsent(regionId, k -> new HashSet<>());
       } else if (levelNumber == 4) {
         UUID countryId = geographicZone.getParent().getParent().getParent().getId();
         UUID zoneId = geographicZone.getParent().getParent().getId();
@@ -561,7 +562,7 @@ public class BottomUpQuantificationService {
         UUID districtId = geographicZone.getId();
         zones.computeIfAbsent(countryId, k -> new HashMap<>())
             .computeIfAbsent(zoneId, k -> new HashMap<>())
-            .computeIfAbsent(regionId, k -> new ArrayList<>())
+            .computeIfAbsent(regionId, k -> new HashSet<>())
             .add(districtId);
       }
     }
