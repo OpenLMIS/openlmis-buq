@@ -1,5 +1,0 @@
-CREATE INDEX bottom_up_quantification_line_items_bottomUpQuantificationId_idx ON bottom_up_quantification_line_items (bottomUpQuantificationId);
-
-CLUSTER bottom_up_quantification_line_items USING bottom_up_quantification_line_items_bottomUpQuantificationId_idx;
-
-CREATE INDEX on bottom_up_quantification_status_changes (bottomUpQuantificationId);
