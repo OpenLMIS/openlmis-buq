@@ -18,6 +18,7 @@ package org.openlmis.buq.web.buq;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
@@ -313,7 +314,7 @@ public class BottomUpQuantificationController extends BaseController {
   @GetMapping(value = "/supervisedGeographicZones")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public Map<UUID, Map<UUID, Map<UUID, List<UUID>>>> getSupervisedGeographicZones(
+  public Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> getSupervisedGeographicZones(
       @RequestParam(value = PROGRAM_ID) UUID programId) {
     return bottomUpQuantificationService.getSupervisedGeographicZones(programId);
   }

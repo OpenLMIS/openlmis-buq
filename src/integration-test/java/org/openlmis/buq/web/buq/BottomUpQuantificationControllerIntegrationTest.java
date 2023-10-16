@@ -37,9 +37,9 @@ import guru.nidi.ramltester.junit.RamlMatchers;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
@@ -458,7 +458,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   public void shouldReturnSupervisedGeographicZones() {
     final UUID programId = UUID.randomUUID();
     final UUID geoZoneId = UUID.randomUUID();
-    Map<UUID, Map<UUID, Map<UUID, List<UUID>>>> zones = new HashMap<>();
+    Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> zones = new HashMap<>();
     zones.put(geoZoneId, new HashMap<>());
     given(bottomUpQuantificationService.getSupervisedGeographicZones(programId))
         .willReturn(zones);
