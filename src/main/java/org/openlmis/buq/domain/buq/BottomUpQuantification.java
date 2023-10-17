@@ -54,6 +54,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
   public static final String PROGRAM_ID = "programId";
   public static final String SUPERVISORY_NODE_ID = "supervisoryNodeId";
   public static final String STATUS_CHANGES = "statusChanges";
+  public static final String PROCESSING_PERIOD_ID = "processingPeriodId";
 
   @NotNull
   @Getter

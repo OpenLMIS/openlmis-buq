@@ -26,6 +26,7 @@ import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
+import org.openlmis.buq.dto.productgroup.ProductGroupsCostData;
 import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
@@ -364,6 +365,27 @@ public class BottomUpQuantificationController extends BaseController {
   }
 
   /**
+   * Retrieves the cost calculations for product groups related to a specific processing period,
+   * program, and geographic zone.
+   *
+   * @param pageable object used to encapsulate the pagination related values: page, size and sort.
+   * @param processingPeriodId UUID of the processing period.
+   * @param programId UUID of the program.
+   * @param geographicZoneId UUID of the geographic zone.
+   * @return List of {@link ProductGroupsCostData} objects containing calculations data.
+   */
+  @GetMapping("/costCalculation")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public List<ProductGroupsCostData> getCostCalculations(Pageable pageable,
+      @RequestParam(value = "processingPeriodId") UUID processingPeriodId,
+      @RequestParam(value = "programId") UUID programId,
+      @RequestParam(value = "geographicZoneId") UUID geographicZoneId) {
+    return bottomUpQuantificationService.getProductsCostData(processingPeriodId, programId,
+        geographicZoneId, pageable);
+  }
+
+  /**
    * Endpoint to final approve a bottomUpQuantification.
    *
    * @param ids list of UUIDs of bottom-up quantification which we want to update.
@@ -380,7 +402,6 @@ public class BottomUpQuantificationController extends BaseController {
             .stream()
             .map(bottomUpQuantificationDtoBuilder::buildDto)
             .collect(Collectors.toList());
-
   }
 
 }

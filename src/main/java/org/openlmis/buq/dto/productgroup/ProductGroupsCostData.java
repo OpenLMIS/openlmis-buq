@@ -13,27 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.buq.repository.buq.custom;
+package org.openlmis.buq.dto.productgroup;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import org.apache.commons.lang3.tuple.Pair;
-import org.openlmis.buq.domain.buq.BottomUpQuantification;
-import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public interface BottomUpQuantificationRepositoryCustom {
+@Getter
+@Setter
+@NoArgsConstructor
+public class ProductGroupsCostData {
 
-  Page<BottomUpQuantification> search(BottomUpQuantificationSearchParams searchParams,
-      Pageable pageable);
+  private Map<String, String> calculatedGroupsCosts;
+  private List<UUID> bottomUpQuantificationIds;
+  private UUID dataSourceId;
+  private boolean isDataSourceFacility;
 
-  Page<BottomUpQuantification> searchApprovableByProgramSupervisoryNodePairs(
-      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable);
-
-  Page<BottomUpQuantification> searchCostCalculationForProductGroups(
-          UUID processingPeriodId,
-          Set<Pair<UUID, UUID>> programNodePairs,
-          Pageable pageable
-  );
 }

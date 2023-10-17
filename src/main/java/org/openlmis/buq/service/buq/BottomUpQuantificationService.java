@@ -16,6 +16,7 @@
 package org.openlmis.buq.service.buq;
 
 import static java.util.stream.Collectors.toSet;
+import static org.openlmis.buq.CurrencyConfig.currencyCode;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_FACILITY_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_ID_MISMATCH;
@@ -43,6 +44,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.domain.Remark;
@@ -53,15 +56,19 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationSourceOfFund;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
+import org.openlmis.buq.domain.productgroup.ProductGroup;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
+import org.openlmis.buq.dto.BaseDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
+import org.openlmis.buq.dto.productgroup.ProductGroupsCostData;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.GeographicZoneDto;
+import org.openlmis.buq.dto.referencedata.MinimalFacilityDto;
 import org.openlmis.buq.dto.referencedata.ObjectReferenceDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
@@ -76,6 +83,7 @@ import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
+import org.openlmis.buq.repository.productgroup.ProductGroupRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.RequestParameters;
@@ -168,6 +176,9 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private SupplyLineReferenceDataService supplyLineReferenceDataService;
+
+  @Autowired
+  private ProductGroupRepository productGroupRepository;
 
   private static final String MESSAGE_SEPARATOR = ":";
 
@@ -596,6 +607,218 @@ public class BottomUpQuantificationService {
           .add(changeStatus(bottomUpQuantification, BottomUpQuantificationStatus.APPROVED_BY_NQT));
     });
     return updatedBottomUpQuantifications;
+  }
+
+  /**
+   * Retrieves cost data for product groups within a specified geographic zone and program,
+   * based on the Bottom-Up Quantification records.
+   *
+   * @param processingPeriodId The UUID of the processing period.
+   * @param programId The UUID of the program for which cost data is retrieved.
+   * @param geographicZoneId The UUID of the geographic zone for which cost data is calculated.
+   * @param pageable Pagination information to limit the number of results.
+   * @return A list of {@link ProductGroupsCostData} containing cost data for product groups.
+   */
+  public List<ProductGroupsCostData> getProductsCostData(UUID processingPeriodId, UUID programId,
+      UUID geographicZoneId, Pageable pageable) {
+    List<BottomUpQuantification> bottomUpQuantificationList =
+        getBottomUpQuantificationsForCostCalculation(processingPeriodId, programId,
+            pageable).getContent();
+
+    Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> supervisedZones =
+        getSupervisedGeographicZones(programId);
+    Set<UUID> subZones = new HashSet<>();
+    boolean isDistrictLevel = false;
+    Set<UUID> countries = supervisedZones.keySet();
+    if (countries.contains(geographicZoneId)) {
+      subZones = supervisedZones.get(geographicZoneId).keySet();
+    } else {
+      for (Map.Entry<UUID, Map<UUID, Map<UUID, Set<UUID>>>> country : supervisedZones.entrySet()) {
+        Set<UUID> zones = country.getValue().keySet();
+        if (zones.contains(geographicZoneId)) {
+          subZones = country.getValue().get(geographicZoneId).keySet();
+          break;
+        } else {
+          for (Map.Entry<UUID, Map<UUID, Set<UUID>>> zone : country.getValue().entrySet()) {
+            Set<UUID> regions = zone.getValue().keySet();
+            if (regions.contains(geographicZoneId)) {
+              subZones = zone.getValue().get(geographicZoneId);
+              break;
+            } else {
+              for (Map.Entry<UUID, Set<UUID>> region : zone.getValue().entrySet()) {
+                Set<UUID> districts = region.getValue();
+                if (districts.contains(geographicZoneId)) {
+                  isDistrictLevel = true;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return createProductsCostData(isDistrictLevel, geographicZoneId, subZones,
+        bottomUpQuantificationList);
+  }
+
+  private List<ProductGroupsCostData> createProductsCostData(boolean isDistrictLevel,
+      UUID geographicZoneId, Set<UUID> subZones,
+      List<BottomUpQuantification> bottomUpQuantificationList) {
+    List<ProductGroupsCostData> productsCostsList = new ArrayList<>();
+    Set<UUID> facilityIds = new HashSet<>();
+
+    if (isDistrictLevel) {
+      List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
+          null, null, geographicZoneId, true);
+      facilityIds.addAll(facilityDtos.stream()
+          .map(BaseDto::getId)
+          .collect(toSet()));
+      List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
+          bottomUpQuantificationList.stream()
+              .filter(buq -> facilityIds.contains(buq.getFacilityId()))
+              .collect(Collectors.toList());
+
+      for (BottomUpQuantification buq : bottomUpQuantificationsForCalculations) {
+        ProductGroupsCostData productsCosts = new ProductGroupsCostData();
+        productsCosts.setDataSourceId(buq.getFacilityId());
+
+        Map<String, String> calculatedGroups =
+            calculateProductGroupsCost(Collections.singletonList(buq));
+        productsCosts.setCalculatedGroupsCosts(calculatedGroups);
+        productsCosts.setBottomUpQuantificationIds(Collections.singletonList(buq.getId()));
+        productsCosts.setDataSourceFacility(true);
+        productsCostsList.add(productsCosts);
+      }
+    } else {
+      for (UUID locationId : subZones) {
+        ProductGroupsCostData productsCosts = new ProductGroupsCostData();
+        productsCosts.setDataSourceId(locationId);
+        List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
+            null, null, locationId, true);
+        facilityIds.addAll(facilityDtos.stream()
+            .map(BaseDto::getId)
+            .collect(toSet()));
+
+        List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
+            bottomUpQuantificationList.stream()
+                .filter(buq -> facilityIds.contains(buq.getFacilityId()))
+                .collect(Collectors.toList());
+
+        Map<String, String> calculatedGroups =
+            calculateProductGroupsCost(bottomUpQuantificationsForCalculations);
+        productsCosts.setCalculatedGroupsCosts(calculatedGroups);
+
+        List<UUID> bottomUpQuantificationsForCostCalculationIds =
+            bottomUpQuantificationList.stream()
+                .map(BottomUpQuantification::getId)
+                .collect(Collectors.toList());
+        productsCosts.setBottomUpQuantificationIds(bottomUpQuantificationsForCostCalculationIds);
+        productsCostsList.add(productsCosts);
+      }
+    }
+
+    return productsCostsList;
+  }
+
+  private Page<BottomUpQuantification> getBottomUpQuantificationsForCostCalculation(
+      UUID processingPeriodId,
+      UUID programId,
+      Pageable pageable) {
+    List<String> allowedRightNames = new ArrayList<>();
+    allowedRightNames.add(MOH_APPROVAL_RIGHT_NAME);
+    allowedRightNames.add(PORALG_APPROVAL_RIGHT_NAME);
+    List<RightDto> rights = new ArrayList<>();
+    allowedRightNames.forEach(right -> {
+      RightDto rightDto = rightReferenceDataService.findRight(right);
+      if (rightDto != null) {
+        rights.add(rightDto);
+      }
+    });
+    UserDto user = authenticationHelper.getCurrentUser();
+    List<List<DetailedRoleAssignmentDto>> roleAssignments = new ArrayList<>();
+    rights.forEach(right -> {
+      List<DetailedRoleAssignmentDto> roleAssignment =
+              userRoleAssignmentsReferenceDataService
+                      .hasRight(user, right);
+      if (!roleAssignment.isEmpty()) {
+        roleAssignments.add(roleAssignment);
+      }
+    });
+
+    if (CollectionUtils.isEmpty(roleAssignments)) {
+      return Pagination.getPage(Collections.emptyList(), pageable);
+    }
+
+    Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
+            .stream()
+            .map(role ->
+              role
+                .stream()
+                .filter(item -> Objects.nonNull(item.getRole().getId()))
+                .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
+                .filter(item -> Objects.nonNull(item.getProgramId()))
+                .filter(item -> null == programId || programId.equals(item.getProgramId()))
+                .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
+                .collect(toSet())
+            )
+            .flatMap(Set::stream)
+            .collect(toSet());
+
+    return bottomUpQuantificationRepository.searchCostCalculationForProductGroups(
+                    processingPeriodId,
+                    programNodePairs,
+                    pageable);
+  }
+
+  private Map<String, String> calculateProductGroupsCost(
+      List<BottomUpQuantification> bottomUpQuantifications) {
+    List<ProductGroup> productGroups = productGroupRepository.findAll();
+    Map<String, Money> groupsCalculations = new HashMap<>();
+    List<String> productGroupCodes = new ArrayList<>();
+    Map<String, String> productGroupsCodeNameMap = new HashMap<>();
+
+    for (ProductGroup group : productGroups) {
+      productGroupsCodeNameMap.put(group.getCode(), group.getName());
+      groupsCalculations.put(group.getName(), Money.of(CurrencyUnit.of(currencyCode), 0.00));
+      productGroupCodes.add(group.getCode());
+    }
+
+    for (BottomUpQuantification buq : bottomUpQuantifications) {
+      List<BottomUpQuantificationLineItem> lineItems = buq.getBottomUpQuantificationLineItems();
+
+      List<UUID> orderableIds = lineItems.stream()
+          .map(BottomUpQuantificationLineItem::getOrderableId)
+          .collect(Collectors.toList());
+      List<BasicOrderableDto> orderableDtos = new ArrayList<>();
+      if (!orderableIds.isEmpty()) {
+        orderableDtos = findOrderables(orderableIds);
+      }
+      Map<UUID, BasicOrderableDto> orderablesMap = new HashMap<>();
+      orderableDtos.forEach(orderable ->
+          orderablesMap.put(orderable.getId(), orderable));
+
+      for (BottomUpQuantificationLineItem lineItem : lineItems) {
+        BasicOrderableDto orderable = orderablesMap.get(lineItem.getOrderableId());
+        String orderableCodeSuffix = orderable.getProductCode().substring(0, 2);
+        if (productGroupCodes.contains(orderableCodeSuffix)) {
+          Money currentValue = groupsCalculations.get(
+              productGroupsCodeNameMap.get(orderableCodeSuffix));
+          groupsCalculations.put(productGroupsCodeNameMap.get(orderableCodeSuffix),
+              currentValue.plus(lineItem.getTotalCost()));
+        } else {
+          Money currentValue = groupsCalculations.get(
+              productGroupsCodeNameMap.get(null));
+          groupsCalculations.put(productGroupsCodeNameMap.get(null),
+              currentValue.plus(lineItem.getTotalCost()));
+        }
+      }
+    }
+
+    return groupsCalculations.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+          return entry.getValue().getAmount() + " " + entry.getValue().getCurrencyUnit().getCode();
+        }));
   }
 
   private Map<String, Message> getErrors(BindingResult bindingResult) {
