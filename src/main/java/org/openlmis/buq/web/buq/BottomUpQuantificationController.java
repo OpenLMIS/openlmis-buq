@@ -420,6 +420,7 @@ public class BottomUpQuantificationController extends BaseController {
       @RequestParam(value = "processingPeriodId") UUID processingPeriodId,
       @RequestParam(value = "programId") UUID programId,
       @RequestParam(value = "geographicZoneId") UUID geographicZoneId) {
+    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
     return bottomUpQuantificationService.getProductsCostData(processingPeriodId, programId,
         geographicZoneId, pageable);
   }
