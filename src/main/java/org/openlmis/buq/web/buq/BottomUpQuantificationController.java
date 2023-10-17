@@ -233,6 +233,11 @@ public class BottomUpQuantificationController extends BaseController {
 
     ProgramDto program = programReferenceDataService
             .findOne(bottomUpQuantificationDto.getProgramId());
+
+    if (program == null) {
+      throw new NotFoundException(MessageKeys.ERROR_PROGRAM_NOT_FOUND);
+    }
+
     if (program.getSkipAuthorization()) {
       permissionService.hasPermission(PermissionService.CREATE_FORECASTING);
     } else {
@@ -322,7 +327,7 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto reject(@PathVariable("id") UUID bottomUpQuantificationId,
       @RequestBody RejectionDto rejectionDto) {
-    permissionService.hasPermission(PermissionService.APPROVE_BUQ);
+    permissionService.hasAtLeastOnePermission(PermissionService.APPROVE_RIGHTS);
     BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
             .reject(bottomUpQuantificationId, rejectionDto);
     return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
@@ -348,6 +353,7 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> getSupervisedGeographicZones(
       @RequestParam(value = PROGRAM_ID) UUID programId) {
+    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
     return bottomUpQuantificationService.getSupervisedGeographicZones(programId);
   }
 
@@ -429,6 +435,7 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public List<BottomUpQuantificationDto> finalApproveBottomUpQuantification(
           @RequestParam("id") List<UUID> ids) {
+    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
     List<BottomUpQuantification> updatedBottomUpQuantifications =
             bottomUpQuantificationService.finalApproveBottomUpQuantification(ids);
     return updatedBottomUpQuantifications

@@ -484,6 +484,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     final UUID geoZoneId = UUID.randomUUID();
     Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> zones = new HashMap<>();
     zones.put(geoZoneId, new HashMap<>());
+    mockUserHasAtLeastOneOfFollowingRights(PermissionService.MOH_PORALG_RIGHTS);
     given(bottomUpQuantificationService.getSupervisedGeographicZones(programId))
         .willReturn(zones);
 

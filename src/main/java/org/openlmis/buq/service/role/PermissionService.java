@@ -53,6 +53,12 @@ public class PermissionService {
   public static final List<String> RECENT_REJECTION_RIGHTS = Arrays.asList(
           CREATE_FORECASTING, AUTHORIZE_FORECASTING, MOH_APPROVAL, PORALG_APPROVAL);
 
+  public static final List<String> MOH_PORALG_RIGHTS = Arrays.asList(
+          MOH_APPROVAL, PORALG_APPROVAL);
+
+  public static final List<String> APPROVE_RIGHTS = Arrays.asList(
+          MOH_APPROVAL, PORALG_APPROVAL, APPROVE_BUQ);
+
   @Autowired
   private AuthenticationHelper authenticationHelper;
 
@@ -145,4 +151,5 @@ public class PermissionService {
 
     return new ResultDto<>(false);
   }
+
 }
