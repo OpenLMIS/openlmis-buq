@@ -815,8 +815,6 @@ public class BottomUpQuantificationService {
       }
     }
 
-
-
     return groupsCalculations.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
           return entry.getValue().getAmount() + " " + entry.getValue().getCurrencyUnit().getCode();
