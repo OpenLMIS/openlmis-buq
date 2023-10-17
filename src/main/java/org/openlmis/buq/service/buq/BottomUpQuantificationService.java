@@ -666,14 +666,12 @@ public class BottomUpQuantificationService {
       UUID geographicZoneId, Set<UUID> subZones,
       List<BottomUpQuantification> bottomUpQuantificationList) {
     List<ProductGroupsCostData> productsCostsList = new ArrayList<>();
-    Set<UUID> facilityIds = new HashSet<>();
 
     if (isDistrictLevel) {
       List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
           null, null, geographicZoneId, true);
-      facilityIds.addAll(facilityDtos.stream()
-          .map(BaseDto::getId)
-          .collect(toSet()));
+      Set<UUID> facilityIds = facilityDtos.stream()
+          .map(BaseDto::getId).collect(Collectors.toSet());
       List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
           bottomUpQuantificationList.stream()
               .filter(buq -> facilityIds.contains(buq.getFacilityId()))
@@ -696,9 +694,8 @@ public class BottomUpQuantificationService {
         productsCosts.setDataSourceId(locationId);
         List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
             null, null, locationId, true);
-        facilityIds.addAll(facilityDtos.stream()
-            .map(BaseDto::getId)
-            .collect(toSet()));
+        Set<UUID> facilityIds = facilityDtos.stream()
+            .map(BaseDto::getId).collect(Collectors.toSet());
 
         List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
             bottomUpQuantificationList.stream()
