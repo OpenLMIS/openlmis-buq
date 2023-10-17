@@ -21,15 +21,15 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.joda.money.Money;
 
 @Getter
 @Setter
 @NoArgsConstructor
-public class ProductsCostResponse {
+public class ProductGroupsCostData {
 
-  private Map<String, Money> calculatedGroupsCosts;
+  private Map<String, String> calculatedGroupsCosts;
   private List<UUID> bottomUpQuantificationIds;
   private UUID dataSourceId;
+  private boolean isDataSourceFacility;
 
 }

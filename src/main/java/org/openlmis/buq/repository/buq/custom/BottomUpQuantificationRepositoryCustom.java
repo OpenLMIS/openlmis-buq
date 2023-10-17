@@ -33,7 +33,6 @@ public interface BottomUpQuantificationRepositoryCustom {
 
   Page<BottomUpQuantification> searchCostCalculationForProductGroups(
           UUID processingPeriodId,
-          UUID geographicalZoneId,
           Set<Pair<UUID, UUID>> programNodePairs,
           Pageable pageable
   );
