@@ -21,6 +21,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.openlmis.buq.exception.AuthenticationMessageException;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.NotFoundException;
+import org.openlmis.buq.exception.PermissionMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.service.DataRetrievalException;
@@ -128,4 +129,10 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
     return getLocalizedMessage(new Message(ex.getMessage()));
   }
 
+  @ExceptionHandler(PermissionMessageException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  @ResponseBody
+  public Message.LocalizedMessage handlePermissionException(PermissionMessageException ex) {
+    return getLocalizedMessage(ex);
+  }
 }

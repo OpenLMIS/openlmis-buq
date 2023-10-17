@@ -15,11 +15,15 @@
 
 package org.openlmis.buq.util;
 
+import static org.openlmis.buq.i18n.MessageKeys.ERROR_RIGHT_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 
 import java.util.UUID;
+import org.openlmis.buq.dto.referencedata.RightDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
 import org.openlmis.buq.exception.AuthenticationMessageException;
+import org.openlmis.buq.exception.NotFoundException;
+import org.openlmis.buq.service.referencedata.RightReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +34,9 @@ public class AuthenticationHelper {
 
   @Autowired
   private UserReferenceDataService userReferenceDataService;
+
+  @Autowired
+  private RightReferenceDataService rightReferenceDataService;
 
   /**
    * Method returns current user based on Spring context
@@ -49,4 +56,20 @@ public class AuthenticationHelper {
     return user;
   }
 
+  /**
+   * Method returns a correct right and fetches his data from reference-data service.
+   *
+   * @param name right name
+   * @return RightDto entity of right.
+   * @throws AuthenticationMessageException if right cannot be found.
+   */
+  public RightDto getRight(String name) {
+    RightDto right = rightReferenceDataService.findRight(name);
+
+    if (null == right) {
+      throw new NotFoundException(new Message(ERROR_RIGHT_NOT_FOUND, name));
+    }
+
+    return right;
+  }
 }

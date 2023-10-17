@@ -62,6 +62,7 @@ public abstract class MessageKeys {
   private static final String APPROVE = "approve";
   private static final String PERIOD_FACILITY_UNIQUE = "periodAndFacilityUnique";
   private static final String AND = "and";
+  private static final String RIGHT = "right";
 
   private static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
 
@@ -79,6 +80,8 @@ public abstract class MessageKeys {
   public static final String ERROR_REMARK_NOT_FOUND = join(ERROR_PREFIX, REMARK, NOT_FOUND);
   public static final String ERROR_REJECTION_NOT_FOUND = join(ERROR_PREFIX, REJECTION, NOT_FOUND);
   public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION, USER,
+      "canNotBeFound");
+  public static final String ERROR_RIGHT_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION, RIGHT,
       "canNotBeFound");
   public static final String ERROR_SERVICE_REQUIRED = join(ERROR_PREFIX, SERVICE, REQUIRED);
   public static final String ERROR_SERVICE_OCCURRED = join(ERROR_PREFIX, SERVICE, "errorOccurred");
@@ -130,6 +133,15 @@ public abstract class MessageKeys {
   public static final String ERROR_PERIOD_FACILITY_PAIR_UNIQUE =
       join(ERROR_PREFIX, PERIOD_FACILITY_UNIQUE);
 
+  public static final String ERROR_NO_FOLLOWING_PERMISSION = join(ERROR_PREFIX, AUTHENTICATION,
+      "noFollowingPermission");
+
+  public static final String ERROR_NO_SINGLE_FOLLOWING_PERMISSION = join(ERROR_PREFIX,
+      AUTHENTICATION, "noSingleFollowingPermission");
+
+  public static final String ERROR_PERMISSION_CHECK_FAILED = join(ERROR_PREFIX, AUTHENTICATION,
+      "failed");
+
   private MessageKeys() {
     throw new UnsupportedOperationException();
   }
@@ -137,5 +149,4 @@ public abstract class MessageKeys {
   private static String join(String... params) {
     return String.join(DELIMITER, Arrays.asList(params));
   }
-
 }
