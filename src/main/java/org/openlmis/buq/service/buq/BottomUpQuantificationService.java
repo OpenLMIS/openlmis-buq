@@ -707,8 +707,8 @@ public class BottomUpQuantificationService {
         for (String facilityType : facilityTypes) {
           List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
               bottomUpQuantificationList.stream()
-                  .filter(buq -> facilityIds.contains(buq.getFacilityId()))
-                  .filter(buq -> getFacility(facilityDtos, buq.getFacilityId()).getType().getName()
+                  .filter(buq -> facilityIds.contains(buq.getFacilityId())
+                      && getFacility(facilityDtos, buq.getFacilityId()).getType().getName()
                       .equals(facilityType))
                   .collect(Collectors.toList());
 
