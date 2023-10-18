@@ -20,6 +20,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static org.mockito.Mockito.doNothing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -29,6 +30,7 @@ import com.jayway.restassured.config.RestAssuredConfig;
 import guru.nidi.ramltester.RamlDefinition;
 import guru.nidi.ramltester.RamlLoaders;
 import guru.nidi.ramltester.restassured.RestAssuredClient;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import org.javers.core.Javers;
@@ -43,6 +45,8 @@ import org.openlmis.buq.repository.productgroup.ProductGroupRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
+import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.role.PermissionService;
 import org.openlmis.buq.util.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -110,6 +114,9 @@ public abstract class BaseWebIntegrationTest {
   @LocalServerPort
   private int randomPort;
 
+  @SpyBean
+  protected PermissionService permissionService;
+
   @Autowired
   private ObjectMapper objectMapper;
 
@@ -124,6 +131,9 @@ public abstract class BaseWebIntegrationTest {
 
   @MockBean
   public BottomUpQuantificationService bottomUpQuantificationService;
+
+  @MockBean
+  public ProgramReferenceDataService programReferenceDataService;
 
   @MockBean
   public RemarkRepository remarkRepository;
@@ -197,6 +207,14 @@ public abstract class BaseWebIntegrationTest {
    */
   public String getClientTokenHeader() {
     return CLIENT_ACCESS_TOKEN_HEADER;
+  }
+
+  protected void mockUserHasRight(String rightName) {
+    doNothing().when(permissionService).hasPermission(rightName);
+  }
+
+  protected void mockUserHasAtLeastOneOfFollowingRights(List<String> rightNames) {
+    doNothing().when(permissionService).hasAtLeastOnePermission(rightNames);
   }
 
   public static class SaveAnswer<T extends BaseEntity> implements Answer<T> {

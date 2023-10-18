@@ -35,6 +35,7 @@ import com.google.common.collect.Maps;
 import com.jayway.restassured.response.Response;
 import guru.nidi.ramltester.junit.RamlMatchers;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,10 +56,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
+import org.openlmis.buq.builder.ProgramDtoDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
+import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationSearchParams;
+import org.openlmis.buq.service.role.PermissionService;
 import org.openlmis.buq.web.BaseWebIntegrationTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageImpl;
@@ -111,6 +115,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnPageOfBottomUpQuantifications() {
+    mockUserHasAtLeastOneOfFollowingRights(PermissionService.ALL_BUQ_RIGHTS);
     given(bottomUpQuantificationRepository.search(
         any(BottomUpQuantificationSearchParams.class),
         any(Pageable.class)))
@@ -160,6 +165,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnGivenBottomUpQuantification() {
+    mockUserHasAtLeastOneOfFollowingRights(PermissionService.ALL_BUQ_RIGHTS);
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
@@ -179,6 +185,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldCreateBottomUpQuantification() {
+    mockUserHasRight(PermissionService.PREPARE_BUQ);
     given(bottomUpQuantificationService.prepare(bottomUpQuantification.getFacilityId(),
         bottomUpQuantification.getProgramId(), bottomUpQuantification.getProcessingPeriodId()))
         .willReturn(bottomUpQuantification);
@@ -200,6 +207,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnNotFoundMessageIfBuqDoesNotExistForGivenBuqEndpoint() {
+    mockUserHasAtLeastOneOfFollowingRights(PermissionService.ALL_BUQ_RIGHTS);
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.empty());
 
@@ -231,6 +239,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldUpdateBottomUpQuantification() {
+    mockUserHasAtLeastOneOfFollowingRights(Arrays.asList(
+            PermissionService.CREATE_FORECASTING,
+            PermissionService.AUTHORIZE_FORECASTING));
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
         .willReturn(true);
     given(bottomUpQuantificationService.save(any(BottomUpQuantificationDto.class),
@@ -270,6 +281,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldDeleteBottomUpQuantification() {
+    mockUserHasRight(PermissionService.PREPARE_BUQ);
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
     willDoNothing().given(bottomUpQuantificationService).delete(bottomUpQuantification);
@@ -288,6 +300,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnNotFoundMessageIfBuqDoesNotExistForDeleteBuqOfFundEndpoint() {
+    mockUserHasRight(PermissionService.PREPARE_BUQ);
     given(bottomUpQuantificationRepository.findById(any()))
         .willReturn(Optional.empty());
 
@@ -306,6 +319,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnUnauthorizedForDeleteBuqEndpointIfUserIsNotAuthorized() {
+    mockUserHasRight(PermissionService.PREPARE_BUQ);
     restAssured
         .given()
         .pathParam(ID, bottomUpQuantificationDto.getId().toString())
@@ -319,6 +333,11 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldAuthorizeBottomUpQuantification() {
+    mockUserHasRight(PermissionService.AUTHORIZE_FORECASTING);
+    mockUserHasRight(PermissionService.CREATE_FORECASTING);
+    ProgramDto programDto = new ProgramDtoDataBuilder().buildAsDto();
+    given(programReferenceDataService.findOne(bottomUpQuantificationDto.getProgramId()))
+            .willReturn(programDto);
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
         .willReturn(true);
     given(bottomUpQuantificationService.authorize(any(BottomUpQuantificationDto.class),
@@ -343,6 +362,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldApproveBottomUpQuantification() {
+    mockUserHasRight(PermissionService.APPROVE_BUQ);
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
         .willReturn(true);
     given(bottomUpQuantificationService.approve(any(BottomUpQuantificationDto.class),
@@ -367,6 +387,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldSubmitBottomUpQuantification() {
+    mockUserHasRight(PermissionService.CREATE_FORECASTING);
     given(bottomUpQuantificationService
             .submitBottomUpQuantification(any(BottomUpQuantificationDto.class),
             eq(bottomUpQuantificationDto.getId())))
@@ -390,6 +411,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldDownload() throws IOException {
+    mockUserHasRight(PermissionService.PREPARE_BUQ);
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
     ClassPathResource file = new ClassPathResource("csv/" + BUQ_FORM_CSV_FILENAME + ".csv");
@@ -415,6 +437,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnNotFoundMessageIfBuqDoesNotExistForGivenBuqDownloadEndpoint() {
+    mockUserHasRight(PermissionService.PREPARE_BUQ);
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.empty());
 
@@ -434,6 +457,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnApproveFacilityForecastingStats() {
+    mockUserHasRight(PermissionService.APPROVE_BUQ);
     final UUID programId = UUID.randomUUID();
     ApproveFacilityForecastingStats stats = new ApproveFacilityForecastingStats(10, 3, 30);
     given(bottomUpQuantificationService.getApproveFacilityForecastingStats(programId))
@@ -460,6 +484,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     final UUID geoZoneId = UUID.randomUUID();
     Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> zones = new HashMap<>();
     zones.put(geoZoneId, new HashMap<>());
+    mockUserHasAtLeastOneOfFollowingRights(PermissionService.MOH_PORALG_RIGHTS);
     given(bottomUpQuantificationService.getSupervisedGeographicZones(programId))
         .willReturn(zones);
 
@@ -479,6 +504,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldRetrieveAuditLogs() {
+    mockUserHasRight(PermissionService.MANAGE_BUQ);
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
         .willReturn(true);
     willReturn(Lists.newArrayList(change)).given(javers).findChanges(any(JqlQuery.class));
@@ -507,6 +533,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldRetrieveAuditLogsWithParameters() {
+    mockUserHasRight(PermissionService.MANAGE_BUQ);
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
         .willReturn(true);
     willReturn(Lists.newArrayList(change)).given(javers).findChanges(any(JqlQuery.class));
@@ -537,6 +564,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnNotFoundMessageIfBuqDoesNotExistForAuditLogEndpoint() {
+    mockUserHasRight(PermissionService.MANAGE_BUQ);
     given(sourceOfFundRepository.existsById(bottomUpQuantificationDto.getId())).willReturn(false);
 
     restAssured
