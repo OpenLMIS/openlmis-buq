@@ -59,6 +59,7 @@ import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.domain.productgroup.ProductGroup;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
 import org.openlmis.buq.dto.BaseDto;
+import org.openlmis.buq.dto.ResultDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
@@ -669,7 +670,9 @@ public class BottomUpQuantificationService {
 
     if (isDistrictLevel) {
       List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
-          null, null, geographicZoneId, true);
+              null, null, geographicZoneId, true).stream()
+          .filter(this::checkFacilityTypeAndPermission)
+          .collect(Collectors.toList());
       Set<UUID> facilityIds = facilityDtos.stream()
           .map(BaseDto::getId).collect(Collectors.toSet());
       List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
@@ -693,7 +696,9 @@ public class BottomUpQuantificationService {
         ProductGroupsCostData productsCosts = new ProductGroupsCostData();
         productsCosts.setDataSourceId(locationId);
         List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
-            null, null, locationId, true);
+                null, null, locationId, true).stream()
+            .filter(this::checkFacilityTypeAndPermission)
+            .collect(Collectors.toList());
         Set<UUID> facilityIds = facilityDtos.stream()
             .map(BaseDto::getId).collect(Collectors.toSet());
 
@@ -716,6 +721,38 @@ public class BottomUpQuantificationService {
     }
 
     return productsCostsList;
+  }
+
+  private boolean checkFacilityTypeAndPermission(MinimalFacilityDto facility) {
+    String checkedFacilityTypeName = "Health Centre";
+    UserDto user = authenticationHelper.getCurrentUser();
+    RightDto mohRight = rightReferenceDataService.findRight(MOH_APPROVAL_RIGHT_NAME);
+    ResultDto<Boolean> hasMohRight = new ResultDto<>();
+    if (mohRight != null) {
+      hasMohRight = userReferenceDataService
+          .hasRight(user.getId(), mohRight.getId(), null, null, null);
+    } else {
+      hasMohRight.setResult(false);
+    }
+
+    RightDto poralgRight = rightReferenceDataService.findRight(PORALG_APPROVAL_RIGHT_NAME);
+    ResultDto<Boolean> hasPoralgRight = new ResultDto<>();
+    if (poralgRight != null) {
+      hasPoralgRight = userReferenceDataService
+          .hasRight(user.getId(), poralgRight.getId(), null, null, null);
+    } else {
+      hasPoralgRight.setResult(false);
+    }
+
+    if (hasMohRight.getResult() && hasPoralgRight.getResult()) {
+      return true;
+    } else if (Boolean.TRUE.equals(hasPoralgRight.getResult())) {
+      return facility.getType().getName().equals(checkedFacilityTypeName);
+    } else if (Boolean.TRUE.equals(hasMohRight.getResult())) {
+      return !facility.getType().getName().equals(checkedFacilityTypeName);
+    }
+
+    return false;
   }
 
   private Page<BottomUpQuantification> getBottomUpQuantificationsForCostCalculation(
