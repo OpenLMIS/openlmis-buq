@@ -27,5 +27,6 @@ public class FacilityTypeDto {
   private String description;
   private Integer displayOrder;
   private Boolean active;
+  private boolean primaryHealthCare;
 
 }
