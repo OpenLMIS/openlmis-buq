@@ -697,12 +697,16 @@ public class BottomUpQuantificationService {
                 null, null, locationId, true).stream()
             .filter(this::checkFacilityTypeAndPermission)
             .collect(Collectors.toList());
-        Set<String> facilityTypes = facilityDtos.stream()
-            .map(dto -> dto.getType().getName())
-            .collect(Collectors.toSet());
-
         Set<UUID> facilityIds = facilityDtos.stream()
             .map(BaseDto::getId).collect(Collectors.toSet());
+
+        Set<UUID> bottomUpQuantificationFacilityIds = bottomUpQuantificationList.stream()
+            .map(BottomUpQuantification::getFacilityId)
+            .collect(toSet());
+        Set<String> facilityTypes = facilityDtos.stream()
+            .filter(dto -> bottomUpQuantificationFacilityIds.contains(dto.getId()))
+            .map(dto -> dto.getType().getName())
+            .collect(Collectors.toSet());
 
         for (String facilityType : facilityTypes) {
           List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
