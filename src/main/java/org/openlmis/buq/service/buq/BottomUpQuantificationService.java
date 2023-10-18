@@ -733,7 +733,6 @@ public class BottomUpQuantificationService {
   }
 
   private boolean checkFacilityTypeAndPermission(MinimalFacilityDto facility) {
-    String checkedFacilityTypeName = "Health Centre";
     UserDto user = authenticationHelper.getCurrentUser();
     RightDto mohRight = rightReferenceDataService.findRight(MOH_APPROVAL_RIGHT_NAME);
     ResultDto<Boolean> hasMohRight = new ResultDto<>();
@@ -756,9 +755,9 @@ public class BottomUpQuantificationService {
     if (hasMohRight.getResult() && hasPoralgRight.getResult()) {
       return true;
     } else if (Boolean.TRUE.equals(hasPoralgRight.getResult())) {
-      return facility.getType().getName().equals(checkedFacilityTypeName);
+      return facility.getType().isPrimaryHealthCare();
     } else if (Boolean.TRUE.equals(hasMohRight.getResult())) {
-      return !facility.getType().getName().equals(checkedFacilityTypeName);
+      return !facility.getType().isPrimaryHealthCare();
     }
 
     return false;
