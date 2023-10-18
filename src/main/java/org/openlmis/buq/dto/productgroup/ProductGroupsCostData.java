@@ -31,5 +31,6 @@ public class ProductGroupsCostData {
   private List<UUID> bottomUpQuantificationIds;
   private UUID dataSourceId;
   private boolean isDataSourceFacility;
+  private String facilityType;
 
 }

@@ -693,30 +693,39 @@ public class BottomUpQuantificationService {
       }
     } else {
       for (UUID locationId : subZones) {
-        ProductGroupsCostData productsCosts = new ProductGroupsCostData();
-        productsCosts.setDataSourceId(locationId);
         List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
                 null, null, locationId, true).stream()
             .filter(this::checkFacilityTypeAndPermission)
             .collect(Collectors.toList());
+        Set<String> facilityTypes = facilityDtos.stream()
+            .map(dto -> dto.getType().getName())
+            .collect(Collectors.toSet());
+
         Set<UUID> facilityIds = facilityDtos.stream()
             .map(BaseDto::getId).collect(Collectors.toSet());
 
-        List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
-            bottomUpQuantificationList.stream()
-                .filter(buq -> facilityIds.contains(buq.getFacilityId()))
-                .collect(Collectors.toList());
+        for (String facilityType : facilityTypes) {
+          List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
+              bottomUpQuantificationList.stream()
+                  .filter(buq -> facilityIds.contains(buq.getFacilityId())
+                      && getFacility(facilityDtos, buq.getFacilityId()).getType().getName()
+                      .equals(facilityType))
+                  .collect(Collectors.toList());
 
-        Map<String, String> calculatedGroups =
-            calculateProductGroupsCost(bottomUpQuantificationsForCalculations);
-        productsCosts.setCalculatedGroupsCosts(calculatedGroups);
+          ProductGroupsCostData productsCosts = new ProductGroupsCostData();
+          productsCosts.setFacilityType(facilityType);
+          productsCosts.setDataSourceId(locationId);
+          Map<String, String> calculatedGroups =
+              calculateProductGroupsCost(bottomUpQuantificationsForCalculations);
+          productsCosts.setCalculatedGroupsCosts(calculatedGroups);
 
-        List<UUID> bottomUpQuantificationsForCostCalculationIds =
-            bottomUpQuantificationList.stream()
-                .map(BottomUpQuantification::getId)
-                .collect(Collectors.toList());
-        productsCosts.setBottomUpQuantificationIds(bottomUpQuantificationsForCostCalculationIds);
-        productsCostsList.add(productsCosts);
+          List<UUID> bottomUpQuantificationsForCostCalculationIds =
+              bottomUpQuantificationsForCalculations.stream()
+                  .map(BottomUpQuantification::getId)
+                  .collect(Collectors.toList());
+          productsCosts.setBottomUpQuantificationIds(bottomUpQuantificationsForCostCalculationIds);
+          productsCostsList.add(productsCosts);
+        }
       }
     }
 
@@ -1066,6 +1075,15 @@ public class BottomUpQuantificationService {
     bottomUpQuantification.setStatus(status);
     addNewStatusChange(bottomUpQuantification);
     return bottomUpQuantificationRepository.save(bottomUpQuantification);
+  }
+
+  private MinimalFacilityDto getFacility(List<MinimalFacilityDto> facilities, UUID id) {
+    return facilities.stream()
+        .filter(f -> f.getId().equals(id))
+        .findFirst()
+        .orElseThrow(() -> new ContentNotFoundMessageException(
+            ERROR_FACILITY_NOT_FOUND, id)
+        );
   }
 
 }
