@@ -670,12 +670,6 @@ public class BottomUpQuantificationService {
 
     if (isDistrictLevel) {
       List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
-              null, null, geographicZoneId, true).stream()
-          .filter(this::checkFacilityTypeAndPermission)
-          .collect(Collectors.toList());
-      facilityIds.addAll(facilityDtos.stream()
-          .map(BaseDto::getId)
-          .collect(toSet()));
           null, null, geographicZoneId, true);
       Set<UUID> facilityIds = facilityDtos.stream()
           .map(BaseDto::getId).collect(Collectors.toSet());
@@ -703,12 +697,6 @@ public class BottomUpQuantificationService {
             null, null, locationId, true);
         Set<UUID> facilityIds = facilityDtos.stream()
             .map(BaseDto::getId).collect(Collectors.toSet());
-                null, null, locationId, true).stream()
-            .filter(this::checkFacilityTypeAndPermission)
-            .collect(Collectors.toList());
-        facilityIds.addAll(facilityDtos.stream()
-            .map(BaseDto::getId)
-            .collect(toSet()));
 
         List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
             bottomUpQuantificationList.stream()
@@ -758,9 +746,9 @@ public class BottomUpQuantificationService {
       return facility.getType().getName().equals(checkedFacilityTypeName);
     } else if (Boolean.TRUE.equals(hasMohRight.getResult())) {
       return !facility.getType().getName().equals(checkedFacilityTypeName);
-    } else {
-      return false;
     }
+
+    return false;
   }
 
   private Page<BottomUpQuantification> getBottomUpQuantificationsForCostCalculation(
