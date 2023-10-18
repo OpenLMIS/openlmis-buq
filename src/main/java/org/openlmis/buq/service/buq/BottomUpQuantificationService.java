@@ -670,7 +670,9 @@ public class BottomUpQuantificationService {
 
     if (isDistrictLevel) {
       List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
-          null, null, geographicZoneId, true);
+              null, null, geographicZoneId, true).stream()
+          .filter(this::checkFacilityTypeAndPermission)
+          .collect(Collectors.toList());
       Set<UUID> facilityIds = facilityDtos.stream()
           .map(BaseDto::getId).collect(Collectors.toSet());
       List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
@@ -694,7 +696,9 @@ public class BottomUpQuantificationService {
         ProductGroupsCostData productsCosts = new ProductGroupsCostData();
         productsCosts.setDataSourceId(locationId);
         List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
-            null, null, locationId, true);
+                null, null, locationId, true).stream()
+            .filter(this::checkFacilityTypeAndPermission)
+            .collect(Collectors.toList());
         Set<UUID> facilityIds = facilityDtos.stream()
             .map(BaseDto::getId).collect(Collectors.toSet());
 
