@@ -202,7 +202,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
    * Approve a bottom-up quantification.
    *
    */
-  public void approve(UUID parentNodeId,
+  public BottomUpQuantificationStatusChange approve(UUID parentNodeId,
       List<SupplyLineDto> supplyLines,
       UUID approver) {
     setApprovalStatus(supplyLines, parentNodeId);
@@ -210,6 +210,7 @@ public class BottomUpQuantification extends BaseTimestampedEntity {
     BottomUpQuantificationStatusChange statusChange =
             BottomUpQuantificationStatusChange.newInstance(this, approver, this.getStatus());
     statusChanges.add(statusChange);
+    return statusChange;
   }
 
   private void setApprovalStatus(List<SupplyLineDto> supplyLines, UUID parentNodeId) {
