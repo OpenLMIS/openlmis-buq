@@ -414,7 +414,6 @@ public class BottomUpQuantificationServiceTest {
     BottomUpQuantificationStatusChange statusChange = new BottomUpQuantificationStatusChange();
     statusChange.setStatus(BottomUpQuantificationStatus.REJECTED);
     doNothing().when(validator).validateCanBeRejected(bottomUpQuantification);
-    when(bottomUpQuantificationRepository.save(any())).thenReturn(new BottomUpQuantification());
     when(bottomUpQuantificationStatusChangeRepository.save(any()))
             .thenReturn(statusChange);
     when(rejectionService.save(any())).thenReturn(new Rejection());
@@ -497,7 +496,6 @@ public class BottomUpQuantificationServiceTest {
     buq.setStatus(BottomUpQuantificationStatus.DRAFT);
     when(bottomUpQuantificationLineItemRepository.saveAll(any()))
             .thenReturn(new ArrayList<>());
-    when(bottomUpQuantificationRepository.save(any())).thenReturn(buq);
     Mockito.lenient().when(supervisoryNodeReferenceDataService
             .findSupervisoryNode(buq.getProgramId(), buq.getFacilityId()))
             .thenReturn(new SupervisoryNodeDto());
@@ -593,7 +591,6 @@ public class BottomUpQuantificationServiceTest {
       BottomUpQuantification bottomUpQuantification) {
     when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
         .thenReturn(Optional.of(bottomUpQuantification));
-    when(bottomUpQuantificationRepository.save(any())).thenReturn(bottomUpQuantification);
   }
 
   private RequisitionLineItemDataProjection createRequisitionLineItem(

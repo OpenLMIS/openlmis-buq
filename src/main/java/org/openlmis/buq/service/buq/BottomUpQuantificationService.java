@@ -338,7 +338,6 @@ public class BottomUpQuantificationService {
     rejection.setStatusChange(persistedStatusChange);
 
     bottomUpQuantification.setSupervisoryNodeId(null);
-    bottomUpQuantificationRepository.save(bottomUpQuantification);
     rejectionService.save(rejection);
     return bottomUpQuantification;
 
