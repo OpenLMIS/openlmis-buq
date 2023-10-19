@@ -82,8 +82,10 @@ import org.openlmis.buq.exception.BindingResultException;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationFundingDetailsRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationLineItemRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationSourceOfFundRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
 import org.openlmis.buq.repository.productgroup.ProductGroupRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
@@ -184,6 +186,13 @@ public class BottomUpQuantificationService {
 
   @Autowired
   private BottomUpQuantificationLineItemRepository bottomUpQuantificationLineItemRepository;
+
+  @Autowired
+  private BottomUpQuantificationSourceOfFundRepository bottomUpQuantificationSourceOfFundRepository;
+
+  @Autowired
+  private BottomUpQuantificationFundingDetailsRepository
+            bottomUpQuantificationFundingDetailsRepository;
 
   private static final String MESSAGE_SEPARATOR = ":";
 
@@ -994,8 +1003,12 @@ public class BottomUpQuantificationService {
           .collect(Collectors.toList());
 
       fundingDetails.getSourcesOfFunds().clear();
-      fundingDetails.getSourcesOfFunds().addAll(updatedSourcesOfFunds);
-      bottomUpQuantificationToUpdate.setFundingDetails(fundingDetails);
+      List<BottomUpQuantificationSourceOfFund> persistedSourcesOfFunds =
+              bottomUpQuantificationSourceOfFundRepository.saveAll(updatedSourcesOfFunds);
+      fundingDetails.getSourcesOfFunds().addAll(persistedSourcesOfFunds);
+      BottomUpQuantificationFundingDetails persistedFundingDetails =
+              bottomUpQuantificationFundingDetailsRepository.save(fundingDetails);
+      bottomUpQuantificationToUpdate.setFundingDetails(persistedFundingDetails);
     }
 
     bottomUpQuantificationToUpdate.updateFrom(updatedLineItems);
