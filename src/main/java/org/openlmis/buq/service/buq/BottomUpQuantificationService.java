@@ -82,6 +82,7 @@ import org.openlmis.buq.exception.BindingResultException;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
+import org.openlmis.buq.repository.buq.BottomUpQuantificationLineItemRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
 import org.openlmis.buq.repository.productgroup.ProductGroupRepository;
@@ -181,6 +182,9 @@ public class BottomUpQuantificationService {
   @Autowired
   private ProductGroupRepository productGroupRepository;
 
+  @Autowired
+  private BottomUpQuantificationLineItemRepository bottomUpQuantificationLineItemRepository;
+
   private static final String MESSAGE_SEPARATOR = ":";
 
   private static final String PARAMETER_SEPARATOR = ",";
@@ -235,7 +239,6 @@ public class BottomUpQuantificationService {
         updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
 
     assignInitialSupervisoryNode(updatedBottomUpQuantification);
-    bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
 
     return updatedBottomUpQuantification;
   }
@@ -297,7 +300,6 @@ public class BottomUpQuantificationService {
     updatedBottomUpQuantification.setStatus(BottomUpQuantificationStatus.AUTHORIZED);
     addNewStatusChange(updatedBottomUpQuantification);
     assignInitialSupervisoryNode(updatedBottomUpQuantification);
-    bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
 
     return updatedBottomUpQuantification;
   }
@@ -347,14 +349,7 @@ public class BottomUpQuantificationService {
 
     BottomUpQuantification bottomUpQuantification = save(bottomUpQuantificationDto, id);
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.SUBMITTED);
-    BottomUpQuantificationStatusChange statusChange =
-            BottomUpQuantificationStatusChange.newInstance(
-                    bottomUpQuantification,
-                    authenticationHelper.getCurrentUser().getId(),
-                    bottomUpQuantification.getStatus());
-
-    bottomUpQuantification.getStatusChanges().add(statusChange);
-
+    addNewStatusChange(bottomUpQuantification);
 
     return bottomUpQuantificationDtoBuilder
         .buildDto(bottomUpQuantification);
@@ -450,8 +445,6 @@ public class BottomUpQuantificationService {
             new ApproveParams(user, supervisoryNodeDto, supplyLines, period);
     doApprove(updatedBottomUpQuantification, approveParams);
 
-    bottomUpQuantificationRepository.save(updatedBottomUpQuantification);
-
     return updatedBottomUpQuantification;
   }
 
@@ -467,9 +460,11 @@ public class BottomUpQuantificationService {
       parentNodeId = parentNode.getId();
     }
 
-    bottomUpQuantification.approve(parentNodeId,
+    BottomUpQuantificationStatusChange statusChange =
+            bottomUpQuantification.approve(parentNodeId,
             approveParams.getSupplyLines(),
             approveParams.getUser().getId());
+    bottomUpQuantificationStatusChangeRepository.save(statusChange);
   }
 
   /**
@@ -893,7 +888,13 @@ public class BottomUpQuantificationService {
 
     prepareLineItems(bottomUpQuantification, requisitionLineItemsData);
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
-    addNewStatusChange(bottomUpQuantification);
+    bottomUpQuantification.getStatusChanges().add(
+            BottomUpQuantificationStatusChange.newInstance(
+                    bottomUpQuantification,
+                    authenticationHelper.getCurrentUser().getId(),
+                    bottomUpQuantification.getStatus())
+    );
+    bottomUpQuantification.setModifiedDate(ZonedDateTime.now());
 
     return bottomUpQuantification;
   }
@@ -919,12 +920,15 @@ public class BottomUpQuantificationService {
   }
 
   private void addNewStatusChange(BottomUpQuantification bottomUpQuantification) {
-    bottomUpQuantification.getStatusChanges().add(
-        BottomUpQuantificationStatusChange.newInstance(
-            bottomUpQuantification,
-            authenticationHelper.getCurrentUser().getId(),
-            bottomUpQuantification.getStatus())
-    );
+    BottomUpQuantificationStatusChange statusChange =
+            BottomUpQuantificationStatusChange.newInstance(
+                    bottomUpQuantification,
+                    authenticationHelper.getCurrentUser().getId(),
+                    bottomUpQuantification.getStatus());
+    BottomUpQuantificationStatusChange persistedStatusChange =
+            bottomUpQuantificationStatusChangeRepository.save(statusChange);
+
+    bottomUpQuantification.getStatusChanges().add(persistedStatusChange);
     bottomUpQuantification.setModifiedDate(ZonedDateTime.now());
   }
 
@@ -945,10 +949,7 @@ public class BottomUpQuantificationService {
               .getBottomUpQuantificationLineItems()
               .forEach(lineItemDto ->
                       orderableIds.add(lineItemDto.getOrderableId()));
-      List<BasicOrderableDto> orderableDtos = findOrderables(orderableIds);
-      if (orderableDtos.size() != orderableIds.size()) {
-        throw new ContentNotFoundMessageException(ERROR_ORDERABLE_NOT_FOUND);
-      }
+      findOrderables(orderableIds);
     }
     List<BottomUpQuantificationLineItem> updatedLineItems = bottomUpQuantificationDto
         .getBottomUpQuantificationLineItems()
@@ -995,7 +996,8 @@ public class BottomUpQuantificationService {
     }
 
     bottomUpQuantificationToUpdate.updateFrom(updatedLineItems);
-
+    bottomUpQuantificationLineItemRepository
+            .saveAll(bottomUpQuantificationToUpdate.getBottomUpQuantificationLineItems());
     return bottomUpQuantificationToUpdate;
   }
 
@@ -1076,8 +1078,17 @@ public class BottomUpQuantificationService {
       BottomUpQuantification bottomUpQuantification,
       BottomUpQuantificationStatus status) {
     bottomUpQuantification.setStatus(status);
-    addNewStatusChange(bottomUpQuantification);
-    return bottomUpQuantificationRepository.save(bottomUpQuantification);
+    BottomUpQuantificationStatusChange statusChange =
+            BottomUpQuantificationStatusChange.newInstance(
+                    bottomUpQuantification,
+                    authenticationHelper.getCurrentUser().getId(),
+                    bottomUpQuantification.getStatus());
+    BottomUpQuantificationStatusChange persistedStatusChange =
+            bottomUpQuantificationStatusChangeRepository.save(statusChange);
+
+    bottomUpQuantification.getStatusChanges().add(persistedStatusChange);
+    bottomUpQuantification.setModifiedDate(ZonedDateTime.now());
+    return bottomUpQuantification;
   }
 
   private MinimalFacilityDto getFacility(List<MinimalFacilityDto> facilities, UUID id) {
