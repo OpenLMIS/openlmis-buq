@@ -111,9 +111,9 @@ public abstract class MessageKeys {
   public static final String ERROR_MUST_BE_AUTHORIZED_OR_IN_APPROVAL_TO_BE_APPROVED =
           join(ERROR_PREFIX,
       APPROVE, "mustBeAuthorizedOrInApprovalToBeApproved");
-  public static final String ERROR_MUST_BE_AUTHORIZED_OR_IN_APPROVAL_TO_BE_REJECTED =
+  public static final String ERROR_MUST_BE_AUTHORIZED_IN_APPROVAL_OR_APPROVED_TO_BE_REJECTED =
           join(ERROR_PREFIX,
-      REJECT, "mustBeAuthorizedOrInApprovalToBeRejected");
+      REJECT, "mustBeAuthorizedInApprovalOrApprovedToBeRejected");
   public static final String ERROR_LINE_ITEM_FIELD_REQUIRED = join(ERROR_PREFIX, LINE_ITEM, FIELD,
       REQUIRED);
   public static final String ERROR_LINE_ITEM_FIELD_MUST_BE_NON_NEGATIVE = join(ERROR_PREFIX,
