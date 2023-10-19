@@ -949,7 +949,10 @@ public class BottomUpQuantificationService {
               .getBottomUpQuantificationLineItems()
               .forEach(lineItemDto ->
                       orderableIds.add(lineItemDto.getOrderableId()));
-      findOrderables(orderableIds);
+      List<BasicOrderableDto> orderableDtos = findOrderables(orderableIds);
+      if (orderableDtos.size() != orderableIds.size()) {
+        throw new ContentNotFoundMessageException(ERROR_ORDERABLE_NOT_FOUND);
+      }
     }
     List<BottomUpQuantificationLineItem> updatedLineItems = bottomUpQuantificationDto
         .getBottomUpQuantificationLineItems()

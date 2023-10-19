@@ -36,7 +36,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -308,7 +307,6 @@ public class BottomUpQuantificationServiceTest {
   }
 
   @Test(expected = ContentNotFoundMessageException.class)
-  @Ignore
   public void shouldNotSaveBottomUpQuantificationWithInvalidOrderableId() {
     UUID bottomUpQuantificationId = UUID.randomUUID();
     BottomUpQuantificationDto bottomUpQuantificationDto = new BottomUpQuantificationDto();
