@@ -702,9 +702,11 @@ resourceTypes:
               application/json:
                 schema: localizedErrorResponse
     /costCalculation:
-      get:
+      post:
         is: [ secured ]
         description: Get geographic zones supervised by current user.
+        body:
+          application/json:
         queryParameters:
           processingPeriodId:
             displayName: processingPeriodId

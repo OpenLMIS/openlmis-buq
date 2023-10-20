@@ -58,7 +58,6 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.domain.productgroup.ProductGroup;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
-import org.openlmis.buq.dto.BaseDto;
 import org.openlmis.buq.dto.ResultDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
@@ -620,24 +619,24 @@ public class BottomUpQuantificationService {
    * @param processingPeriodId The UUID of the processing period.
    * @param programId The UUID of the program for which cost data is retrieved.
    * @param geographicZoneId The UUID of the geographic zone for which cost data is calculated.
+   * @param geographicZones The Map of geographic zones for which cost data is calculated.
    * @param pageable Pagination information to limit the number of results.
    * @return A list of {@link ProductGroupsCostData} containing cost data for product groups.
    */
   public List<ProductGroupsCostData> getProductsCostData(UUID processingPeriodId, UUID programId,
-      UUID geographicZoneId, Pageable pageable) {
+      UUID geographicZoneId, Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> geographicZones,
+      Pageable pageable) {
     List<BottomUpQuantification> bottomUpQuantificationList =
         getBottomUpQuantificationsForCostCalculation(processingPeriodId, programId,
             pageable).getContent();
 
-    Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> supervisedZones =
-        getSupervisedGeographicZones(programId);
     Set<UUID> subZones = new HashSet<>();
     boolean isDistrictLevel = false;
-    Set<UUID> countries = supervisedZones.keySet();
+    Set<UUID> countries = geographicZones.keySet();
     if (countries.contains(geographicZoneId)) {
-      subZones = supervisedZones.get(geographicZoneId).keySet();
+      subZones = geographicZones.get(geographicZoneId).keySet();
     } else {
-      for (Map.Entry<UUID, Map<UUID, Map<UUID, Set<UUID>>>> country : supervisedZones.entrySet()) {
+      for (Map.Entry<UUID, Map<UUID, Map<UUID, Set<UUID>>>> country : geographicZones.entrySet()) {
         Set<UUID> zones = country.getValue().keySet();
         if (zones.contains(geographicZoneId)) {
           subZones = country.getValue().get(geographicZoneId).keySet();
@@ -670,25 +669,25 @@ public class BottomUpQuantificationService {
       UUID geographicZoneId, Set<UUID> subZones,
       List<BottomUpQuantification> bottomUpQuantificationList) {
     List<ProductGroupsCostData> productsCostsList = new ArrayList<>();
+    List<ProductGroup> productGroups = productGroupRepository.findAll();
 
     if (isDistrictLevel) {
-      List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
-              null, null, geographicZoneId, true).stream()
-          .filter(this::checkFacilityTypeAndPermission)
-          .collect(Collectors.toList());
-      Set<UUID> facilityIds = facilityDtos.stream()
-          .map(BaseDto::getId).collect(Collectors.toSet());
       List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
-          bottomUpQuantificationList.stream()
-              .filter(buq -> facilityIds.contains(buq.getFacilityId()))
-              .collect(Collectors.toList());
+          bottomUpQuantificationList
+          .stream()
+          .filter(buq -> {
+            FacilityDto facility = facilityReferenceDataService.findOne(buq.getFacilityId());
+            return checkFacilityTypeAndPermission(facility)
+                && isGeographicZoneInHierarchy(facility.getGeographicZone(), geographicZoneId);
+          })
+          .collect(Collectors.toList());
 
       for (BottomUpQuantification buq : bottomUpQuantificationsForCalculations) {
         ProductGroupsCostData productsCosts = new ProductGroupsCostData();
         productsCosts.setDataSourceId(buq.getFacilityId());
 
         Map<String, String> calculatedGroups =
-            calculateProductGroupsCost(Collections.singletonList(buq));
+            calculateProductGroupsCost(Collections.singletonList(buq), productGroups);
         productsCosts.setCalculatedGroupsCosts(calculatedGroups);
         productsCosts.setBottomUpQuantificationIds(Collections.singletonList(buq.getId()));
         productsCosts.setDataSourceFacility(true);
@@ -696,34 +695,39 @@ public class BottomUpQuantificationService {
       }
     } else {
       for (UUID locationId : subZones) {
-        List<MinimalFacilityDto> facilityDtos = facilityReferenceDataService.search(
-                null, null, locationId, true).stream()
-            .filter(this::checkFacilityTypeAndPermission)
-            .collect(Collectors.toList());
-        Set<UUID> facilityIds = facilityDtos.stream()
-            .map(BaseDto::getId).collect(Collectors.toSet());
+        Set<String> facilityTypes = new HashSet<>();
 
-        Set<UUID> bottomUpQuantificationFacilityIds = bottomUpQuantificationList.stream()
-            .map(BottomUpQuantification::getFacilityId)
-            .collect(toSet());
-        Set<String> facilityTypes = facilityDtos.stream()
-            .filter(dto -> bottomUpQuantificationFacilityIds.contains(dto.getId()))
-            .map(dto -> dto.getType().getName())
-            .collect(Collectors.toSet());
+        List<BottomUpQuantification> bottomUpQuantificationForZone = bottomUpQuantificationList
+            .stream()
+            .filter(buq -> {
+              FacilityDto facility = facilityReferenceDataService.findOne(buq.getFacilityId());
+              if (checkFacilityTypeAndPermission(facility)) {
+                boolean isInZone =
+                    isGeographicZoneInHierarchy(facility.getGeographicZone(), locationId);
+                if (isInZone) {
+                  facilityTypes.add(facility.getType().getName());
+                }
+                return isInZone;
+              }
+              return false;
+            })
+            .collect(Collectors.toList());
 
         for (String facilityType : facilityTypes) {
           List<BottomUpQuantification> bottomUpQuantificationsForCalculations =
-              bottomUpQuantificationList.stream()
-                  .filter(buq -> facilityIds.contains(buq.getFacilityId())
-                      && getFacility(facilityDtos, buq.getFacilityId()).getType().getName()
-                      .equals(facilityType))
+              bottomUpQuantificationForZone.stream()
+                  .filter(buq -> {
+                    FacilityDto facility =
+                        facilityReferenceDataService.findOne(buq.getFacilityId());
+                    return facility.getType().getName().equals(facilityType);
+                  })
                   .collect(Collectors.toList());
 
           ProductGroupsCostData productsCosts = new ProductGroupsCostData();
           productsCosts.setFacilityType(facilityType);
           productsCosts.setDataSourceId(locationId);
           Map<String, String> calculatedGroups =
-              calculateProductGroupsCost(bottomUpQuantificationsForCalculations);
+              calculateProductGroupsCost(bottomUpQuantificationsForCalculations, productGroups);
           productsCosts.setCalculatedGroupsCosts(calculatedGroups);
 
           List<UUID> bottomUpQuantificationsForCostCalculationIds =
@@ -739,7 +743,24 @@ public class BottomUpQuantificationService {
     return productsCostsList;
   }
 
-  private boolean checkFacilityTypeAndPermission(MinimalFacilityDto facility) {
+  private boolean isGeographicZoneInHierarchy(GeographicZoneDto geographicZone,
+      UUID geographicZoneId) {
+    if (geographicZone == null) {
+      return false;
+    }
+
+    if (geographicZone.getId().equals(geographicZoneId)) {
+      return true;
+    }
+
+    if (geographicZone.getParent() != null) {
+      return isGeographicZoneInHierarchy(geographicZone.getParent(), geographicZoneId);
+    }
+
+    return false;
+  }
+
+  private boolean checkFacilityTypeAndPermission(FacilityDto facility) {
     UserDto user = authenticationHelper.getCurrentUser();
     RightDto mohRight = rightReferenceDataService.findRight(MOH_APPROVAL_RIGHT_NAME);
     ResultDto<Boolean> hasMohRight = new ResultDto<>();
@@ -821,8 +842,8 @@ public class BottomUpQuantificationService {
   }
 
   private Map<String, String> calculateProductGroupsCost(
-      List<BottomUpQuantification> bottomUpQuantifications) {
-    List<ProductGroup> productGroups = productGroupRepository.findAll();
+      List<BottomUpQuantification> bottomUpQuantifications,
+      List<ProductGroup> productGroups) {
     Map<String, Money> groupsCalculations = new HashMap<>();
     List<String> productGroupCodes = new ArrayList<>();
     Map<String, String> productGroupsCodeNameMap = new HashMap<>();

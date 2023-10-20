@@ -411,18 +411,20 @@ public class BottomUpQuantificationController extends BaseController {
    * @param processingPeriodId UUID of the processing period.
    * @param programId UUID of the program.
    * @param geographicZoneId UUID of the geographic zone.
+   * @param geographicZones The Map of geographic zones for which cost data is calculated.
    * @return List of {@link ProductGroupsCostData} objects containing calculations data.
    */
-  @GetMapping("/costCalculation")
+  @PostMapping("/costCalculation")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public List<ProductGroupsCostData> getCostCalculations(Pageable pageable,
       @RequestParam(value = "processingPeriodId") UUID processingPeriodId,
       @RequestParam(value = "programId") UUID programId,
-      @RequestParam(value = "geographicZoneId") UUID geographicZoneId) {
+      @RequestParam(value = "geographicZoneId") UUID geographicZoneId,
+      @RequestBody Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> geographicZones) {
     permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
     return bottomUpQuantificationService.getProductsCostData(processingPeriodId, programId,
-        geographicZoneId, pageable);
+        geographicZoneId, geographicZones, pageable);
   }
 
   /**
