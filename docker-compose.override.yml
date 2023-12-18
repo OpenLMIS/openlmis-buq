@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   buq:
-    image: openlmis/dev:6
+    image: openlmis/dev:7
     ports:
       - "5005:5005"
       - "8080:8080"
