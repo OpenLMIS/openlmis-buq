@@ -84,6 +84,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
       + "/approveFacilityForecastingStats";
   private static final String SUPERVISED_GEOGRAPHIC_ZONES_URL = RESOURCE_URL
       + "/supervisedGeographicZones";
+  private static final String FOR_FINAL_APPROVAL_URL = RESOURCE_URL + "/forFinalApproval";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String STATUS = "status";
@@ -588,6 +589,30 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .get(AUDIT_LOG_URL)
         .then()
         .statusCode(HttpStatus.SC_UNAUTHORIZED);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnBottomUpQuantificationsForFinalApproval() {
+    mockUserHasAtLeastOneOfFollowingRights(PermissionService.MOH_PORALG_RIGHTS);
+    given(bottomUpQuantificationService.getBottomUpQuantificationsForFinalApproval(
+        any(UUID.class),
+        any(UUID.class),
+        any(Pageable.class)))
+        .willReturn(new PageImpl<>(Collections.singletonList(bottomUpQuantification)));
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam(PROGRAM_ID, bottomUpQuantificationDto.getProgramId())
+        .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantificationDto.getProcessingPeriodId())
+        .when()
+        .get(FOR_FINAL_APPROVAL_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body("content", Matchers.hasSize(1))
+        .body("content[0].id", Matchers.is(bottomUpQuantification.getId().toString()))
+        .body("content[0].status", Matchers.is(bottomUpQuantification.getStatus().toString()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }

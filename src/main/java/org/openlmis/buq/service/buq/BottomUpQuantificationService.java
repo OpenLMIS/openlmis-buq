@@ -620,14 +620,14 @@ public class BottomUpQuantificationService {
    * @param programId The UUID of the program for which cost data is retrieved.
    * @param geographicZoneId The UUID of the geographic zone for which cost data is calculated.
    * @param geographicZones The Map of geographic zones for which cost data is calculated.
-   * @param pageable Pagination information to limit the number of results.
+   * @param pageable object used to encapsulate the pagination related values: page, size and sort.
    * @return A list of {@link ProductGroupsCostData} containing cost data for product groups.
    */
   public List<ProductGroupsCostData> getProductsCostData(UUID processingPeriodId, UUID programId,
       UUID geographicZoneId, Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> geographicZones,
       Pageable pageable) {
     List<BottomUpQuantification> bottomUpQuantificationList =
-        getBottomUpQuantificationsForCostCalculation(processingPeriodId, programId,
+        getBottomUpQuantificationsForFinalApproval(processingPeriodId, programId,
             pageable).getContent();
 
     Set<UUID> subZones = new HashSet<>();
@@ -663,6 +663,68 @@ public class BottomUpQuantificationService {
 
     return createProductsCostData(isDistrictLevel, geographicZoneId, subZones,
         bottomUpQuantificationList);
+  }
+
+
+  /**
+   * Retrieves bottom-up quantifications that are ready for final approval based on the specified
+   * processing period, program, and user permissions.
+   *
+   * @param processingPeriodId The UUID of the processing period.
+   * @param programId          The UUID of the program for which quantifications are retrieved.
+   * @param pageable           object used to encapsulate the pagination related values: page,
+   *     size and sort.
+   * @return A page of {@link BottomUpQuantification} objects representing quantifications ready
+   *     for final approval.
+   */
+  public Page<BottomUpQuantification> getBottomUpQuantificationsForFinalApproval(
+      UUID programId,
+      UUID processingPeriodId,
+      Pageable pageable) {
+    List<String> allowedRightNames = new ArrayList<>();
+    allowedRightNames.add(MOH_APPROVAL_RIGHT_NAME);
+    allowedRightNames.add(PORALG_APPROVAL_RIGHT_NAME);
+    List<RightDto> rights = new ArrayList<>();
+    allowedRightNames.forEach(right -> {
+      RightDto rightDto = rightReferenceDataService.findRight(right);
+      if (rightDto != null) {
+        rights.add(rightDto);
+      }
+    });
+    UserDto user = authenticationHelper.getCurrentUser();
+    List<List<DetailedRoleAssignmentDto>> roleAssignments = new ArrayList<>();
+    rights.forEach(right -> {
+      List<DetailedRoleAssignmentDto> roleAssignment =
+          userRoleAssignmentsReferenceDataService
+              .hasRight(user, right);
+      if (!roleAssignment.isEmpty()) {
+        roleAssignments.add(roleAssignment);
+      }
+    });
+
+    if (CollectionUtils.isEmpty(roleAssignments)) {
+      return Pagination.getPage(Collections.emptyList(), pageable);
+    }
+
+    Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
+        .stream()
+        .map(role ->
+            role
+                .stream()
+                .filter(item -> Objects.nonNull(item.getRole().getId()))
+                .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
+                .filter(item -> Objects.nonNull(item.getProgramId()))
+                .filter(item -> null == programId || programId.equals(item.getProgramId()))
+                .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
+                .collect(toSet())
+        )
+        .flatMap(Set::stream)
+        .collect(toSet());
+
+    return bottomUpQuantificationRepository.searchForFinalApproval(
+        processingPeriodId,
+        programNodePairs,
+        pageable);
   }
 
   private List<ProductGroupsCostData> createProductsCostData(boolean isDistrictLevel,
@@ -789,56 +851,6 @@ public class BottomUpQuantificationService {
     }
 
     return false;
-  }
-
-  private Page<BottomUpQuantification> getBottomUpQuantificationsForCostCalculation(
-      UUID processingPeriodId,
-      UUID programId,
-      Pageable pageable) {
-    List<String> allowedRightNames = new ArrayList<>();
-    allowedRightNames.add(MOH_APPROVAL_RIGHT_NAME);
-    allowedRightNames.add(PORALG_APPROVAL_RIGHT_NAME);
-    List<RightDto> rights = new ArrayList<>();
-    allowedRightNames.forEach(right -> {
-      RightDto rightDto = rightReferenceDataService.findRight(right);
-      if (rightDto != null) {
-        rights.add(rightDto);
-      }
-    });
-    UserDto user = authenticationHelper.getCurrentUser();
-    List<List<DetailedRoleAssignmentDto>> roleAssignments = new ArrayList<>();
-    rights.forEach(right -> {
-      List<DetailedRoleAssignmentDto> roleAssignment =
-              userRoleAssignmentsReferenceDataService
-                      .hasRight(user, right);
-      if (!roleAssignment.isEmpty()) {
-        roleAssignments.add(roleAssignment);
-      }
-    });
-
-    if (CollectionUtils.isEmpty(roleAssignments)) {
-      return Pagination.getPage(Collections.emptyList(), pageable);
-    }
-
-    Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
-            .stream()
-            .map(role ->
-              role
-                .stream()
-                .filter(item -> Objects.nonNull(item.getRole().getId()))
-                .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
-                .filter(item -> Objects.nonNull(item.getProgramId()))
-                .filter(item -> null == programId || programId.equals(item.getProgramId()))
-                .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
-                .collect(toSet())
-            )
-            .flatMap(Set::stream)
-            .collect(toSet());
-
-    return bottomUpQuantificationRepository.searchCostCalculationForProductGroups(
-                    processingPeriodId,
-                    programNodePairs,
-                    pageable);
   }
 
   private Map<String, String> calculateProductGroupsCost(
