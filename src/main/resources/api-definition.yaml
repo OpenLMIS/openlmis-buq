@@ -684,6 +684,11 @@ resourceTypes:
             type: string
             required: true
             repeat: false
+          geographicZoneId:
+            displayName: geographicZoneId
+            type: string
+            required: true
+            repeat: false
         responses:
           200:
             headers:

@@ -627,7 +627,7 @@ public class BottomUpQuantificationService {
       UUID geographicZoneId, Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> geographicZones,
       Pageable pageable) {
     List<BottomUpQuantification> bottomUpQuantificationList =
-        getBottomUpQuantificationsForFinalApproval(processingPeriodId, programId,
+        getBottomUpQuantificationsForFinalApproval(programId, processingPeriodId,
             pageable).getContent();
 
     Set<UUID> subZones = new HashSet<>();
@@ -670,8 +670,9 @@ public class BottomUpQuantificationService {
    * Retrieves bottom-up quantifications that are ready for final approval based on the specified
    * processing period, program, and user permissions.
    *
-   * @param processingPeriodId The UUID of the processing period.
    * @param programId          The UUID of the program for which quantifications are retrieved.
+   * @param processingPeriodId The UUID of the processing period.
+   * @param geographicZoneId   The UUID of the geographic zone.
    * @param pageable           object used to encapsulate the pagination related values: page,
    *     size and sort.
    * @return A page of {@link BottomUpQuantification} objects representing quantifications ready
@@ -680,6 +681,7 @@ public class BottomUpQuantificationService {
   public Page<BottomUpQuantification> getBottomUpQuantificationsForFinalApproval(
       UUID programId,
       UUID processingPeriodId,
+      UUID geographicZoneId,
       Pageable pageable) {
     List<String> allowedRightNames = new ArrayList<>();
     allowedRightNames.add(MOH_APPROVAL_RIGHT_NAME);
@@ -721,10 +723,44 @@ public class BottomUpQuantificationService {
         .flatMap(Set::stream)
         .collect(toSet());
 
-    return bottomUpQuantificationRepository.searchForFinalApproval(
-        processingPeriodId,
-        programNodePairs,
+    Page<BottomUpQuantification> bottomUpQuantifications = bottomUpQuantificationRepository
+        .searchForFinalApproval(processingPeriodId, programNodePairs, pageable);
+
+    if (geographicZoneId != null) {
+      List<BottomUpQuantification> bottomUpQuantificationsFilteredByZone =
+          bottomUpQuantifications.getContent()
+              .stream()
+              .filter(buq -> {
+                FacilityDto facility = findFacility(buq.getFacilityId());
+                GeographicZoneDto geographicZoneDto = facility.getGeographicZone();
+
+                return isZoneInHierarchy(geographicZoneId, geographicZoneDto);
+              })
+              .collect(Collectors.toList());
+
+      bottomUpQuantifications = Pagination.getPage(bottomUpQuantificationsFilteredByZone,
+          bottomUpQuantifications.getPageable(), bottomUpQuantifications.getTotalElements());
+    }
+
+    return bottomUpQuantifications;
+  }
+
+  public Page<BottomUpQuantification> getBottomUpQuantificationsForFinalApproval(
+      UUID programId,
+      UUID processingPeriodId,
+      Pageable pageable) {
+    return getBottomUpQuantificationsForFinalApproval(programId, processingPeriodId, null,
         pageable);
+  }
+
+  private boolean isZoneInHierarchy(UUID targetZoneId, GeographicZoneDto zone) {
+    if (zone == null) {
+      return false;
+    }
+    if (zone.getId().equals(targetZoneId)) {
+      return true;
+    }
+    return isZoneInHierarchy(targetZoneId, zone.getParent());
   }
 
   private List<ProductGroupsCostData> createProductsCostData(boolean isDistrictLevel,

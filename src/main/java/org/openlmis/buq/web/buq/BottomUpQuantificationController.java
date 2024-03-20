@@ -329,11 +329,12 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public Page<BottomUpQuantificationDto> getForFinalApproval(Pageable pageable,
       @RequestParam(value = PROGRAM_ID) UUID programId,
-      @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId) {
+      @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId,
+      @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId) {
     permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
     Page<BottomUpQuantification> bottomUpQuantificationsForFinalApproval =
         bottomUpQuantificationService.getBottomUpQuantificationsForFinalApproval(programId,
-            processingPeriodId, pageable);
+            processingPeriodId, geographicZoneId, pageable);
 
     List<BottomUpQuantificationDto> content = bottomUpQuantificationsForFinalApproval
         .getContent()
