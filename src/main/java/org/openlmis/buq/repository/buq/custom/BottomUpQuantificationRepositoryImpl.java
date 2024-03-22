@@ -339,7 +339,7 @@ public class BottomUpQuantificationRepositoryImpl
   }
 
   @Override
-  public Page<BottomUpQuantification> searchCostCalculationForProductGroups(
+  public Page<BottomUpQuantification> searchForFinalApproval(
       UUID processingPeriodId,
       Set<Pair<UUID, UUID>> programNodePairs,
       Pageable pageable) {

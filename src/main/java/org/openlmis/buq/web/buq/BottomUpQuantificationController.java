@@ -73,6 +73,9 @@ public class BottomUpQuantificationController extends BaseController {
   public static final String TEXT_CSV_MEDIA_TYPE = "text/csv";
   public static final String BUQ_FORM_CSV_FILENAME = "buq_quantification_preparation_report";
   public static final String PROGRAM_ID = "programId";
+  public static final String PROCESSING_PERIOD_ID = "processingPeriodId";
+  public static final String GEOGRAPHIC_ZONE_ID = "geographicZoneId";
+  public static final String FACILITY_ID = "facilityId";
 
   @Autowired
   private BottomUpQuantificationRepository bottomUpQuantificationRepository;
@@ -159,9 +162,9 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public BottomUpQuantificationDto prepare(
-      @RequestParam(value = "facilityId") UUID facilityId,
+      @RequestParam(value = FACILITY_ID) UUID facilityId,
       @RequestParam(value = PROGRAM_ID) UUID programId,
-      @RequestParam(value = "processingPeriodId") UUID processingPeriodId) {
+      @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId) {
     permissionService.hasPermission(PermissionService.PREPARE_BUQ);
     BottomUpQuantification bottomUpQuantification = bottomUpQuantificationService
         .prepare(facilityId, programId, processingPeriodId);
@@ -316,6 +319,34 @@ public class BottomUpQuantificationController extends BaseController {
   }
 
   /**
+   * Get bottom-up quantifications to approve for right supervisor.
+   *
+   * @param pageable object used to encapsulate the pagination related values: page, size and sort.
+   * @return List of bottom-up quantifications to approve.
+   */
+  @GetMapping(value = "/forFinalApproval")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public Page<BottomUpQuantificationDto> getForFinalApproval(Pageable pageable,
+      @RequestParam(value = PROGRAM_ID) UUID programId,
+      @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId,
+      @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId) {
+    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    Page<BottomUpQuantification> bottomUpQuantificationsForFinalApproval =
+        bottomUpQuantificationService.getBottomUpQuantificationsForFinalApproval(programId,
+            processingPeriodId, geographicZoneId, pageable);
+
+    List<BottomUpQuantificationDto> content = bottomUpQuantificationsForFinalApproval
+        .getContent()
+        .stream()
+        .map(buq -> bottomUpQuantificationDtoBuilder.buildDto(buq))
+        .collect(Collectors.toList());
+
+    return Pagination.getPage(content, pageable,
+        bottomUpQuantificationsForFinalApproval.getTotalElements());
+  }
+
+  /**
    * Rejects given bottom-up quantification.
    *
    * @param bottomUpQuantificationId UUID of BottomUpQuantification to authorize.
@@ -418,9 +449,9 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public List<ProductGroupsCostData> getCostCalculations(Pageable pageable,
-      @RequestParam(value = "processingPeriodId") UUID processingPeriodId,
-      @RequestParam(value = "programId") UUID programId,
-      @RequestParam(value = "geographicZoneId") UUID geographicZoneId,
+      @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId,
+      @RequestParam(value = PROGRAM_ID) UUID programId,
+      @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId,
       @RequestBody Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> geographicZones) {
     permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
     return bottomUpQuantificationService.getProductsCostData(processingPeriodId, programId,
