@@ -24,6 +24,8 @@ schemas:
 
 - bottomUpQuantification: !include schemas/bottomUpQuantification.json
 - bottomUpQuantificationPage: !include schemas/bottomUpQuantificationPage.json
+- bottomUpQuantificationGroupCostsData: !include schemas/bottomUpQuantificationGroupCostsData.json
+- bottomUpQuantificationGroupCostsDataPage: !include schemas/bottomUpQuantificationGroupCostsDataPage.json
 - sourceOfFund: !include schemas/sourceOfFund.json
 - sourceOfFundPage: !include schemas/sourceOfFundPage.json
 - remark: !include schemas/remark.json
@@ -695,7 +697,7 @@ resourceTypes:
               Keep-Alive:
             body:
               application/json:
-                schema: bottomUpQuantificationPage
+                schema: bottomUpQuantificationGroupCostsData
           400:
             body:
               application/json:

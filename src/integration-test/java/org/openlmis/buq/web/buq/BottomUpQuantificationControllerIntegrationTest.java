@@ -59,6 +59,7 @@ import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
 import org.openlmis.buq.builder.ProgramDtoDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.dto.BottomUpQuantificationGroupCostsData;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
 import org.openlmis.buq.i18n.MessageKeys;
@@ -595,14 +596,14 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   }
 
   @Test
-  public void shouldReturnBottomUpQuantificationsForFinalApproval() {
+  public void shouldReturnBottomUpQuantificationsForFinalApprovalWithGroupCosts() {
     mockUserHasAtLeastOneOfFollowingRights(PermissionService.MOH_PORALG_RIGHTS);
-    given(bottomUpQuantificationService.getBottomUpQuantificationsForFinalApproval(
+    given(bottomUpQuantificationService.getBottomUpQuantificationsForFinalApprovalWithGroupCosts(
         any(UUID.class),
         any(UUID.class),
         any(UUID.class),
         any(Pageable.class)))
-        .willReturn(new PageImpl<>(Collections.singletonList(bottomUpQuantification)));
+        .willReturn(Collections.singletonList(new BottomUpQuantificationGroupCostsData()));
 
     restAssured.given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
@@ -613,9 +614,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .get(FOR_FINAL_APPROVAL_URL)
         .then()
         .statusCode(HttpStatus.SC_OK)
-        .body("content", Matchers.hasSize(1))
-        .body("content[0].id", Matchers.is(bottomUpQuantification.getId().toString()))
-        .body("content[0].status", Matchers.is(bottomUpQuantification.getStatus().toString()));
+        .body("content", Matchers.hasSize(1));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }

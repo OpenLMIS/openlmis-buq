@@ -58,6 +58,7 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
 import org.openlmis.buq.domain.productgroup.ProductGroup;
 import org.openlmis.buq.domain.sourceoffund.SourceOfFund;
+import org.openlmis.buq.dto.BottomUpQuantificationGroupCostsData;
 import org.openlmis.buq.dto.ResultDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
@@ -751,6 +752,48 @@ public class BottomUpQuantificationService {
       Pageable pageable) {
     return getBottomUpQuantificationsForFinalApproval(programId, processingPeriodId, null,
         pageable);
+  }
+
+  /**
+   * Retrieves bottom-up quantifications that are ready for final approval
+   * based on the specified processing period, program, geographic zone,
+   * and user permissions, along with group costs data.
+   *
+   * @param programId          The UUID of the program for which quantifications are retrieved.
+   * @param processingPeriodId The UUID of the processing period.
+   * @param geographicZoneId   The UUID of the geographic zone.
+   * @param pageable           object used to encapsulate the pagination related values: page,
+   *     size and sort.
+   * @return A page of {@link BottomUpQuantification} objects representing quantifications ready
+   *     for final approval.
+   */
+  public List<BottomUpQuantificationGroupCostsData>
+      getBottomUpQuantificationsForFinalApprovalWithGroupCosts(
+      UUID programId,
+      UUID processingPeriodId,
+      UUID geographicZoneId,
+      Pageable pageable) {
+    Page<BottomUpQuantification> bottomUpQuantifications =
+        getBottomUpQuantificationsForFinalApproval(programId, processingPeriodId,
+            geographicZoneId, pageable);
+    List<ProductGroup> productGroups = productGroupRepository.findAll();
+
+    return bottomUpQuantifications.stream()
+        .map(buq -> buildBottomUpQuantificationGroupCostsData(buq, productGroups))
+        .collect(Collectors.toList());
+  }
+
+  private BottomUpQuantificationGroupCostsData buildBottomUpQuantificationGroupCostsData(
+      BottomUpQuantification bottomUpQuantification, List<ProductGroup> productGroups) {
+    BottomUpQuantificationGroupCostsData bottomUpQuantificationGroupCostsData =
+        new BottomUpQuantificationGroupCostsData();
+    bottomUpQuantificationGroupCostsData.setBottomUpQuantification(
+        bottomUpQuantificationDtoBuilder.buildDto(bottomUpQuantification));
+    bottomUpQuantificationGroupCostsData.setCalculatedGroupsCosts(
+        calculateProductGroupsCost(Collections.singletonList(bottomUpQuantification),
+            productGroups)
+    );
+    return bottomUpQuantificationGroupCostsData;
   }
 
   private boolean isZoneInHierarchy(UUID targetZoneId, GeographicZoneDto zone) {
