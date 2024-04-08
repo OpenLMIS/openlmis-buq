@@ -320,40 +320,12 @@ public class BottomUpQuantificationController extends BaseController {
   }
 
   /**
-   * Get bottom-up quantifications to approve for right supervisor.
-   *
-   * @param pageable object used to encapsulate the pagination related values: page, size and sort.
-   * @return List of bottom-up quantifications to approve.
-   */
-  @GetMapping(value = "/forFinalApproval")
-  @ResponseStatus(HttpStatus.OK)
-  @ResponseBody
-  public Page<BottomUpQuantificationDto> getForFinalApproval(Pageable pageable,
-      @RequestParam(value = PROGRAM_ID) UUID programId,
-      @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId,
-      @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
-    Page<BottomUpQuantification> bottomUpQuantificationsForFinalApproval =
-        bottomUpQuantificationService.getBottomUpQuantificationsForFinalApproval(programId,
-            processingPeriodId, geographicZoneId, pageable);
-
-    List<BottomUpQuantificationDto> content = bottomUpQuantificationsForFinalApproval
-        .getContent()
-        .stream()
-        .map(buq -> bottomUpQuantificationDtoBuilder.buildDto(buq))
-        .collect(Collectors.toList());
-
-    return Pagination.getPage(content, pageable,
-        bottomUpQuantificationsForFinalApproval.getTotalElements());
-  }
-
-  /**
    * Get bottom-up quantifications along with group costs data to approve for right supervisor.
    *
    * @param pageable object used to encapsulate the pagination related values: page, size and sort.
    * @return List of bottom-up quantifications to approve along with group costs data.
    */
-  @GetMapping(value = "/forFinalApprovalWithGroupCosts")
+  @GetMapping(value = "/forFinalApproval")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public Page<BottomUpQuantificationGroupCostsData> getForFinalApprovalWithGroupCostsData(

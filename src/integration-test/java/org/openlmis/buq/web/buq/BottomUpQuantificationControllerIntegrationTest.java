@@ -87,8 +87,6 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String SUPERVISED_GEOGRAPHIC_ZONES_URL = RESOURCE_URL
       + "/supervisedGeographicZones";
   private static final String FOR_FINAL_APPROVAL_URL = RESOURCE_URL + "/forFinalApproval";
-  private static final String FOR_FINAL_APPROVAL_WITH_GROUP_COSTS_URL = RESOURCE_URL
-      + "/forFinalApprovalWithGroupCosts";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
 
   private static final String STATUS = "status";
@@ -598,32 +596,6 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   }
 
   @Test
-  public void shouldReturnBottomUpQuantificationsForFinalApproval() {
-    mockUserHasAtLeastOneOfFollowingRights(PermissionService.MOH_PORALG_RIGHTS);
-    given(bottomUpQuantificationService.getBottomUpQuantificationsForFinalApproval(
-        any(UUID.class),
-        any(UUID.class),
-        any(UUID.class),
-        any(Pageable.class)))
-        .willReturn(new PageImpl<>(Collections.singletonList(bottomUpQuantification)));
-
-    restAssured.given()
-        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
-        .queryParam(PROGRAM_ID, bottomUpQuantificationDto.getProgramId())
-        .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantificationDto.getProcessingPeriodId())
-        .queryParam(GEOGRAPHIC_ZONE_ID, UUID.randomUUID())
-        .when()
-        .get(FOR_FINAL_APPROVAL_URL)
-        .then()
-        .statusCode(HttpStatus.SC_OK)
-        .body("content", Matchers.hasSize(1))
-        .body("content[0].id", Matchers.is(bottomUpQuantification.getId().toString()))
-        .body("content[0].status", Matchers.is(bottomUpQuantification.getStatus().toString()));
-
-    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
-  }
-
-  @Test
   public void shouldReturnBottomUpQuantificationsForFinalApprovalWithGroupCosts() {
     mockUserHasAtLeastOneOfFollowingRights(PermissionService.MOH_PORALG_RIGHTS);
     given(bottomUpQuantificationService.getBottomUpQuantificationsForFinalApprovalWithGroupCosts(
@@ -639,7 +611,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantificationDto.getProcessingPeriodId())
         .queryParam(GEOGRAPHIC_ZONE_ID, UUID.randomUUID())
         .when()
-        .get(FOR_FINAL_APPROVAL_WITH_GROUP_COSTS_URL)
+        .get(FOR_FINAL_APPROVAL_URL)
         .then()
         .statusCode(HttpStatus.SC_OK)
         .body("content", Matchers.hasSize(1));
