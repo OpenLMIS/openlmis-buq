@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.Rejection;
+import org.openlmis.buq.dto.BottomUpQuantificationGroupCostsData;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.productgroup.ProductGroupsCostData;
@@ -344,6 +345,29 @@ public class BottomUpQuantificationController extends BaseController {
 
     return Pagination.getPage(content, pageable,
         bottomUpQuantificationsForFinalApproval.getTotalElements());
+  }
+
+  /**
+   * Get bottom-up quantifications along with group costs data to approve for right supervisor.
+   *
+   * @param pageable object used to encapsulate the pagination related values: page, size and sort.
+   * @return List of bottom-up quantifications to approve along with group costs data.
+   */
+  @GetMapping(value = "/forFinalApprovalWithGroupCosts")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public Page<BottomUpQuantificationGroupCostsData> getForFinalApprovalWithGroupCostsData(
+      Pageable pageable,
+      @RequestParam(value = PROGRAM_ID) UUID programId,
+      @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId,
+      @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId) {
+    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    List<BottomUpQuantificationGroupCostsData> content =
+        bottomUpQuantificationService.getBottomUpQuantificationsForFinalApprovalWithGroupCosts(
+            programId, processingPeriodId, geographicZoneId, pageable);
+
+    return Pagination.getPage(content, pageable,
+        content.size());
   }
 
   /**

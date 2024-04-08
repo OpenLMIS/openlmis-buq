@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "BottomUpQuantificationGroupCostsData",
+  "description": "Single bottom up quantification group costs data instance",
+  "properties": {
+    "calculatedGroupsCosts": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "title": "calculatedGroupsCosts"
+    },
+    "bottomUpQuantification": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "$ref": "bottomUpQuantification.json",
+      "title": "bottomUpQuantification"
+    }
+  }
+}
