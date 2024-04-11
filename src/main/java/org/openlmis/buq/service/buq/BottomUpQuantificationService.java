@@ -779,6 +779,10 @@ public class BottomUpQuantificationService {
     List<ProductGroup> productGroups = productGroupRepository.findAll();
 
     return bottomUpQuantifications.stream()
+        .filter(buq -> {
+          FacilityDto facility = facilityReferenceDataService.findOne(buq.getFacilityId());
+          return checkFacilityTypeAndPermission(facility);
+        })
         .map(buq -> buildBottomUpQuantificationGroupCostsData(buq, productGroups))
         .collect(Collectors.toList());
   }
