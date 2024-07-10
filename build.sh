@@ -2,7 +2,7 @@
 
 # Sync with Transifex
 /transifex/sync_transifex.sh \
-  --resource openlmis-buq.messages \
+  --resource openlmis-buq \
   --pattern 'src/main/resources/messages_<lang>.properties' \
   --source-file src/main/resources/messages_en.properties
 
