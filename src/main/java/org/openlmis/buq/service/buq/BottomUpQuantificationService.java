@@ -24,6 +24,7 @@ import static org.openlmis.buq.i18n.MessageKeys.ERROR_ORDERABLE_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROCESSING_PERIOD_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_PROGRAM_NOT_FOUND;
 import static org.openlmis.buq.i18n.MessageKeys.ERROR_SOURCE_OF_FUND_NOT_FOUND;
+import static org.openlmis.buq.i18n.MessageKeys.ERROR_SUPERVISORY_NODE_CANNOT_BE_NULL_TO_BE_AUTHORIZED;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -309,6 +310,10 @@ public class BottomUpQuantificationService {
     updatedBottomUpQuantification.setStatus(BottomUpQuantificationStatus.AUTHORIZED);
     addNewStatusChange(updatedBottomUpQuantification);
     assignInitialSupervisoryNode(updatedBottomUpQuantification);
+    if (Objects.isNull(updatedBottomUpQuantification.getSupervisoryNodeId())) {
+      throw new ValidationMessageException(
+          ERROR_SUPERVISORY_NODE_CANNOT_BE_NULL_TO_BE_AUTHORIZED);
+    }
 
     return updatedBottomUpQuantification;
   }

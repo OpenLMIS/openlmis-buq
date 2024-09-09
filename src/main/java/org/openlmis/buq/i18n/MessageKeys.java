@@ -114,6 +114,8 @@ public abstract class MessageKeys {
   public static final String ERROR_MUST_BE_AUTHORIZED_IN_APPROVAL_OR_APPROVED_TO_BE_REJECTED =
           join(ERROR_PREFIX,
       REJECT, "mustBeAuthorizedInApprovalOrApprovedToBeRejected");
+  public static final String ERROR_SUPERVISORY_NODE_CANNOT_BE_NULL_TO_BE_AUTHORIZED = join(
+      ERROR_PREFIX, AUTHORIZE, "supervisoryNodeCannotBeNull");
   public static final String ERROR_LINE_ITEM_FIELD_REQUIRED = join(ERROR_PREFIX, LINE_ITEM, FIELD,
       REQUIRED);
   public static final String ERROR_LINE_ITEM_FIELD_MUST_BE_NON_NEGATIVE = join(ERROR_PREFIX,
