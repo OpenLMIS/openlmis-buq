@@ -123,4 +123,9 @@ public class BottomUpQuantificationDataBuilder {
     return this;
   }
 
+  public BottomUpQuantificationDataBuilder withSupervisoryNodeId(UUID supervisoryNodeId) {
+    this.supervisoryNodeId = supervisoryNodeId;
+    return this;
+  }
+
 }

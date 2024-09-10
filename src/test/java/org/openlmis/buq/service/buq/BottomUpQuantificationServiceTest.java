@@ -450,6 +450,33 @@ public class BottomUpQuantificationServiceTest {
         invalidBottomUpQuantificationId);
   }
 
+  @Test(expected = ValidationMessageException.class)
+  public void shouldNotAuthorizeBottomUpQuantificationIfSupervisoryNodeNotAssigned() {
+    UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .withId(bottomUpQuantificationId)
+        .withSupervisoryNodeId(null)
+        .build();
+    BottomUpQuantificationDto bottomUpQuantificationDto = BottomUpQuantificationDto
+        .newInstance(bottomUpQuantification);
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
+    doNothing().when(validator).validateCanBeAuthorized(bottomUpQuantificationDto,
+        bottomUpQuantificationId);
+    mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
+    when(bottomUpQuantificationLineItemRepository
+        .saveAll(bottomUpQuantification.getBottomUpQuantificationLineItems()))
+        .thenReturn(new ArrayList<>());
+    BottomUpQuantificationStatusChange statusChange =
+        new BottomUpQuantificationStatusChange();
+    statusChange.setStatus(BottomUpQuantificationStatus.AUTHORIZED);
+    when(bottomUpQuantificationStatusChangeRepository
+        .save(any(BottomUpQuantificationStatusChange.class)))
+        .thenReturn(statusChange);
+
+    bottomUpQuantificationService
+        .authorize(bottomUpQuantificationDto, bottomUpQuantificationId);
+  }
+
   @Test
   public void shouldCallDelete() {
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
