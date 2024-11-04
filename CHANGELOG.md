@@ -1,4 +1,7 @@
-1.0.1 / 31.10.2024
+1.0.2 / wip
+==================
+
+1.0.1 / 2024-10-31
 ==================
 Bug fixes:
 * [OLMIS-7995](https://openlmis.atlassian.net/browse/OLMIS-7995): Supervisory node assignment is now required for authorization process
