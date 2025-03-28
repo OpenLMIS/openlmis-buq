@@ -1,3 +1,6 @@
+Upcoming Version (WIP)
+==================
+
 1.0.2 / 2025-03-31
 ==================
 
@@ -5,6 +8,7 @@ Minor coverage updates and code analysis improvements.
 
 1.0.1 / 2024-10-31
 ==================
+
 Bug fixes:
 * [OLMIS-7995](https://openlmis.atlassian.net/browse/OLMIS-7995): Supervisory node assignment is now required for authorization process
 
@@ -14,5 +18,6 @@ Improvements:
 
 1.0.0 / 2024-04-19
 ==================
+
 Features
 * [OLMIS-7838](https://openlmis.atlassian.net/browse/OLMIS-7838): Initial implementation of openlmis-buq
