@@ -15,33 +15,42 @@
 
 package org.openlmis.buq.web.sourceoffund;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willReturn;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import guru.nidi.ramltester.junit.RamlMatchers;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.javers.common.string.PrettyValuePrinter;
+import org.javers.core.Changes;
 import org.javers.core.commit.CommitId;
 import org.javers.core.commit.CommitMetadata;
+import org.javers.core.diff.changetype.PropertyChangeMetadata;
+import org.javers.core.diff.changetype.PropertyChangeType;
 import org.javers.core.diff.changetype.ValueChange;
 import org.javers.core.metamodel.object.GlobalId;
 import org.javers.core.metamodel.object.UnboundedValueObjectId;
 import org.javers.repository.jql.JqlQuery;
-import org.joda.time.LocalDateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.openlmis.buq.builder.SourceOfFundDataBuilder;
@@ -66,18 +75,25 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   private final SourceOfFund sourceOfFund = new SourceOfFundDataBuilder().build();
   private final SourceOfFundDto sourceOfFundDto = SourceOfFundDto.newInstance(sourceOfFund);
 
-  private final GlobalId globalId = new UnboundedValueObjectId(SourceOfFund.class.getSimpleName());
-  private final ValueChange change = new ValueChange(globalId, NAME, "name1", "name2");
+  private final DateTimeFormatter javersDateFormat =
+      new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd'T'HH:mm:ss").optionalStart()
+          .appendFraction(ChronoField.NANO_OF_SECOND, 1, 3, true).optionalEnd().toFormatter();
 
+  private final LocalDateTime commitDateTime = java.time.LocalDateTime.now();
+  private final GlobalId globalId = new UnboundedValueObjectId(SourceOfFund.class.getSimpleName());
   private final CommitId commitId = new CommitId(1, 0);
-  private final CommitMetadata commitMetadata = new CommitMetadata(
-      "admin", Maps.newHashMap(), LocalDateTime.now(), commitId);
+  private final CommitMetadata commitMetadata =
+      new CommitMetadata("admin", Maps.newHashMap(), commitDateTime,
+          commitDateTime.toInstant(ZoneOffset.UTC), commitId);
+  private final PropertyChangeMetadata propertyChangeMetadata =
+      new PropertyChangeMetadata(globalId, NAME, Optional.of(commitMetadata),
+          PropertyChangeType.PROPERTY_VALUE_CHANGED);
+  private final ValueChange change = new ValueChange(propertyChangeMetadata, "name1", "name2");
 
   @Before
   public void setUp() {
     given(sourceOfFundRepository.saveAndFlush(any(SourceOfFund.class)))
         .willAnswer(new SaveAnswer<>());
-    change.bindToCommit(commitMetadata);
   }
 
   @Test
@@ -320,7 +336,8 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   @Test
   public void shouldRetrieveAuditLogs() {
     given(sourceOfFundRepository.existsById(sourceOfFundDto.getId())).willReturn(true);
-    willReturn(Lists.newArrayList(change)).given(javers).findChanges(any(JqlQuery.class));
+    willReturn(new Changes(singletonList(change), mock(PrettyValuePrinter.class)))
+        .given(javers).findChanges(any(JqlQuery.class));
 
     restAssured
         .given()
@@ -347,7 +364,8 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
   @Test
   public void shouldRetrieveAuditLogsWithParameters() {
     given(sourceOfFundRepository.existsById(sourceOfFundDto.getId())).willReturn(true);
-    willReturn(Lists.newArrayList(change)).given(javers).findChanges(any(JqlQuery.class));
+    willReturn(new Changes(singletonList(change), mock(PrettyValuePrinter.class)))
+        .given(javers).findChanges(any(JqlQuery.class));
 
     restAssured
         .given()
@@ -364,7 +382,8 @@ public class SourceOfFundControllerIntegrationTest extends BaseWebIntegrationTes
         .body("globalId.valueObject", hasItem(SourceOfFund.class.getSimpleName()))
         .body("commitMetadata.author", hasItem(commitMetadata.getAuthor()))
         .body("commitMetadata.properties", hasItem(hasSize(0)))
-        .body("commitMetadata.commitDate", hasItem(commitMetadata.getCommitDate().toString()))
+        .body("commitMetadata.commitDate",
+            hasItem(commitMetadata.getCommitDate().format(javersDateFormat)))
         .body("commitMetadata.id", hasItem(commitId.valueAsNumber().floatValue()))
         .body("property", hasItem(change.getPropertyName()))
         .body("left", hasItem(change.getLeft().toString()))

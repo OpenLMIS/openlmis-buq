@@ -15,10 +15,12 @@
 
 package org.openlmis.buq.web;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
+import org.javers.core.Changes;
 import org.javers.core.Javers;
 import org.javers.core.diff.Change;
 import org.javers.core.json.JsonConverter;
@@ -91,8 +93,8 @@ public abstract class BaseController {
     /* Depending on the business' preference, we can either use findSnapshots() or findChanges().
        Whereas the former returns the entire state of the object as it was at each commit, the later
        returns only the property and values which changed. */
-    List<Change> changes = javers.findChanges(queryBuilder.build());
-
+    final Changes immutableChanges = javers.findChanges(queryBuilder.build());
+    final List<Change> changes = new ArrayList<>(immutableChanges);
     changes.sort((o1, o2) -> -1 * o1.getCommitMetadata().get().getCommitDate()
         .compareTo(o2.getCommitMetadata().get().getCommitDate()));
     return changes;

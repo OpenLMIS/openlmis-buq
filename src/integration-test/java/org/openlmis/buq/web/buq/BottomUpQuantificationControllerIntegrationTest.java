@@ -15,27 +15,30 @@
 
 package org.openlmis.buq.web.buq;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.openlmis.buq.web.buq.BottomUpQuantificationController.BUQ_FORM_CSV_FILENAME;
 import static org.openlmis.buq.web.buq.BottomUpQuantificationController.GEOGRAPHIC_ZONE_ID;
 import static org.openlmis.buq.web.buq.BottomUpQuantificationController.TEXT_CSV_MEDIA_TYPE;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.jayway.restassured.response.Response;
 import guru.nidi.ramltester.junit.RamlMatchers;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,13 +49,16 @@ import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
+import org.javers.common.string.PrettyValuePrinter;
+import org.javers.core.Changes;
 import org.javers.core.commit.CommitId;
 import org.javers.core.commit.CommitMetadata;
+import org.javers.core.diff.changetype.PropertyChangeMetadata;
+import org.javers.core.diff.changetype.PropertyChangeType;
 import org.javers.core.diff.changetype.ValueChange;
 import org.javers.core.metamodel.object.GlobalId;
 import org.javers.core.metamodel.object.UnboundedValueObjectId;
 import org.javers.repository.jql.JqlQuery;
-import org.joda.time.LocalDateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
@@ -99,13 +105,17 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private final BottomUpQuantificationDto bottomUpQuantificationDto =
       BottomUpQuantificationDto.newInstance(bottomUpQuantification);
 
-  private final GlobalId globalId = new UnboundedValueObjectId(BottomUpQuantification.class
-      .getSimpleName());
-  private final ValueChange change = new ValueChange(globalId, STATUS, "name1", "name2");
-
+  private final LocalDateTime commitDateTime = java.time.LocalDateTime.now();
+  private final GlobalId globalId =
+      new UnboundedValueObjectId(BottomUpQuantification.class.getSimpleName());
   private final CommitId commitId = new CommitId(1, 0);
-  private final CommitMetadata commitMetadata = new CommitMetadata(
-      "admin", Maps.newHashMap(), LocalDateTime.now(), commitId);
+  private final CommitMetadata commitMetadata =
+      new CommitMetadata("admin", Maps.newHashMap(), commitDateTime,
+          commitDateTime.toInstant(ZoneOffset.UTC), commitId);
+  private final PropertyChangeMetadata propertyChangeMetadata =
+      new PropertyChangeMetadata(globalId, STATUS, Optional.of(commitMetadata),
+          PropertyChangeType.PROPERTY_VALUE_CHANGED);
+  private final ValueChange change = new ValueChange(propertyChangeMetadata, "name1", "name2");
 
   @Before
   public void setUp() {
@@ -113,7 +123,6 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .willAnswer(new SaveAnswer<>());
     given(bottomUpQuantificationDtoBuilder.buildDto(any(BottomUpQuantification.class)))
         .willReturn(bottomUpQuantificationDto);
-    change.bindToCommit(commitMetadata);
   }
 
   @Test
@@ -510,7 +519,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     mockUserHasRight(PermissionService.MANAGE_BUQ);
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
         .willReturn(true);
-    willReturn(Lists.newArrayList(change)).given(javers).findChanges(any(JqlQuery.class));
+    willReturn(new Changes(singletonList(change), mock(PrettyValuePrinter.class)))
+        .given(javers).findChanges(any(JqlQuery.class));
 
     restAssured
         .given()
@@ -539,7 +549,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     mockUserHasRight(PermissionService.MANAGE_BUQ);
     given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
         .willReturn(true);
-    willReturn(Lists.newArrayList(change)).given(javers).findChanges(any(JqlQuery.class));
+    willReturn(new Changes(singletonList(change), mock(PrettyValuePrinter.class)))
+        .given(javers).findChanges(any(JqlQuery.class));
 
     restAssured
         .given()
