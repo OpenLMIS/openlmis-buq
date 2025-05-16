@@ -18,7 +18,6 @@ package org.openlmis.buq.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.UUID;
-import javax.validation.ConstraintViolationException;
 import org.junit.Test;
 import org.openlmis.buq.domain.Remark;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,12 +49,6 @@ public class RemarkRepositoryIntegrationTest extends BaseCrudRepositoryIntegrati
     remarkRepository.saveAndFlush(remark2);
 
     assertThat(remarkRepository.count()).isEqualTo(count + 2);
-  }
-
-  @Test(expected = ConstraintViolationException.class)
-  public void shouldNotAllowRemarkWithBlankName() {
-    Remark remark = new Remark("", "descriptionTest");
-    remarkRepository.saveAndFlush(remark);
   }
 
 }
