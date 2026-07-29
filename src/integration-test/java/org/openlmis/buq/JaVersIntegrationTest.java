@@ -77,7 +77,7 @@ public class JaVersIntegrationTest {
 
     // then
     List<CdoSnapshot> snapshots = javers.findSnapshots(
-        QueryBuilder.byClass(SourceOfFund.class).build());
+        QueryBuilder.byInstanceId(sourceOfFund.getId(), SourceOfFund.class).build());
     assertEquals(2, snapshots.size());
 
     LocalDateTime commitTime1 = snapshots.get(0).getCommitMetadata().getCommitDate();
