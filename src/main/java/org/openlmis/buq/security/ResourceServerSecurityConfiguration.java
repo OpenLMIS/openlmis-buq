@@ -88,7 +88,8 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
             "/buq",
             "/webjars/**",
             "/buq/webjars/**",
-            "/buq/docs/**"
+            "/buq/docs/**",
+            "/actuator/prometheus"
         ).permitAll()
         .antMatchers("/**").fullyAuthenticated();
   }
