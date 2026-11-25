@@ -1,6 +1,16 @@
 1.2.2-SNAPSHOT (WIP)
 ==================
 
+Improvements:
+* [OLMIS-8464](https://openlmis.atlassian.net/browse/OLMIS-8464): BUQ right checks now apply to the program and facility a request acts on. Before, a user holding a BUQ right for any program or facility passed the check everywhere.
+  * Prepare, view, save, submit, authorize, delete, download and the most recent rejection check the right for the bottom-up quantification's stored program and facility, never the ids in the request body.
+  * The search endpoint (`GET /api/bottomUpQuantifications`) is not scoped yet; it still requires any BUQ right.
+  * Approve, reject and final approve require the right through a role at the supervisory node the bottom-up quantification currently sits at, for its program, as the approval lists already did. A right at a parent node no longer approves out of turn.
+  * The approval statistics, approval lists, supervised geographic zones and cost calculation require the right for the requested program.
+  * Final approve checks every given bottom-up quantification before approving any.
+  * Roles that worked only because of the missing scope now get HTTP 403. Check BUQ role assignments (program, home facility, supervisory node) before upgrading. MANAGE_BUQ is unchanged.
+  * The API definition now declares the 403 responses, the `/forApproval` endpoint, the `id` query parameter and array response of `/finalApprove`, and the rejection body of `/reject`.
+
 1.2.1 / 2026-10-16
 ==================
 
