@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.buq.service.role.PermissionService.APPROVE_BUQ;
@@ -30,6 +31,7 @@ import static org.openlmis.buq.service.role.PermissionService.PREPARE_BUQ;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -253,6 +255,34 @@ public class PermissionServiceTest {
 
     permissionService.hasPermissionForSupervisoryNode(
         Collections.singletonList(APPROVE_BUQ), programId, nodeId);
+  }
+
+  @Test
+  public void shouldLookUpAssignmentsOnceForSeveralProgramNodePairs() {
+    UUID nodeId = UUID.randomUUID();
+    UUID otherNodeId = UUID.randomUUID();
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    RightDto approve = rightNamed(APPROVE_BUQ);
+    when(rightReferenceDataService.findRight(APPROVE_BUQ)).thenReturn(approve);
+    when(userRoleAssignmentsReferenceDataService.hasRight(user, approve)).thenReturn(Arrays.asList(
+        roleAssignment(programId, nodeId), roleAssignment(programId, otherNodeId)));
+
+    permissionService.hasPermissionForSupervisoryNodes(Collections.singletonList(APPROVE_BUQ),
+        new HashSet<>(Arrays.asList(new ImmutablePair<>(programId, nodeId),
+            new ImmutablePair<>(programId, otherNodeId))));
+
+    verify(authenticationHelper, times(1)).getCurrentUser();
+    verify(userRoleAssignmentsReferenceDataService, times(1)).hasRight(user, approve);
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldDenySeveralProgramNodePairsIfOneIsMissing() {
+    UUID nodeId = UUID.randomUUID();
+    stubApproveAssignment(programId, nodeId);
+
+    permissionService.hasPermissionForSupervisoryNodes(Collections.singletonList(APPROVE_BUQ),
+        new HashSet<>(Arrays.asList(new ImmutablePair<>(programId, nodeId),
+            new ImmutablePair<>(programId, UUID.randomUUID()))));
   }
 
   @Test

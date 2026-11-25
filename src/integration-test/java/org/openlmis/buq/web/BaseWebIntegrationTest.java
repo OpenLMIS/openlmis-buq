@@ -33,8 +33,10 @@ import guru.nidi.ramltester.RamlDefinition;
 import guru.nidi.ramltester.RamlLoaders;
 import guru.nidi.ramltester.restassured.RestAssuredClient;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
+import org.apache.commons.lang3.tuple.Pair;
 import org.javers.core.Javers;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
@@ -239,6 +241,12 @@ public abstract class BaseWebIntegrationTest {
         .hasPermissionForSupervisoryNode(rightNames, programId, supervisoryNodeId);
   }
 
+  protected void mockUserHasRightAtSupervisoryNodes(List<String> rightNames,
+      Set<Pair<UUID, UUID>> programNodePairs) {
+    doNothing().when(permissionService)
+        .hasPermissionForSupervisoryNodes(rightNames, programNodePairs);
+  }
+
   protected void mockUserHasRightForProgram(List<String> rightNames, UUID programId) {
     doNothing().when(permissionService).hasPermissionForProgram(rightNames, programId);
   }
@@ -261,6 +269,7 @@ public abstract class BaseWebIntegrationTest {
     doThrow(exception).when(permissionService)
         .hasPermissionForSupervisoryNode(any(), any(), any());
     doThrow(exception).when(permissionService).hasPermissionForProgram(any(), any());
+    doThrow(exception).when(permissionService).hasPermissionForSupervisoryNodes(any(), any());
   }
 
   public static class SaveAnswer<T extends BaseEntity> implements Answer<T> {

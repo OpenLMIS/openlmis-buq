@@ -45,6 +45,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 @Service
+@SuppressWarnings("PMD.TooManyMethods")
 public class PermissionService {
 
   public static final String PREPARE_BUQ = "PREPARE_BUQ";
@@ -192,14 +193,26 @@ public class PermissionService {
    */
   public void hasPermissionForSupervisoryNode(List<String> rightNames, UUID program,
       UUID supervisoryNode) {
+    hasPermissionForSupervisoryNodes(rightNames,
+        Collections.singleton(new ImmutablePair<>(program, supervisoryNode)));
+  }
+
+  /**
+   * Checks {@link #hasPermissionForSupervisoryNode} for every given (program, supervisory node)
+   * pair, looking up the user's role assignments once per right, however many pairs are given.
+   *
+   * @param rightNames       names of the rights to check.
+   * @param programNodePairs pairs of program id (left) and supervisory node id (right).
+   */
+  public void hasPermissionForSupervisoryNodes(List<String> rightNames,
+      Set<Pair<UUID, UUID>> programNodePairs) {
     OAuth2Authentication authentication = (OAuth2Authentication) SecurityContextHolder
             .getContext()
             .getAuthentication();
 
     boolean hasPermission = authentication.isClientOnly()
         ? checkServiceToken(false, authentication).getResult()
-        : getProgramNodePairs(rightNames)
-            .contains(new ImmutablePair<>(program, supervisoryNode));
+        : getProgramNodePairs(rightNames).containsAll(programNodePairs);
 
     if (!hasPermission) {
       throw new PermissionMessageException(

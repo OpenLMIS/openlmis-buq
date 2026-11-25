@@ -41,12 +41,15 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.javers.core.commit.CommitId;
@@ -835,10 +838,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   public void shouldFinalApproveBottomUpQuantifications() {
     BottomUpQuantification other = new BottomUpQuantificationDataBuilder().build();
     mockUserHasNoRights();
-    mockUserHasRightAtSupervisoryNode(PermissionService.MOH_PORALG_RIGHTS,
-        bottomUpQuantification.getProgramId(), bottomUpQuantification.getSupervisoryNodeId());
-    mockUserHasRightAtSupervisoryNode(PermissionService.MOH_PORALG_RIGHTS,
-        other.getProgramId(), other.getSupervisoryNodeId());
+    mockUserHasRightAtSupervisoryNodes(PermissionService.MOH_PORALG_RIGHTS,
+        programNodePairs(bottomUpQuantification, other));
     stubFindById(bottomUpQuantification, other);
     given(bottomUpQuantificationService.finalApproveBottomUpQuantification(
         Arrays.asList(bottomUpQuantification.getId(), other.getId())))
@@ -853,8 +854,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   public void shouldNotFinalApproveAnyIfOneBottomUpQuantificationIsForbidden() {
     BottomUpQuantification other = new BottomUpQuantificationDataBuilder().build();
     mockUserHasNoRights();
-    mockUserHasRightAtSupervisoryNode(PermissionService.MOH_PORALG_RIGHTS,
-        bottomUpQuantification.getProgramId(), bottomUpQuantification.getSupervisoryNodeId());
+    mockUserHasRightAtSupervisoryNodes(PermissionService.MOH_PORALG_RIGHTS,
+        programNodePairs(bottomUpQuantification));
     stubFindById(bottomUpQuantification, other);
 
     finalApprove(bottomUpQuantification, other).then().statusCode(HttpStatus.SC_FORBIDDEN);
@@ -952,6 +953,14 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  private Set<Pair<UUID, UUID>> programNodePairs(BottomUpQuantification... buqs) {
+    Set<Pair<UUID, UUID>> pairs = new HashSet<>();
+    for (BottomUpQuantification buq : buqs) {
+      pairs.add(new ImmutablePair<>(buq.getProgramId(), buq.getSupervisoryNodeId()));
+    }
+    return pairs;
   }
 
   private void stubFindById(BottomUpQuantification... buqs) {

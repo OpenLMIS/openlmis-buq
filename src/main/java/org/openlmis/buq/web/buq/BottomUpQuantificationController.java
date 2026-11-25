@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.Rejection;
@@ -466,11 +468,12 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public List<BottomUpQuantificationDto> finalApproveBottomUpQuantification(
           @RequestParam("id") List<UUID> ids) {
-    for (UUID id : ids) {
-      BottomUpQuantification buq = findBottomUpQuantification(id);
-      permissionService.hasPermissionForSupervisoryNode(PermissionService.MOH_PORALG_RIGHTS,
-          buq.getProgramId(), buq.getSupervisoryNodeId());
-    }
+    Set<Pair<UUID, UUID>> programNodePairs = ids.stream()
+        .map(this::findBottomUpQuantification)
+        .map(buq -> new ImmutablePair<>(buq.getProgramId(), buq.getSupervisoryNodeId()))
+        .collect(Collectors.toSet());
+    permissionService.hasPermissionForSupervisoryNodes(PermissionService.MOH_PORALG_RIGHTS,
+        programNodePairs);
     List<BottomUpQuantification> updatedBottomUpQuantifications =
             bottomUpQuantificationService.finalApproveBottomUpQuantification(ids);
     return updatedBottomUpQuantifications
