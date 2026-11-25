@@ -207,6 +207,63 @@ public class PermissionService {
     }
   }
 
+  /**
+   * Checks if the user has any of the given rights for the given program at any facility. Used
+   * where a request names a program but no facility, which referencedata's right check refuses.
+   *
+   * @param rightNames names of the rights to check.
+   * @param program    the unique identifier of the program.
+   */
+  public void hasPermissionForProgram(List<String> rightNames, UUID program) {
+    OAuth2Authentication authentication = (OAuth2Authentication) SecurityContextHolder
+            .getContext()
+            .getAuthentication();
+
+    boolean hasPermission;
+    if (authentication.isClientOnly()) {
+      hasPermission = checkServiceToken(false, authentication).getResult();
+    } else {
+      List<String[]> permissions = getCurrentUserFacilityProgramPermissions();
+      hasPermission = rightNames.stream().anyMatch(rightName ->
+          !getFacilityIds(permissions, rightName, program).isEmpty());
+    }
+
+    if (!hasPermission) {
+      throw new PermissionMessageException(
+              new Message(MessageKeys.ERROR_NO_SINGLE_FOLLOWING_PERMISSION, rightNames));
+    }
+  }
+
+  /**
+   * Returns the facilities at which the current user has the given right for the given program.
+   *
+   * @param rightName name of the right.
+   * @param program   the unique identifier of the program.
+   * @return facility ids.
+   */
+  public List<UUID> getSupervisedFacilityIds(String rightName, UUID program) {
+    return getFacilityIds(getCurrentUserFacilityProgramPermissions(), rightName, program);
+  }
+
+  private List<String[]> getCurrentUserFacilityProgramPermissions() {
+    UserDto user = authenticationHelper.getCurrentUser();
+
+    return userReferenceDataService.getPermissionStrings(user.getId())
+        .stream()
+        .map(permission -> permission.split("\\|"))
+        .filter(parts -> parts.length == 3)
+        .collect(Collectors.toList());
+  }
+
+  private List<UUID> getFacilityIds(List<String[]> permissions, String rightName,
+      UUID program) {
+    return permissions.stream()
+        .filter(parts -> rightName.equals(parts[0]))
+        .filter(parts -> program.equals(UUID.fromString(parts[2])))
+        .map(parts -> UUID.fromString(parts[1]))
+        .collect(Collectors.toList());
+  }
+
   private ResultDto<Boolean> getRightResult(String rightName, UUID program, UUID facility,
                                             boolean allowApiKey) {
     OAuth2Authentication authentication = (OAuth2Authentication) SecurityContextHolder

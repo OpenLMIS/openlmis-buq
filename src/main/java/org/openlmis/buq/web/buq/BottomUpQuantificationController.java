@@ -283,7 +283,8 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public ApproveFacilityForecastingStats getApproveFacilityForecastingStats(
       @RequestParam(value = PROGRAM_ID) UUID programId) {
-    permissionService.hasPermission(PermissionService.APPROVE_BUQ);
+    permissionService.hasPermissionForProgram(
+        Collections.singletonList(PermissionService.APPROVE_BUQ), programId);
     return bottomUpQuantificationService.getApproveFacilityForecastingStats(programId);
   }
 
@@ -298,7 +299,8 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public Page<BottomUpQuantificationDto> getForApproval(Pageable pageable,
       @RequestParam(value = PROGRAM_ID) UUID programId) {
-    permissionService.hasPermission(PermissionService.APPROVE_BUQ);
+    permissionService.hasPermissionForProgram(
+        Collections.singletonList(PermissionService.APPROVE_BUQ), programId);
     Page<BottomUpQuantification> bottomUpQuantificationsForApproval =
         bottomUpQuantificationService.getBottomUpQuantificationsForApproval(programId, pageable);
 
@@ -326,7 +328,7 @@ public class BottomUpQuantificationController extends BaseController {
       @RequestParam(value = PROGRAM_ID) UUID programId,
       @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId,
       @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    permissionService.hasPermissionForProgram(PermissionService.MOH_PORALG_RIGHTS, programId);
     List<BottomUpQuantificationGroupCostsData> content =
         bottomUpQuantificationService.getBottomUpQuantificationsForFinalApprovalWithGroupCosts(
             programId, processingPeriodId, geographicZoneId, pageable);
@@ -377,7 +379,7 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> getSupervisedGeographicZones(
       @RequestParam(value = PROGRAM_ID) UUID programId) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    permissionService.hasPermissionForProgram(PermissionService.MOH_PORALG_RIGHTS, programId);
     return bottomUpQuantificationService.getSupervisedGeographicZones(programId);
   }
 
@@ -448,7 +450,7 @@ public class BottomUpQuantificationController extends BaseController {
       @RequestParam(value = PROGRAM_ID) UUID programId,
       @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId,
       @RequestBody Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> geographicZones) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    permissionService.hasPermissionForProgram(PermissionService.MOH_PORALG_RIGHTS, programId);
     return bottomUpQuantificationService.getProductsCostData(processingPeriodId, programId,
         geographicZoneId, geographicZones, pageable);
   }

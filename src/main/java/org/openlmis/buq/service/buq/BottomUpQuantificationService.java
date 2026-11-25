@@ -485,8 +485,8 @@ public class BottomUpQuantificationService {
    * @return {@link ApproveFacilityForecastingStats} containing the calculated data.
    */
   public ApproveFacilityForecastingStats getApproveFacilityForecastingStats(UUID programId) {
-    List<UUID> userSupervisedFacilities = getUserSupervisedFacilities(
-        programId, APPROVE_BUQ_RIGHT_NAME);
+    List<UUID> userSupervisedFacilities = permissionService.getSupervisedFacilityIds(
+        APPROVE_BUQ_RIGHT_NAME, programId);
     int totalFacilities = userSupervisedFacilities.size();
 
     List<BottomUpQuantification> bottomUpQuantifications =
@@ -535,8 +535,11 @@ public class BottomUpQuantificationService {
    */
   public Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> getSupervisedGeographicZones(UUID programId) {
     List<UUID> userSupervisedFacilities = Stream
-        .concat(getUserSupervisedFacilities(programId, MOH_APPROVAL_RIGHT_NAME).stream(),
-            getUserSupervisedFacilities(programId, PORALG_APPROVAL_RIGHT_NAME).stream())
+        .concat(
+            permissionService.getSupervisedFacilityIds(MOH_APPROVAL_RIGHT_NAME, programId)
+                .stream(),
+            permissionService.getSupervisedFacilityIds(PORALG_APPROVAL_RIGHT_NAME, programId)
+                .stream())
         .collect(Collectors.toList());
     Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> zones = new HashMap<>();
 
@@ -573,20 +576,6 @@ public class BottomUpQuantificationService {
     }
 
     return zones;
-  }
-
-  private List<UUID> getUserSupervisedFacilities(UUID programId, String rightName) {
-    UserDto currentUser = authenticationHelper.getCurrentUser();
-    List<String> userPermissionStrings = userReferenceDataService
-        .getPermissionStrings(currentUser.getId());
-
-    return userPermissionStrings.stream()
-        .filter(p -> p.length() - p.replace("|", "").length() == 2
-            && rightName.equals(p.substring(0, p.indexOf('|'))))
-        .map(p -> p.split("\\|"))
-        .filter(p -> programId.equals(UUID.fromString(p[2])))
-        .map(p -> UUID.fromString(p[1]))
-        .collect(Collectors.toList());
   }
 
   /**

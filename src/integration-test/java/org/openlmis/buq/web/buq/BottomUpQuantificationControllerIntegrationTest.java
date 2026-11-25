@@ -90,6 +90,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String SUPERVISED_GEOGRAPHIC_ZONES_URL = RESOURCE_URL
       + "/supervisedGeographicZones";
   private static final String FOR_FINAL_APPROVAL_URL = RESOURCE_URL + "/forFinalApproval";
+  private static final String FOR_APPROVAL_URL = RESOURCE_URL + "/forApproval";
+  private static final String COST_CALCULATION_URL = RESOURCE_URL + "/costCalculation";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
   private static final String MOST_RECENT_REJECTION_URL = ID_URL + "/mostRecentRejection";
   private static final String REJECT_URL = ID_URL + "/reject";
@@ -482,8 +484,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnApproveFacilityForecastingStats() {
-    mockUserHasRight(PermissionService.APPROVE_BUQ);
     final UUID programId = UUID.randomUUID();
+    mockUserHasNoRights();
+    mockUserHasRightForProgram(APPROVE_BUQ_RIGHTS, programId);
     ApproveFacilityForecastingStats stats = new ApproveFacilityForecastingStats(10, 3, 30);
     given(bottomUpQuantificationService.getApproveFacilityForecastingStats(programId))
         .willReturn(stats);
@@ -509,7 +512,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     final UUID geoZoneId = UUID.randomUUID();
     Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> zones = new HashMap<>();
     zones.put(geoZoneId, new HashMap<>());
-    mockUserHasAtLeastOneOfFollowingRights(PermissionService.MOH_PORALG_RIGHTS);
+    mockUserHasNoRights();
+    mockUserHasRightForProgram(PermissionService.MOH_PORALG_RIGHTS, programId);
     given(bottomUpQuantificationService.getSupervisedGeographicZones(programId))
         .willReturn(zones);
 
@@ -619,7 +623,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnBottomUpQuantificationsForFinalApprovalWithGroupCosts() {
-    mockUserHasAtLeastOneOfFollowingRights(PermissionService.MOH_PORALG_RIGHTS);
+    mockUserHasNoRights();
+    mockUserHasRightForProgram(PermissionService.MOH_PORALG_RIGHTS,
+        bottomUpQuantificationDto.getProgramId());
     given(bottomUpQuantificationService.getBottomUpQuantificationsForFinalApprovalWithGroupCosts(
         any(UUID.class),
         any(UUID.class),
@@ -854,6 +860,97 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     finalApprove(bottomUpQuantification, other).then().statusCode(HttpStatus.SC_FORBIDDEN);
 
     verify(bottomUpQuantificationService, never()).finalApproveBottomUpQuantification(any());
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForApproveFacilityForecastingStatsOfAnotherProgram() {
+    getForProgramWithRightsForAnotherProgram(APPROVE_FACILITY_FORECASTING_STATUS_URL,
+        APPROVE_BUQ_RIGHTS);
+  }
+
+  @Test
+  public void shouldReturnBottomUpQuantificationsForApproval() {
+    final UUID programId = bottomUpQuantification.getProgramId();
+    mockUserHasNoRights();
+    mockUserHasRightForProgram(APPROVE_BUQ_RIGHTS, programId);
+    given(bottomUpQuantificationService.getBottomUpQuantificationsForApproval(eq(programId),
+        any(Pageable.class)))
+        .willReturn(new PageImpl<>(Collections.singletonList(bottomUpQuantification)));
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam(PROGRAM_ID, programId)
+        .when()
+        .get(FOR_APPROVAL_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body("content", Matchers.hasSize(1));
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForApprovalListOfAnotherProgram() {
+    getForProgramWithRightsForAnotherProgram(FOR_APPROVAL_URL, APPROVE_BUQ_RIGHTS);
+  }
+
+  @Test
+  public void shouldReturnForbiddenForSupervisedGeographicZonesOfAnotherProgram() {
+    getForProgramWithRightsForAnotherProgram(SUPERVISED_GEOGRAPHIC_ZONES_URL,
+        PermissionService.MOH_PORALG_RIGHTS);
+  }
+
+  @Test
+  public void shouldReturnForbiddenForFinalApprovalListOfAnotherProgram() {
+    mockUserHasNoRights();
+    mockUserHasRightForProgram(PermissionService.MOH_PORALG_RIGHTS, UUID.randomUUID());
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam(PROGRAM_ID, bottomUpQuantification.getProgramId())
+        .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantification.getProcessingPeriodId())
+        .queryParam(GEOGRAPHIC_ZONE_ID, UUID.randomUUID())
+        .when()
+        .get(FOR_FINAL_APPROVAL_URL)
+        .then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForCostCalculationOfAnotherProgram() {
+    mockUserHasNoRights();
+    mockUserHasRightForProgram(PermissionService.MOH_PORALG_RIGHTS, UUID.randomUUID());
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .queryParam(PROGRAM_ID, bottomUpQuantification.getProgramId())
+        .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantification.getProcessingPeriodId())
+        .queryParam(GEOGRAPHIC_ZONE_ID, UUID.randomUUID())
+        .body(new HashMap<>())
+        .when()
+        .post(COST_CALCULATION_URL)
+        .then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  private void getForProgramWithRightsForAnotherProgram(String url, List<String> rightNames) {
+    mockUserHasNoRights();
+    mockUserHasRightForProgram(rightNames, UUID.randomUUID());
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam(PROGRAM_ID, bottomUpQuantification.getProgramId())
+        .when()
+        .get(url)
+        .then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 

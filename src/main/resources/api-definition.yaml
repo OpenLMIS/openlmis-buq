@@ -671,6 +671,34 @@ resourceTypes:
             body:
               application/json:
                 schema: localizedErrorResponse
+    /forApproval:
+      get:
+        is: [ secured, paginated, sorted ]
+        description: Get bottom-up quantifications of the given program that wait for approval at the user's supervisory nodes.
+        queryParameters:
+          programId:
+            displayName: programId
+            type: string
+            required: true
+            repeat: false
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: bottomUpQuantificationPage
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
     /approveFacilityForecastingStats:
       get:
         is: [ secured ]

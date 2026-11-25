@@ -628,21 +628,8 @@ public class BottomUpQuantificationServiceTest {
 
   @Test
   public void shouldReturnApproveFacilityForecastingStatsWithCalculatedValues() {
-    UserDto user = new UserDtoDataBuilder().buildAsDto();
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
-    List<String> permissionStrings = Arrays.asList(
-        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID() + "|" + programId,
-        APPROVE_BUQ_RIGHT_NAME + "|" + user.getHomeFacilityId() + "|" + programId,
-        APPROVE_BUQ_RIGHT_NAME + "|" + user.getHomeFacilityId() + "|" + UUID.randomUUID(),
-        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID() + "|" + programId,
-        "SOME_RIGHT|" + user.getHomeFacilityId() + "|" + programId,
-        "SOME_RIGHT|" + user.getHomeFacilityId(),
-        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID(),
-        APPROVE_BUQ_RIGHT_NAME,
-        "SOME_RIGHT"
-    );
-    when(userReferenceDataService.getPermissionStrings(user.getId()))
-        .thenReturn(permissionStrings);
+    when(permissionService.getSupervisedFacilityIds(APPROVE_BUQ_RIGHT_NAME, programId))
+        .thenReturn(Arrays.asList(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
     List<BottomUpQuantification> bottomUpQuantifications = Arrays.asList(
         new BottomUpQuantificationDataBuilder()
             .withStatus(BottomUpQuantificationStatus.DRAFT).buildAsNew(),
@@ -662,9 +649,7 @@ public class BottomUpQuantificationServiceTest {
 
   @Test
   public void shouldReturnApproveFacilityForecastingStatsWithZeroValues() {
-    UserDto user = new UserDtoDataBuilder().buildAsDto();
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
-    when(userReferenceDataService.getPermissionStrings(user.getId()))
+    when(permissionService.getSupervisedFacilityIds(APPROVE_BUQ_RIGHT_NAME, programId))
         .thenReturn(Collections.emptyList());
     when(bottomUpQuantificationRepository.findByFacilityIdIn(any()))
         .thenReturn(Collections.emptyList());

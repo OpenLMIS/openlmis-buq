@@ -265,6 +265,49 @@ public class PermissionServiceTest {
     verify(authenticationHelper, never()).getCurrentUser();
   }
 
+  @Test
+  public void shouldPassProgramCheckWhenUserHasRightAtAnyFacilityOfTheProgram() {
+    stubPermissionStrings(APPROVE_BUQ + "|" + facilityId + "|" + programId);
+
+    permissionService.hasPermissionForProgram(Arrays.asList(MOH_APPROVAL, APPROVE_BUQ), programId);
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldDenyProgramCheckWhenUserHasRightForAnotherProgramOnly() {
+    stubPermissionStrings(APPROVE_BUQ + "|" + facilityId + "|" + UUID.randomUUID(),
+        MANAGE_BUQ, MOH_APPROVAL + "|" + facilityId + "|" + programId);
+
+    permissionService.hasPermissionForProgram(Collections.singletonList(APPROVE_BUQ), programId);
+  }
+
+  @Test
+  public void shouldAllowServiceTokenProgramCheckWithoutUserLookup() {
+    stubClient(SERVICE_CLIENT_ID);
+
+    permissionService.hasPermissionForProgram(Collections.singletonList(APPROVE_BUQ), programId);
+
+    verify(authenticationHelper, never()).getCurrentUser();
+  }
+
+  @Test
+  public void shouldReturnFacilitiesWhereUserHasRightForTheProgram() {
+    UUID otherFacilityId = UUID.randomUUID();
+    stubPermissionStrings(APPROVE_BUQ + "|" + facilityId + "|" + programId,
+        APPROVE_BUQ + "|" + otherFacilityId + "|" + UUID.randomUUID(),
+        MOH_APPROVAL + "|" + otherFacilityId + "|" + programId,
+        APPROVE_BUQ + "|" + otherFacilityId,
+        MANAGE_BUQ);
+
+    assertEquals(Collections.singletonList(facilityId),
+        permissionService.getSupervisedFacilityIds(APPROVE_BUQ, programId));
+  }
+
+  private void stubPermissionStrings(String... permissionStrings) {
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    when(userReferenceDataService.getPermissionStrings(user.getId()))
+        .thenReturn(Arrays.asList(permissionStrings));
+  }
+
   private void stubApproveAssignment(UUID assignmentProgramId, UUID nodeId) {
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
     RightDto approve = rightNamed(APPROVE_BUQ);

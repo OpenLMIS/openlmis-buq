@@ -239,6 +239,10 @@ public abstract class BaseWebIntegrationTest {
         .hasPermissionForSupervisoryNode(rightNames, programId, supervisoryNodeId);
   }
 
+  protected void mockUserHasRightForProgram(List<String> rightNames, UUID programId) {
+    doNothing().when(permissionService).hasPermissionForProgram(rightNames, programId);
+  }
+
   protected void mockUserCanViewBottomUpQuantification(BottomUpQuantification buq) {
     doNothing().when(permissionService).canViewBottomUpQuantification(buq);
   }
@@ -256,6 +260,7 @@ public abstract class BaseWebIntegrationTest {
     doThrow(exception).when(permissionService).canViewBottomUpQuantification(any());
     doThrow(exception).when(permissionService)
         .hasPermissionForSupervisoryNode(any(), any(), any());
+    doThrow(exception).when(permissionService).hasPermissionForProgram(any(), any());
   }
 
   public static class SaveAnswer<T extends BaseEntity> implements Answer<T> {
