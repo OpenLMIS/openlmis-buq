@@ -20,7 +20,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -39,6 +41,9 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openlmis.buq.domain.BaseEntity;
+import org.openlmis.buq.domain.buq.BottomUpQuantification;
+import org.openlmis.buq.exception.PermissionMessageException;
+import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.RemarkRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.productgroup.ProductGroupRepository;
@@ -47,6 +52,7 @@ import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.service.role.PermissionService;
+import org.openlmis.buq.util.Message;
 import org.openlmis.buq.util.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -213,8 +219,35 @@ public abstract class BaseWebIntegrationTest {
     doNothing().when(permissionService).hasPermission(rightName);
   }
 
+  protected void mockUserHasRight(String rightName, UUID programId, UUID facilityId) {
+    doNothing().when(permissionService).hasPermission(rightName, programId, facilityId);
+  }
+
   protected void mockUserHasAtLeastOneOfFollowingRights(List<String> rightNames) {
     doNothing().when(permissionService).hasAtLeastOnePermission(rightNames);
+  }
+
+  protected void mockUserHasAtLeastOneOfFollowingRights(List<String> rightNames,
+      UUID programId, UUID facilityId) {
+    doNothing().when(permissionService)
+        .hasAtLeastOnePermission(rightNames, programId, facilityId);
+  }
+
+  protected void mockUserCanViewBottomUpQuantification(BottomUpQuantification buq) {
+    doNothing().when(permissionService).canViewBottomUpQuantification(buq);
+  }
+
+  /**
+   * Denies every permission check, so that a test grants only the exact checks it expects.
+   */
+  protected void mockUserHasNoRights() {
+    PermissionMessageException exception = new PermissionMessageException(
+        new Message(MessageKeys.ERROR_NO_FOLLOWING_PERMISSION, "any"));
+    doThrow(exception).when(permissionService).hasPermission(any());
+    doThrow(exception).when(permissionService).hasPermission(any(), any(), any());
+    doThrow(exception).when(permissionService).hasAtLeastOnePermission(any());
+    doThrow(exception).when(permissionService).hasAtLeastOnePermission(any(), any(), any());
+    doThrow(exception).when(permissionService).canViewBottomUpQuantification(any());
   }
 
   public static class SaveAnswer<T extends BaseEntity> implements Answer<T> {

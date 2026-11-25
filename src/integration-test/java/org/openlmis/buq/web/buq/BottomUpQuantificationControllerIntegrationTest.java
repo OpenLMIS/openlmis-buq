@@ -34,11 +34,13 @@ import static org.openlmis.buq.web.buq.BottomUpQuantificationController.TEXT_CSV
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.jayway.restassured.response.Response;
+import com.jayway.restassured.specification.RequestSpecification;
 import guru.nidi.ramltester.junit.RamlMatchers;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -88,6 +90,10 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
       + "/supervisedGeographicZones";
   private static final String FOR_FINAL_APPROVAL_URL = RESOURCE_URL + "/forFinalApproval";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
+  private static final String MOST_RECENT_REJECTION_URL = ID_URL + "/mostRecentRejection";
+
+  private static final List<String> FORECASTING_RIGHTS = Arrays.asList(
+      PermissionService.CREATE_FORECASTING, PermissionService.AUTHORIZE_FORECASTING);
 
   private static final String STATUS = "status";
   private static final String PROGRAM_ID = "programId";
@@ -168,7 +174,8 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnGivenBottomUpQuantification() {
-    mockUserHasAtLeastOneOfFollowingRights(PermissionService.ALL_BUQ_RIGHTS);
+    mockUserHasNoRights();
+    mockUserCanViewBottomUpQuantification(bottomUpQuantification);
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
@@ -188,7 +195,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldCreateBottomUpQuantification() {
-    mockUserHasRight(PermissionService.PREPARE_BUQ);
+    mockUserHasNoRights();
+    mockUserHasRight(PermissionService.PREPARE_BUQ, bottomUpQuantification.getProgramId(),
+        bottomUpQuantification.getFacilityId());
     given(bottomUpQuantificationService.prepare(bottomUpQuantification.getFacilityId(),
         bottomUpQuantification.getProgramId(), bottomUpQuantification.getProcessingPeriodId()))
         .willReturn(bottomUpQuantification);
@@ -210,7 +219,6 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnNotFoundMessageIfBuqDoesNotExistForGivenBuqEndpoint() {
-    mockUserHasAtLeastOneOfFollowingRights(PermissionService.ALL_BUQ_RIGHTS);
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.empty());
 
@@ -242,11 +250,11 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldUpdateBottomUpQuantification() {
-    mockUserHasAtLeastOneOfFollowingRights(Arrays.asList(
-            PermissionService.CREATE_FORECASTING,
-            PermissionService.AUTHORIZE_FORECASTING));
-    given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
-        .willReturn(true);
+    mockUserHasNoRights();
+    mockUserHasAtLeastOneOfFollowingRights(FORECASTING_RIGHTS,
+        bottomUpQuantification.getProgramId(), bottomUpQuantification.getFacilityId());
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
     given(bottomUpQuantificationService.save(any(BottomUpQuantificationDto.class),
         eq(bottomUpQuantificationDto.getId())))
         .willReturn(bottomUpQuantification);
@@ -284,7 +292,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldDeleteBottomUpQuantification() {
-    mockUserHasRight(PermissionService.PREPARE_BUQ);
+    mockUserHasNoRights();
+    mockUserHasRight(PermissionService.PREPARE_BUQ, bottomUpQuantification.getProgramId(),
+        bottomUpQuantification.getFacilityId());
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
     willDoNothing().given(bottomUpQuantificationService).delete(bottomUpQuantification);
@@ -303,7 +313,6 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnNotFoundMessageIfBuqDoesNotExistForDeleteBuqOfFundEndpoint() {
-    mockUserHasRight(PermissionService.PREPARE_BUQ);
     given(bottomUpQuantificationRepository.findById(any()))
         .willReturn(Optional.empty());
 
@@ -322,7 +331,6 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnUnauthorizedForDeleteBuqEndpointIfUserIsNotAuthorized() {
-    mockUserHasRight(PermissionService.PREPARE_BUQ);
     restAssured
         .given()
         .pathParam(ID, bottomUpQuantificationDto.getId().toString())
@@ -336,13 +344,14 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldAuthorizeBottomUpQuantification() {
-    mockUserHasRight(PermissionService.AUTHORIZE_FORECASTING);
-    mockUserHasRight(PermissionService.CREATE_FORECASTING);
+    mockUserHasNoRights();
+    mockUserHasRight(PermissionService.AUTHORIZE_FORECASTING,
+        bottomUpQuantification.getProgramId(), bottomUpQuantification.getFacilityId());
     ProgramDto programDto = new ProgramDtoDataBuilder().buildAsDto();
-    given(programReferenceDataService.findOne(bottomUpQuantificationDto.getProgramId()))
+    given(programReferenceDataService.findOne(bottomUpQuantification.getProgramId()))
             .willReturn(programDto);
-    given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
-        .willReturn(true);
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
     given(bottomUpQuantificationService.authorize(any(BottomUpQuantificationDto.class),
         eq(bottomUpQuantificationDto.getId())))
         .willReturn(bottomUpQuantification);
@@ -390,7 +399,11 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldSubmitBottomUpQuantification() {
-    mockUserHasRight(PermissionService.CREATE_FORECASTING);
+    mockUserHasNoRights();
+    mockUserHasRight(PermissionService.CREATE_FORECASTING,
+        bottomUpQuantification.getProgramId(), bottomUpQuantification.getFacilityId());
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
     given(bottomUpQuantificationService
             .submitBottomUpQuantification(any(BottomUpQuantificationDto.class),
             eq(bottomUpQuantificationDto.getId())))
@@ -414,7 +427,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldDownload() throws IOException {
-    mockUserHasRight(PermissionService.PREPARE_BUQ);
+    mockUserHasNoRights();
+    mockUserHasRight(PermissionService.PREPARE_BUQ, bottomUpQuantification.getProgramId(),
+        bottomUpQuantification.getFacilityId());
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
     ClassPathResource file = new ClassPathResource("csv/" + BUQ_FORM_CSV_FILENAME + ".csv");
@@ -440,7 +455,6 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnNotFoundMessageIfBuqDoesNotExistForGivenBuqDownloadEndpoint() {
-    mockUserHasRight(PermissionService.PREPARE_BUQ);
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.empty());
 
@@ -617,6 +631,147 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .body("content", Matchers.hasSize(1));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForGivenBuqIfUserCannotViewIt() {
+    mockUserHasNoRights();
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(ID_URL, null).get(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForPrepareIfUserHasRightForAnotherProgramOnly() {
+    mockUserHasNoRights();
+    mockUserHasRight(PermissionService.PREPARE_BUQ, UUID.randomUUID(),
+        bottomUpQuantification.getFacilityId());
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam(FACILITY_ID, bottomUpQuantification.getFacilityId())
+        .queryParam(PROGRAM_ID, bottomUpQuantification.getProgramId())
+        .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantification.getProcessingPeriodId())
+        .when()
+        .post(PREPARE_URL)
+        .then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForPrepareIfUserHasRightForAnotherFacilityOnly() {
+    mockUserHasNoRights();
+    mockUserHasRight(PermissionService.PREPARE_BUQ, bottomUpQuantification.getProgramId(),
+        UUID.randomUUID());
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam(FACILITY_ID, bottomUpQuantification.getFacilityId())
+        .queryParam(PROGRAM_ID, bottomUpQuantification.getProgramId())
+        .queryParam(PROCESSING_PERIOD_ID, bottomUpQuantification.getProcessingPeriodId())
+        .when()
+        .post(PREPARE_URL)
+        .then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldCheckUpdateAgainstStoredBuqRatherThanRequestBody() {
+    BottomUpQuantificationDto body = BottomUpQuantificationDto.newInstance(bottomUpQuantification);
+    body.setProgramId(UUID.randomUUID());
+    body.setFacilityId(UUID.randomUUID());
+    mockUserHasNoRights();
+    mockUserHasAtLeastOneOfFollowingRights(FORECASTING_RIGHTS, body.getProgramId(),
+        body.getFacilityId());
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(ID_URL, body).put(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForDeleteIfUserHasNoRightForBuqProgramAndFacility() {
+    mockUserHasNoRights();
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(ID_URL, null).delete(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForDownloadIfUserHasNoRightForBuqProgramAndFacility() {
+    mockUserHasNoRights();
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(DOWNLOAD_URL, null).get(DOWNLOAD_URL).then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldCheckAuthorizeAgainstStoredBuqProgram() {
+    BottomUpQuantificationDto body = BottomUpQuantificationDto.newInstance(bottomUpQuantification);
+    body.setProgramId(UUID.randomUUID());
+    mockUserHasNoRights();
+    mockUserHasRight(PermissionService.AUTHORIZE_FORECASTING, body.getProgramId(),
+        bottomUpQuantification.getFacilityId());
+    given(programReferenceDataService.findOne(bottomUpQuantification.getProgramId()))
+        .willReturn(new ProgramDtoDataBuilder().buildAsDto());
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(AUTHORIZE_URL, body).post(AUTHORIZE_URL).then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForSubmitIfUserHasNoRightForBuqProgramAndFacility() {
+    mockUserHasNoRights();
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(SUBMIT_URL, bottomUpQuantificationDto).post(SUBMIT_URL).then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForMostRecentRejectionIfUserHasNoRightForBuq() {
+    mockUserHasNoRights();
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(MOST_RECENT_REJECTION_URL, null).get(MOST_RECENT_REJECTION_URL).then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  private RequestSpecification requestBuq(String url, BottomUpQuantificationDto body) {
+    RequestSpecification request = restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .pathParam(ID, bottomUpQuantification.getId().toString());
+    if (body != null) {
+      request = request.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+          .body(body);
+    }
+    return request.when();
   }
 
 }

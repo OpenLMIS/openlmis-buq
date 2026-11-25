@@ -253,6 +253,7 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Arrays.asList(lineItemDto1, lineItemDto2));
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setFacilityId(bottomUpQuantificationDto.getFacilityId());
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     when(bottomUpQuantificationLineItemRepository.saveAll(any()))
@@ -272,6 +273,11 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationDto.setId(UUID.randomUUID());
     mockUserHomeFacilityPermission(bottomUpQuantificationDto);
     UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .withId(bottomUpQuantificationId)
+        .withFacilityId(bottomUpQuantificationDto.getFacilityId())
+        .build();
+    mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
 
     bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
   }
@@ -299,6 +305,7 @@ public class BottomUpQuantificationServiceTest {
     );
 
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setFacilityId(bottomUpQuantificationDto.getFacilityId());
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
         .thenReturn(Optional.of(bottomUpQuantification));
@@ -325,6 +332,7 @@ public class BottomUpQuantificationServiceTest {
     );
 
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setFacilityId(bottomUpQuantificationDto.getFacilityId());
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
         .thenReturn(Optional.of(bottomUpQuantification));
@@ -441,6 +449,7 @@ public class BottomUpQuantificationServiceTest {
     BottomUpQuantificationDto invalidBottomUpQuantificationDto = BottomUpQuantificationDto
         .newInstance(bottomUpQuantification);
     mockUserHomeFacilityPermission(invalidBottomUpQuantificationDto);
+    mockUpdateBottomUpQuantification(invalidBottomUpQuantificationId, bottomUpQuantification);
 
     doThrow(ValidationMessageException.class).when(validator)
         .validateCanBeAuthorized(invalidBottomUpQuantificationDto,
@@ -505,6 +514,32 @@ public class BottomUpQuantificationServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
 
     bottomUpQuantificationService.delete(bottomUpQuantification);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowValidationMessageExceptionIfUserHasNoHomeFacility() {
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .build();
+    UserDto userDto = new UserDtoDataBuilder().withHomeFacilityId(null).buildAsDto();
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+
+    bottomUpQuantificationService.delete(bottomUpQuantification);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldCheckHomeFacilityAgainstStoredBuqFacilityOnSave() {
+    UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification stored = new BottomUpQuantificationDataBuilder()
+        .withId(bottomUpQuantificationId)
+        .build();
+    BottomUpQuantificationDto bottomUpQuantificationDto = BottomUpQuantificationDto
+        .newInstance(stored);
+    bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
+    when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
+        .thenReturn(Optional.of(stored));
+
+    bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
   }
 
   @Test

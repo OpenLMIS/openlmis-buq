@@ -244,7 +244,7 @@ public class BottomUpQuantificationService {
    */
   public BottomUpQuantification save(BottomUpQuantificationDto bottomUpQuantificationImporter,
       UUID bottomUpQuantificationId) {
-    checkFacilityPermission(bottomUpQuantificationImporter.getFacilityId());
+    checkFacilityPermission(bottomUpQuantificationId);
     BottomUpQuantification updatedBottomUpQuantification =
         updateBottomUpQuantification(bottomUpQuantificationImporter, bottomUpQuantificationId);
 
@@ -302,7 +302,7 @@ public class BottomUpQuantificationService {
    */
   public BottomUpQuantification authorize(BottomUpQuantificationDto bottomUpQuantificationImporter,
       UUID bottomUpQuantificationId) {
-    checkFacilityPermission(bottomUpQuantificationImporter.getFacilityId());
+    checkFacilityPermission(bottomUpQuantificationId);
     validator.validateCanBeAuthorized(bottomUpQuantificationImporter, bottomUpQuantificationId);
 
     BottomUpQuantification updatedBottomUpQuantification =
@@ -357,7 +357,7 @@ public class BottomUpQuantificationService {
    */
   public BottomUpQuantificationDto submitBottomUpQuantification(
       BottomUpQuantificationDto bottomUpQuantificationDto, UUID id) {
-    checkFacilityPermission(bottomUpQuantificationDto.getFacilityId());
+    checkFacilityPermission(id);
     validator.validateCanBeSubmitted(bottomUpQuantificationDto, id);
 
     BottomUpQuantification bottomUpQuantification = save(bottomUpQuantificationDto, id);
@@ -415,7 +415,7 @@ public class BottomUpQuantificationService {
    * @param bottomUpQuantification The Bottom-Up Quantification entity to be deleted.
    */
   public void delete(BottomUpQuantification bottomUpQuantification) {
-    checkFacilityPermission(bottomUpQuantification.getFacilityId());
+    checkHomeFacility(bottomUpQuantification.getFacilityId());
 
     List<BottomUpQuantificationStatusChange> statusChanges =
             bottomUpQuantification.getStatusChanges();
@@ -1196,9 +1196,13 @@ public class BottomUpQuantificationService {
     }
   }
 
-  private void checkFacilityPermission(UUID bottomUpQuantificationFacilityId) {
-    if (!authenticationHelper.getCurrentUser().getHomeFacilityId()
-        .equals(bottomUpQuantificationFacilityId)) {
+  private void checkFacilityPermission(UUID bottomUpQuantificationId) {
+    checkHomeFacility(findBottomUpQuantification(bottomUpQuantificationId).getFacilityId());
+  }
+
+  private void checkHomeFacility(UUID bottomUpQuantificationFacilityId) {
+    UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    if (homeFacilityId == null || !homeFacilityId.equals(bottomUpQuantificationFacilityId)) {
       throw new ValidationMessageException(new Message(
           MessageKeys.ERROR_USER_HOME_FACILITY_AND_BUQ_FACILITY_MISMATCH));
     }

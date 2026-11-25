@@ -18,8 +18,10 @@ package org.openlmis.buq.service.role;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.dto.ResultDto;
 import org.openlmis.buq.dto.referencedata.RightDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
@@ -50,6 +52,10 @@ public class PermissionService {
           CREATE_FORECASTING, AUTHORIZE_FORECASTING, APPROVE_BUQ, PREPARE_BUQ,
           PORALG_APPROVAL, MOH_APPROVAL, MANAGE_BUQ);
 
+  public static final List<String> BUQ_SUPERVISION_RIGHTS = Arrays.asList(
+          CREATE_FORECASTING, AUTHORIZE_FORECASTING, APPROVE_BUQ, PREPARE_BUQ,
+          PORALG_APPROVAL, MOH_APPROVAL);
+
   public static final List<String> RECENT_REJECTION_RIGHTS = Arrays.asList(
           CREATE_FORECASTING, APPROVE_BUQ, MOH_APPROVAL, PORALG_APPROVAL);
 
@@ -75,7 +81,16 @@ public class PermissionService {
     hasPermission(rightName, null, null);
   }
 
-  private void hasPermission(String rightName, UUID program, UUID facility) {
+  /**
+   * Checks if the user has the given right for the given program and facility. Referencedata
+   * accepts a program only together with a facility; with neither, the right is checked
+   * regardless of program and facility.
+   *
+   * @param rightName name of the right to check.
+   * @param program   the unique identifier of the program.
+   * @param facility  the unique identifier of the facility.
+   */
+  public void hasPermission(String rightName, UUID program, UUID facility) {
     ResultDto<Boolean> result = getRightResult(rightName, program, facility, false);
     if (null == result || !result.getResult()) {
       throw new PermissionMessageException(
@@ -95,22 +110,41 @@ public class PermissionService {
    * @param program      The unique identifier of the program.
    * @param facility     The unique identifier of the facility.
    */
-  private void hasAtLeastOnePermission(List<String> rightNames, UUID program, UUID facility) {
-    boolean hasAnyPermission = false;
-
-    for (String name : rightNames) {
-      ResultDto<Boolean> result = getRightResult(name, program, facility, false);
-
-      if (result.getResult()) {
-        hasAnyPermission = true;
-        break;
-      }
-    }
-
-    if (!hasAnyPermission) {
+  public void hasAtLeastOnePermission(List<String> rightNames, UUID program, UUID facility) {
+    if (!hasAnyRight(rightNames, program, facility)) {
       throw new PermissionMessageException(
               new Message(MessageKeys.ERROR_NO_SINGLE_FOLLOWING_PERMISSION, rightNames));
     }
+  }
+
+  /**
+   * Checks if the user can view the given bottom-up quantification: any BUQ supervision right
+   * for its program and facility, or MANAGE_BUQ, which is a general admin right without a
+   * program or facility.
+   *
+   * @param bottomUpQuantification the bottom-up quantification to view.
+   */
+  public void canViewBottomUpQuantification(BottomUpQuantification bottomUpQuantification) {
+    boolean canView = hasAnyRight(BUQ_SUPERVISION_RIGHTS,
+            bottomUpQuantification.getProgramId(), bottomUpQuantification.getFacilityId())
+        || hasAnyRight(Collections.singletonList(MANAGE_BUQ), null, null);
+
+    if (!canView) {
+      throw new PermissionMessageException(
+              new Message(MessageKeys.ERROR_NO_SINGLE_FOLLOWING_PERMISSION, ALL_BUQ_RIGHTS));
+    }
+  }
+
+  private boolean hasAnyRight(List<String> rightNames, UUID program, UUID facility) {
+    for (String name : rightNames) {
+      ResultDto<Boolean> result = getRightResult(name, program, facility, false);
+
+      if (null != result && Boolean.TRUE.equals(result.getResult())) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private ResultDto<Boolean> getRightResult(String rightName, UUID program, UUID facility,
