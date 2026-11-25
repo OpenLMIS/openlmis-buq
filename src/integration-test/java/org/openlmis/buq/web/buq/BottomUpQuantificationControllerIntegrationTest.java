@@ -26,6 +26,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.openlmis.buq.web.buq.BottomUpQuantificationController.BUQ_FORM_CSV_FILENAME;
 import static org.openlmis.buq.web.buq.BottomUpQuantificationController.GEOGRAPHIC_ZONE_ID;
@@ -91,6 +92,11 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
   private static final String FOR_FINAL_APPROVAL_URL = RESOURCE_URL + "/forFinalApproval";
   private static final String AUDIT_LOG_URL = ID_URL + "/auditLog";
   private static final String MOST_RECENT_REJECTION_URL = ID_URL + "/mostRecentRejection";
+  private static final String REJECT_URL = ID_URL + "/reject";
+  private static final String FINAL_APPROVE_URL = RESOURCE_URL + "/finalApprove";
+
+  private static final List<String> APPROVE_BUQ_RIGHTS =
+      Collections.singletonList(PermissionService.APPROVE_BUQ);
 
   private static final List<String> FORECASTING_RIGHTS = Arrays.asList(
       PermissionService.CREATE_FORECASTING, PermissionService.AUTHORIZE_FORECASTING);
@@ -374,9 +380,11 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldApproveBottomUpQuantification() {
-    mockUserHasRight(PermissionService.APPROVE_BUQ);
-    given(bottomUpQuantificationRepository.existsById(bottomUpQuantificationDto.getId()))
-        .willReturn(true);
+    mockUserHasNoRights();
+    mockUserHasRightAtSupervisoryNode(APPROVE_BUQ_RIGHTS, bottomUpQuantification.getProgramId(),
+        bottomUpQuantification.getSupervisoryNodeId());
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
     given(bottomUpQuantificationService.approve(any(BottomUpQuantificationDto.class),
         eq(bottomUpQuantificationDto.getId())))
         .willReturn(bottomUpQuantification);
@@ -761,6 +769,114 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForApproveIfUserHasRightAtAnotherNodeOnly() {
+    mockUserHasNoRights();
+    mockUserHasRightAtSupervisoryNode(APPROVE_BUQ_RIGHTS, bottomUpQuantification.getProgramId(),
+        UUID.randomUUID());
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(APPROVE_URL, bottomUpQuantificationDto).post(APPROVE_URL).then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    verify(bottomUpQuantificationService, never()).approve(any(), any());
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldRejectBottomUpQuantification() {
+    mockUserHasNoRights();
+    mockUserHasRightAtSupervisoryNode(PermissionService.APPROVE_RIGHTS,
+        bottomUpQuantification.getProgramId(), bottomUpQuantification.getSupervisoryNodeId());
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+    given(bottomUpQuantificationService.reject(eq(bottomUpQuantification.getId()), any()))
+        .willReturn(bottomUpQuantification);
+
+    requestBuq(REJECT_URL, null)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .body(rejectionBody())
+        .post(REJECT_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnForbiddenForRejectIfUserHasRightForAnotherProgramOnly() {
+    mockUserHasNoRights();
+    mockUserHasRightAtSupervisoryNode(PermissionService.APPROVE_RIGHTS, UUID.randomUUID(),
+        bottomUpQuantification.getSupervisoryNodeId());
+    given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
+        .willReturn(Optional.of(bottomUpQuantification));
+
+    requestBuq(REJECT_URL, null)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .body(rejectionBody())
+        .post(REJECT_URL)
+        .then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    verify(bottomUpQuantificationService, never()).reject(any(), any());
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldFinalApproveBottomUpQuantifications() {
+    BottomUpQuantification other = new BottomUpQuantificationDataBuilder().build();
+    mockUserHasNoRights();
+    mockUserHasRightAtSupervisoryNode(PermissionService.MOH_PORALG_RIGHTS,
+        bottomUpQuantification.getProgramId(), bottomUpQuantification.getSupervisoryNodeId());
+    mockUserHasRightAtSupervisoryNode(PermissionService.MOH_PORALG_RIGHTS,
+        other.getProgramId(), other.getSupervisoryNodeId());
+    stubFindById(bottomUpQuantification, other);
+    given(bottomUpQuantificationService.finalApproveBottomUpQuantification(
+        Arrays.asList(bottomUpQuantification.getId(), other.getId())))
+        .willReturn(Arrays.asList(bottomUpQuantification, other));
+
+    finalApprove(bottomUpQuantification, other).then().statusCode(HttpStatus.SC_OK);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldNotFinalApproveAnyIfOneBottomUpQuantificationIsForbidden() {
+    BottomUpQuantification other = new BottomUpQuantificationDataBuilder().build();
+    mockUserHasNoRights();
+    mockUserHasRightAtSupervisoryNode(PermissionService.MOH_PORALG_RIGHTS,
+        bottomUpQuantification.getProgramId(), bottomUpQuantification.getSupervisoryNodeId());
+    stubFindById(bottomUpQuantification, other);
+
+    finalApprove(bottomUpQuantification, other).then().statusCode(HttpStatus.SC_FORBIDDEN);
+
+    verify(bottomUpQuantificationService, never()).finalApproveBottomUpQuantification(any());
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  private void stubFindById(BottomUpQuantification... buqs) {
+    for (BottomUpQuantification buq : buqs) {
+      given(bottomUpQuantificationRepository.findById(buq.getId())).willReturn(Optional.of(buq));
+    }
+  }
+
+  private Response finalApprove(BottomUpQuantification... buqs) {
+    RequestSpecification request = restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader());
+    for (BottomUpQuantification buq : buqs) {
+      request = request.queryParam("id", buq.getId().toString());
+    }
+    return request.when().post(FINAL_APPROVE_URL);
+  }
+
+  private Map<String, Object> rejectionBody() {
+    Map<String, Object> body = new HashMap<>();
+    body.put("generalComments", "comment");
+    body.put("rejectionReasons", Collections.emptyList());
+    return body;
   }
 
   private RequestSpecification requestBuq(String url, BottomUpQuantificationDto body) {

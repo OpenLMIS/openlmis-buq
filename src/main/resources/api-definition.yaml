@@ -24,6 +24,13 @@ schemas:
 
 - bottomUpQuantification: !include schemas/bottomUpQuantification.json
 - bottomUpQuantificationPage: !include schemas/bottomUpQuantificationPage.json
+
+- bottomUpQuantificationArray: |
+    {
+        "type": "array",
+        "items": { "type": "object", "$ref": "schemas/bottomUpQuantification.json" }
+    }
+
 - bottomUpQuantificationGroupCostsData: !include schemas/bottomUpQuantificationGroupCostsData.json
 - bottomUpQuantificationGroupCostsDataPage: !include schemas/bottomUpQuantificationGroupCostsDataPage.json
 - sourceOfFund: !include schemas/sourceOfFund.json
@@ -434,7 +441,7 @@ resourceTypes:
           description: Reject existing bottom-up quantification.
           body:
             application/json:
-              schema: bottomUpQuantification
+              schema: rejection
           responses:
             200:
               description: The request is valid and the given bottom-up quantification will be rejected and returned.
@@ -460,7 +467,7 @@ resourceTypes:
                 Keep-Alive:
               body:
                 application/json:
-                  schema: localizedMessage
+                  schema: localizedErrorResponse
             404:
               description: The server understood the request but can not find the bottom-up quantification.
               headers:
@@ -551,7 +558,7 @@ resourceTypes:
                 Keep-Alive:
               body:
                 application/json:
-                  schema: localizedMessage
+                  schema: localizedErrorResponse
             404:
               description: The server understood the request but can not find the bottom-up quantification.
               headers:
@@ -637,18 +644,33 @@ resourceTypes:
     /finalApprove:
       post:
         is: [ secured ]
-        description: Final approve bottomUpQuantification
-        body:
-          application/json:
-            schema: bottomUpQuantification
+        description: Final approve bottomUpQuantifications. Nothing is approved unless the user may approve every one of them.
+        queryParameters:
+          id:
+            displayName: id
+            type: string
+            required: true
+            repeat: true
         responses:
           200:
-            description: The request is valid and the given bottom-up quantification will be approved.
+            description: The request is valid and the given bottom-up quantifications will be approved.
             headers:
               Keep-Alive:
             body:
               application/json:
-                schema: bottomUpQuantification
+                schema: bottomUpQuantificationArray
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
     /approveFacilityForecastingStats:
       get:
         is: [ secured ]

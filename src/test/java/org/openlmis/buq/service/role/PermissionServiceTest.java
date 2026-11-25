@@ -15,6 +15,8 @@
 
 package org.openlmis.buq.service.role;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -23,10 +25,15 @@ import static org.mockito.Mockito.when;
 import static org.openlmis.buq.service.role.PermissionService.APPROVE_BUQ;
 import static org.openlmis.buq.service.role.PermissionService.CREATE_FORECASTING;
 import static org.openlmis.buq.service.role.PermissionService.MANAGE_BUQ;
+import static org.openlmis.buq.service.role.PermissionService.MOH_APPROVAL;
 import static org.openlmis.buq.service.role.PermissionService.PREPARE_BUQ;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,10 +46,14 @@ import org.openlmis.buq.builder.RightDtoDataBuilder;
 import org.openlmis.buq.builder.UserDtoDataBuilder;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.dto.ResultDto;
+import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.RightDto;
+import org.openlmis.buq.dto.referencedata.RoleDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
 import org.openlmis.buq.exception.PermissionMessageException;
+import org.openlmis.buq.service.referencedata.RightReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
+import org.openlmis.buq.service.referencedata.UserRoleAssignmentsReferenceDataService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -64,6 +75,12 @@ public class PermissionServiceTest {
 
   @Mock
   private UserReferenceDataService userReferenceDataService;
+
+  @Mock
+  private UserRoleAssignmentsReferenceDataService userRoleAssignmentsReferenceDataService;
+
+  @Mock
+  private RightReferenceDataService rightReferenceDataService;
 
   @InjectMocks
   private PermissionService permissionService;
@@ -185,9 +202,91 @@ public class PermissionServiceTest {
     permissionService.canViewBottomUpQuantification(buq);
   }
 
+  @Test
+  public void shouldCollectProgramNodePairsOfAssignmentsWithTheRight() {
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    RightDto approve = rightNamed(APPROVE_BUQ);
+    when(rightReferenceDataService.findRight(APPROVE_BUQ)).thenReturn(approve);
+    UUID nodeId = UUID.randomUUID();
+    when(userRoleAssignmentsReferenceDataService.hasRight(user, approve)).thenReturn(Arrays.asList(
+        roleAssignment(programId, nodeId),
+        roleAssignment(programId, null),
+        roleAssignment(null, nodeId)));
+
+    Set<Pair<UUID, UUID>> pairs =
+        permissionService.getProgramNodePairs(Collections.singletonList(APPROVE_BUQ));
+
+    assertEquals(Collections.singleton(new ImmutablePair<>(programId, nodeId)), pairs);
+  }
+
+  @Test
+  public void shouldSkipRightsMissingInReferenceData() {
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+
+    Set<Pair<UUID, UUID>> pairs =
+        permissionService.getProgramNodePairs(Collections.singletonList(MOH_APPROVAL));
+
+    assertTrue(pairs.isEmpty());
+  }
+
+  @Test
+  public void shouldPassNodeCheckWhenUserHasRightAtTheNode() {
+    UUID nodeId = UUID.randomUUID();
+    stubApproveAssignment(programId, nodeId);
+
+    permissionService.hasPermissionForSupervisoryNode(
+        Collections.singletonList(APPROVE_BUQ), programId, nodeId);
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldDenyNodeCheckWhenUserHasRightAtAnotherNodeOnly() {
+    stubApproveAssignment(programId, UUID.randomUUID());
+
+    permissionService.hasPermissionForSupervisoryNode(
+        Collections.singletonList(APPROVE_BUQ), programId, UUID.randomUUID());
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldDenyNodeCheckWhenUserHasRightForAnotherProgramOnly() {
+    UUID nodeId = UUID.randomUUID();
+    stubApproveAssignment(UUID.randomUUID(), nodeId);
+
+    permissionService.hasPermissionForSupervisoryNode(
+        Collections.singletonList(APPROVE_BUQ), programId, nodeId);
+  }
+
+  @Test
+  public void shouldAllowServiceTokenNodeCheckWithoutUserLookup() {
+    stubClient(SERVICE_CLIENT_ID);
+
+    permissionService.hasPermissionForSupervisoryNode(
+        Collections.singletonList(APPROVE_BUQ), programId, UUID.randomUUID());
+
+    verify(authenticationHelper, never()).getCurrentUser();
+  }
+
+  private void stubApproveAssignment(UUID assignmentProgramId, UUID nodeId) {
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    RightDto approve = rightNamed(APPROVE_BUQ);
+    when(rightReferenceDataService.findRight(APPROVE_BUQ)).thenReturn(approve);
+    when(userRoleAssignmentsReferenceDataService.hasRight(user, approve))
+        .thenReturn(Collections.singletonList(roleAssignment(assignmentProgramId, nodeId)));
+  }
+
+  private DetailedRoleAssignmentDto roleAssignment(UUID assignmentProgramId, UUID nodeId) {
+    RoleDto role = new RoleDto();
+    role.setId(UUID.randomUUID());
+    DetailedRoleAssignmentDto assignment = new DetailedRoleAssignmentDto();
+    assignment.setRole(role);
+    assignment.setProgramId(assignmentProgramId);
+    assignment.setSupervisoryNodeId(nodeId);
+    return assignment;
+  }
+
   private RightDto rightNamed(String name) {
     RightDto right = new RightDtoDataBuilder().buildAsDto();
     right.setName(name);
+    right.setId(UUID.randomUUID());
     if (APPROVE_BUQ.equals(name)) {
       right.setId(APPROVE_BUQ_RIGHT_ID);
     } else if (MANAGE_BUQ.equals(name)) {

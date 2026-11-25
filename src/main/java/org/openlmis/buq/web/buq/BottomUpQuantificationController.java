@@ -17,6 +17,7 @@ package org.openlmis.buq.web.buq;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -257,10 +258,10 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto approve(@PathVariable("id") UUID bottomUpQuantificationId,
       @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
-    permissionService.hasPermission(PermissionService.APPROVE_BUQ);
-    if (!bottomUpQuantificationRepository.existsById(bottomUpQuantificationId)) {
-      throw new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND);
-    }
+    BottomUpQuantification buq = findBottomUpQuantification(bottomUpQuantificationId);
+    permissionService.hasPermissionForSupervisoryNode(
+        Collections.singletonList(PermissionService.APPROVE_BUQ), buq.getProgramId(),
+        buq.getSupervisoryNodeId());
 
     BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
         .approve(bottomUpQuantificationDto, bottomUpQuantificationId);
@@ -346,7 +347,9 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto reject(@PathVariable("id") UUID bottomUpQuantificationId,
       @RequestBody RejectionDto rejectionDto) {
-    permissionService.hasAtLeastOnePermission(PermissionService.APPROVE_RIGHTS);
+    BottomUpQuantification buq = findBottomUpQuantification(bottomUpQuantificationId);
+    permissionService.hasPermissionForSupervisoryNode(PermissionService.APPROVE_RIGHTS,
+        buq.getProgramId(), buq.getSupervisoryNodeId());
     BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
             .reject(bottomUpQuantificationId, rejectionDto);
     return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
@@ -461,7 +464,11 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public List<BottomUpQuantificationDto> finalApproveBottomUpQuantification(
           @RequestParam("id") List<UUID> ids) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    for (UUID id : ids) {
+      BottomUpQuantification buq = findBottomUpQuantification(id);
+      permissionService.hasPermissionForSupervisoryNode(PermissionService.MOH_PORALG_RIGHTS,
+          buq.getProgramId(), buq.getSupervisoryNodeId());
+    }
     List<BottomUpQuantification> updatedBottomUpQuantifications =
             bottomUpQuantificationService.finalApproveBottomUpQuantification(ids);
     return updatedBottomUpQuantifications

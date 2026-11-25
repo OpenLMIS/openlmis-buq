@@ -43,7 +43,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
@@ -67,7 +66,6 @@ import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.productgroup.ProductGroupsCostData;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
-import org.openlmis.buq.dto.referencedata.DetailedRoleAssignmentDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
 import org.openlmis.buq.dto.referencedata.GeographicZoneDto;
 import org.openlmis.buq.dto.referencedata.MinimalFacilityDto;
@@ -100,8 +98,8 @@ import org.openlmis.buq.service.referencedata.RightReferenceDataService;
 import org.openlmis.buq.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.buq.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
-import org.openlmis.buq.service.referencedata.UserRoleAssignmentsReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
+import org.openlmis.buq.service.role.PermissionService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 import org.openlmis.buq.util.Message;
@@ -112,7 +110,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -174,10 +171,10 @@ public class BottomUpQuantificationService {
   private RightReferenceDataService rightReferenceDataService;
 
   @Autowired
-  private UserRoleAssignmentsReferenceDataService userRoleAssignmentsReferenceDataService;
+  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
 
   @Autowired
-  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+  private PermissionService permissionService;
 
   @Autowired
   private SupplyLineReferenceDataService supplyLineReferenceDataService;
@@ -516,24 +513,12 @@ public class BottomUpQuantificationService {
    */
   public Page<BottomUpQuantification> getBottomUpQuantificationsForApproval(UUID programId,
       Pageable pageable) {
-    UserDto user = authenticationHelper.getCurrentUser();
+    Set<Pair<UUID, UUID>> programNodePairs = getProgramNodePairs(
+        Collections.singletonList(PermissionService.APPROVE_BUQ), programId);
 
-    RightDto right = rightReferenceDataService.findRight(APPROVE_BUQ_RIGHT_NAME);
-    List<DetailedRoleAssignmentDto> roleAssignments = userRoleAssignmentsReferenceDataService
-        .hasRight(user, right);
-
-    if (CollectionUtils.isEmpty(roleAssignments)) {
+    if (programNodePairs.isEmpty()) {
       return Pagination.getPage(Collections.emptyList(), pageable);
     }
-
-    Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
-        .stream()
-        .filter(item -> Objects.nonNull(item.getRole().getId()))
-        .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
-        .filter(item -> Objects.nonNull(item.getProgramId()))
-        .filter(item -> null == programId || programId.equals(item.getProgramId()))
-        .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
-        .collect(toSet());
 
     return bottomUpQuantificationRepository
         .searchApprovableByProgramSupervisoryNodePairs(programNodePairs, pageable);
@@ -689,45 +674,12 @@ public class BottomUpQuantificationService {
       UUID processingPeriodId,
       UUID geographicZoneId,
       Pageable pageable) {
-    List<String> allowedRightNames = new ArrayList<>();
-    allowedRightNames.add(MOH_APPROVAL_RIGHT_NAME);
-    allowedRightNames.add(PORALG_APPROVAL_RIGHT_NAME);
-    List<RightDto> rights = new ArrayList<>();
-    allowedRightNames.forEach(right -> {
-      RightDto rightDto = rightReferenceDataService.findRight(right);
-      if (rightDto != null) {
-        rights.add(rightDto);
-      }
-    });
-    UserDto user = authenticationHelper.getCurrentUser();
-    List<List<DetailedRoleAssignmentDto>> roleAssignments = new ArrayList<>();
-    rights.forEach(right -> {
-      List<DetailedRoleAssignmentDto> roleAssignment =
-          userRoleAssignmentsReferenceDataService
-              .hasRight(user, right);
-      if (!roleAssignment.isEmpty()) {
-        roleAssignments.add(roleAssignment);
-      }
-    });
+    Set<Pair<UUID, UUID>> programNodePairs =
+        getProgramNodePairs(PermissionService.MOH_PORALG_RIGHTS, programId);
 
-    if (CollectionUtils.isEmpty(roleAssignments)) {
+    if (programNodePairs.isEmpty()) {
       return Pagination.getPage(Collections.emptyList(), pageable);
     }
-
-    Set<Pair<UUID, UUID>> programNodePairs = roleAssignments
-        .stream()
-        .map(role ->
-            role
-                .stream()
-                .filter(item -> Objects.nonNull(item.getRole().getId()))
-                .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
-                .filter(item -> Objects.nonNull(item.getProgramId()))
-                .filter(item -> null == programId || programId.equals(item.getProgramId()))
-                .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
-                .collect(toSet())
-        )
-        .flatMap(Set::stream)
-        .collect(toSet());
 
     Page<BottomUpQuantification> bottomUpQuantifications = bottomUpQuantificationRepository
         .searchForFinalApproval(processingPeriodId, programNodePairs, pageable);
@@ -786,7 +738,7 @@ public class BottomUpQuantificationService {
     return bottomUpQuantifications.stream()
         .filter(buq -> {
           FacilityDto facility = facilityReferenceDataService.findOne(buq.getFacilityId());
-          return checkFacilityTypeAndPermission(facility);
+          return checkFacilityTypeAndPermission(facility, buq.getProgramId());
         })
         .map(buq -> buildBottomUpQuantificationGroupCostsData(buq, productGroups))
         .collect(Collectors.toList());
@@ -827,7 +779,7 @@ public class BottomUpQuantificationService {
           .stream()
           .filter(buq -> {
             FacilityDto facility = facilityReferenceDataService.findOne(buq.getFacilityId());
-            return checkFacilityTypeAndPermission(facility)
+            return checkFacilityTypeAndPermission(facility, buq.getProgramId())
                 && isGeographicZoneInHierarchy(facility.getGeographicZone(), geographicZoneId);
           })
           .collect(Collectors.toList());
@@ -851,7 +803,7 @@ public class BottomUpQuantificationService {
             .stream()
             .filter(buq -> {
               FacilityDto facility = facilityReferenceDataService.findOne(buq.getFacilityId());
-              if (checkFacilityTypeAndPermission(facility)) {
+              if (checkFacilityTypeAndPermission(facility, buq.getProgramId())) {
                 boolean isInZone =
                     isGeographicZoneInHierarchy(facility.getGeographicZone(), locationId);
                 if (isInZone) {
@@ -910,13 +862,20 @@ public class BottomUpQuantificationService {
     return false;
   }
 
-  private boolean checkFacilityTypeAndPermission(FacilityDto facility) {
+  private Set<Pair<UUID, UUID>> getProgramNodePairs(List<String> rightNames, UUID programId) {
+    return permissionService.getProgramNodePairs(rightNames)
+        .stream()
+        .filter(pair -> null == programId || programId.equals(pair.getLeft()))
+        .collect(toSet());
+  }
+
+  private boolean checkFacilityTypeAndPermission(FacilityDto facility, UUID programId) {
     UserDto user = authenticationHelper.getCurrentUser();
     RightDto mohRight = rightReferenceDataService.findRight(MOH_APPROVAL_RIGHT_NAME);
     ResultDto<Boolean> hasMohRight = new ResultDto<>();
     if (mohRight != null) {
       hasMohRight = userReferenceDataService
-          .hasRight(user.getId(), mohRight.getId(), null, null, null);
+          .hasRight(user.getId(), mohRight.getId(), programId, facility.getId(), null);
     } else {
       hasMohRight.setResult(false);
     }
@@ -925,7 +884,7 @@ public class BottomUpQuantificationService {
     ResultDto<Boolean> hasPoralgRight = new ResultDto<>();
     if (poralgRight != null) {
       hasPoralgRight = userReferenceDataService
-          .hasRight(user.getId(), poralgRight.getId(), null, null, null);
+          .hasRight(user.getId(), poralgRight.getId(), programId, facility.getId(), null);
     } else {
       hasPoralgRight.setResult(false);
     }

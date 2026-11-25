@@ -20,14 +20,21 @@ import static org.apache.commons.lang3.StringUtils.startsWith;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.dto.ResultDto;
 import org.openlmis.buq.dto.referencedata.RightDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
 import org.openlmis.buq.exception.PermissionMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
+import org.openlmis.buq.service.referencedata.RightReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
+import org.openlmis.buq.service.referencedata.UserRoleAssignmentsReferenceDataService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +77,12 @@ public class PermissionService {
 
   @Autowired
   private UserReferenceDataService userReferenceDataService;
+
+  @Autowired
+  private UserRoleAssignmentsReferenceDataService userRoleAssignmentsReferenceDataService;
+
+  @Autowired
+  private RightReferenceDataService rightReferenceDataService;
 
   @Value("${auth.server.clientId}")
   private String serviceTokenClientId;
@@ -145,6 +158,53 @@ public class PermissionService {
     }
 
     return false;
+  }
+
+  /**
+   * Returns the (program, supervisory node) pairs of the current user's role assignments that
+   * hold any of the given rights. Rights missing in referencedata are skipped.
+   *
+   * @param rightNames names of the rights to look for.
+   * @return pairs of program id (left) and supervisory node id (right).
+   */
+  public Set<Pair<UUID, UUID>> getProgramNodePairs(List<String> rightNames) {
+    UserDto user = authenticationHelper.getCurrentUser();
+
+    return rightNames.stream()
+        .map(rightReferenceDataService::findRight)
+        .filter(Objects::nonNull)
+        .flatMap(right -> userRoleAssignmentsReferenceDataService.hasRight(user, right).stream())
+        .filter(item -> Objects.nonNull(item.getRole().getId()))
+        .filter(item -> Objects.nonNull(item.getSupervisoryNodeId()))
+        .filter(item -> Objects.nonNull(item.getProgramId()))
+        .map(item -> new ImmutablePair<>(item.getProgramId(), item.getSupervisoryNodeId()))
+        .collect(Collectors.toSet());
+  }
+
+  /**
+   * Checks if the user has any of the given rights through a role assigned at the given
+   * supervisory node for the given program. A right at an ancestor node does not count: a node's
+   * rights reach the facilities of its child nodes, but approval moves one node at a time.
+   *
+   * @param rightNames      names of the rights to check.
+   * @param program         the unique identifier of the program.
+   * @param supervisoryNode the unique identifier of the supervisory node.
+   */
+  public void hasPermissionForSupervisoryNode(List<String> rightNames, UUID program,
+      UUID supervisoryNode) {
+    OAuth2Authentication authentication = (OAuth2Authentication) SecurityContextHolder
+            .getContext()
+            .getAuthentication();
+
+    boolean hasPermission = authentication.isClientOnly()
+        ? checkServiceToken(false, authentication).getResult()
+        : getProgramNodePairs(rightNames)
+            .contains(new ImmutablePair<>(program, supervisoryNode));
+
+    if (!hasPermission) {
+      throw new PermissionMessageException(
+              new Message(MessageKeys.ERROR_NO_SINGLE_FOLLOWING_PERMISSION, rightNames));
+    }
   }
 
   private ResultDto<Boolean> getRightResult(String rightName, UUID program, UUID facility,

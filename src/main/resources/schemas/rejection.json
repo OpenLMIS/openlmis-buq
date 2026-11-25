@@ -20,8 +20,5 @@
       "type": "string",
       "title": "modifiedDate"
     }
-  },
-  "required": [
-    "id"
-  ]
+  }
 }
