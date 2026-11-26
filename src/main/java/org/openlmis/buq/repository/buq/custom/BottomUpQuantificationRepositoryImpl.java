@@ -30,8 +30,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -76,10 +78,35 @@ public class BottomUpQuantificationRepositoryImpl
   public Page<BottomUpQuantification> search(
       BottomUpQuantificationSearchParams searchParams,
       Pageable pageable) {
+    return findPage(searchParams, null, pageable);
+  }
+
+  /**
+   * Like {@link #search(BottomUpQuantificationSearchParams, Pageable)}, restricted to the
+   * bottom-up quantifications of the given (program, facility) pairs. No pairs find nothing.
+   *
+   * @param searchParams Params to search bottom-up quantifications by.
+   * @param programFacilityPairs pairs of program id (left) and facility id (right).
+   * @param pageable object used to encapsulate the pagination related values: page, size and sort.
+   * @return Page of BottomUpQuantifications matching the parameters and one of the pairs.
+   */
+  @Override
+  public Page<BottomUpQuantification> search(BottomUpQuantificationSearchParams searchParams,
+      Set<Pair<UUID, UUID>> programFacilityPairs, Pageable pageable) {
+    return findPage(searchParams, programFacilityPairs, pageable);
+  }
+
+  private Page<BottomUpQuantification> findPage(BottomUpQuantificationSearchParams searchParams,
+      Set<Pair<UUID, UUID>> programFacilityPairs, Pageable pageable) {
+    if (programFacilityPairs != null && programFacilityPairs.isEmpty()) {
+      return Pagination.getPage(Collections.emptyList(), pageable, 0);
+    }
+
     CriteriaBuilder builder = getCriteriaBuilder();
 
     CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
-    countQuery = prepareQuery(builder, countQuery, searchParams, true, pageable);
+    countQuery = prepareQuery(builder, countQuery, searchParams, programFacilityPairs, true,
+        pageable);
 
     Long count = countEntities(countQuery);
 
@@ -90,7 +117,7 @@ public class BottomUpQuantificationRepositoryImpl
     CriteriaQuery<BottomUpQuantification> bottomUpQuantificationCriteriaQuery = builder
         .createQuery(BottomUpQuantification.class);
     bottomUpQuantificationCriteriaQuery = prepareQuery(builder,
-        bottomUpQuantificationCriteriaQuery, searchParams, false, pageable);
+        bottomUpQuantificationCriteriaQuery, searchParams, programFacilityPairs, false, pageable);
 
     List<BottomUpQuantification> bottomUpQuantifications =
         getEntities(bottomUpQuantificationCriteriaQuery, pageable);
@@ -243,6 +270,19 @@ public class BottomUpQuantificationRepositoryImpl
     return builder.or(combinedPredicates);
   }
 
+  private Predicate createProgramFacilityPairPredicate(CriteriaBuilder builder,
+      Root<BottomUpQuantification> root, Set<Pair<UUID, UUID>> programFacilityPairs) {
+    Map<UUID, Set<UUID>> facilitiesByProgram = programFacilityPairs.stream()
+        .collect(Collectors.groupingBy(Pair::getLeft,
+            Collectors.mapping(Pair::getRight, Collectors.toSet())));
+
+    return builder.or(facilitiesByProgram.entrySet().stream()
+        .map(entry -> builder.and(
+            builder.equal(root.get(PROGRAM_ID), entry.getKey()),
+            root.get(FACILITY_ID).in(entry.getValue())))
+        .toArray(Predicate[]::new));
+  }
+
   private Predicate createStatusChangePredicate(CriteriaBuilder builder, CriteriaQuery<?> query,
                                                 Root<BottomUpQuantification> quantificationRoot) {
     final Subquery<ZonedDateTime> subquery = query.subquery(ZonedDateTime.class);
@@ -301,8 +341,8 @@ public class BottomUpQuantificationRepositoryImpl
   }
 
   private <T> CriteriaQuery<T> prepareQuery(CriteriaBuilder builder,
-      CriteriaQuery<T> query, BottomUpQuantificationSearchParams params, boolean count,
-      Pageable pageable) {
+      CriteriaQuery<T> query, BottomUpQuantificationSearchParams params,
+      Set<Pair<UUID, UUID>> programFacilityPairs, boolean count, Pageable pageable) {
     Root<BottomUpQuantification> root = query.from(BottomUpQuantification.class);
 
     if (count) {
@@ -315,6 +355,10 @@ public class BottomUpQuantificationRepositoryImpl
     Predicate predicate = builder.conjunction();
     predicate = addInFilter(predicate, builder, root, STATUS, params.getStatuses());
     predicate = addEqualFilter(predicate, builder, root, FACILITY_ID, params.getFacility());
+    if (programFacilityPairs != null) {
+      predicate = builder.and(predicate,
+          createProgramFacilityPairPredicate(builder, root, programFacilityPairs));
+    }
 
     query.where(predicate);
 

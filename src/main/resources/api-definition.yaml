@@ -169,13 +169,20 @@ resourceTypes:
     displayName: bottomUpQuantifications
     get:
       is: [ secured, paginated, sorted ]
-      description: Get all bottom-up quantifications that match the given parameters.
+      description: Get the bottom-up quantifications that match the given parameters, among
+        those of the programs and facilities the user holds a BUQ right for. MANAGE_BUQ and
+        service tokens see all of them.
       queryParameters:
         status:
           displayName: status
           type: string
           required: false
           repeat: true
+        facility:
+          displayName: facility
+          type: string
+          required: false
+          repeat: false
       responses:
         200:
           headers:
@@ -189,6 +196,8 @@ resourceTypes:
           body:
             application/json:
         403:
+          headers:
+            Keep-Alive:
           body:
             application/json:
               schema: localizedErrorResponse

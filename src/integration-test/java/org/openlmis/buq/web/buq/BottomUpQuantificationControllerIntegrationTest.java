@@ -135,7 +135,9 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
 
   @Test
   public void shouldReturnPageOfBottomUpQuantifications() {
+    mockUserHasNoRights();
     mockUserHasAtLeastOneOfFollowingRights(PermissionService.ALL_BUQ_RIGHTS);
+    mockUserViewsAllBottomUpQuantifications();
     given(bottomUpQuantificationRepository.search(
         any(BottomUpQuantificationSearchParams.class),
         any(Pageable.class)))
@@ -154,6 +156,48 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
         .body("content[0].status", Matchers.is(bottomUpQuantification.getStatus().toString()));
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldSearchOnlyWithinViewableProgramFacilityPairs() {
+    mockUserHasNoRights();
+    mockUserHasAtLeastOneOfFollowingRights(PermissionService.ALL_BUQ_RIGHTS);
+    Set<Pair<UUID, UUID>> pairs = Collections.singleton(new ImmutablePair<>(
+        bottomUpQuantification.getProgramId(), bottomUpQuantification.getFacilityId()));
+    mockUserViewsBottomUpQuantificationsOf(pairs);
+    given(bottomUpQuantificationRepository.search(
+        any(BottomUpQuantificationSearchParams.class), eq(pairs), any(Pageable.class)))
+        .willReturn(new PageImpl<>(Collections.singletonList(bottomUpQuantification)));
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam("facility", bottomUpQuantification.getFacilityId())
+        .queryParam("status", bottomUpQuantification.getStatus().toString())
+        .when()
+        .get(RESOURCE_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK)
+        .body("content.id", Matchers.contains(bottomUpQuantification.getId().toString()));
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+    verify(bottomUpQuantificationRepository, never())
+        .search(any(BottomUpQuantificationSearchParams.class), any(Pageable.class));
+  }
+
+  @Test
+  public void shouldReturnForbiddenForSearchIfUserHasNoBuqRight() {
+    mockUserHasNoRights();
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .when()
+        .get(RESOURCE_URL)
+        .then()
+        .statusCode(HttpStatus.SC_FORBIDDEN);
+
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+    verify(bottomUpQuantificationRepository, never())
+        .search(any(BottomUpQuantificationSearchParams.class), any(Pageable.class));
   }
 
   @Test

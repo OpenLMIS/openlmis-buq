@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -100,7 +101,8 @@ public class BottomUpQuantificationController extends BaseController {
   private PermissionService permissionService;
 
   /**
-   * Retrieves all BottomUpQuantifications that match the parameters passed.
+   * Retrieves the BottomUpQuantifications that match the parameters passed, among those of the
+   * programs and facilities the user holds a BUQ right for.
    *
    * @param queryParams {@link BottomUpQuantificationSearchParams} request parameters.
    * @param pageable object used to encapsulate the pagination related values: page, size and sort.
@@ -116,7 +118,11 @@ public class BottomUpQuantificationController extends BaseController {
     BottomUpQuantificationSearchParams params =
         new QueryBottomUpQuantificationSearchParams(queryParams);
 
-    Page<BottomUpQuantification> page = bottomUpQuantificationRepository.search(params, pageable);
+    Optional<Set<Pair<UUID, UUID>>> programFacilityPairs =
+        permissionService.getViewableProgramFacilityPairs();
+    Page<BottomUpQuantification> page = programFacilityPairs.isPresent()
+        ? bottomUpQuantificationRepository.search(params, programFacilityPairs.get(), pageable)
+        : bottomUpQuantificationRepository.search(params, pageable);
     List<BottomUpQuantificationDto> content = page
         .getContent()
         .stream()

@@ -22,6 +22,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +34,7 @@ import guru.nidi.ramltester.RamlDefinition;
 import guru.nidi.ramltester.RamlLoaders;
 import guru.nidi.ramltester.restassured.RestAssuredClient;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
@@ -255,6 +257,16 @@ public abstract class BaseWebIntegrationTest {
     doNothing().when(permissionService).canViewBottomUpQuantification(buq);
   }
 
+  protected void mockUserViewsBottomUpQuantificationsOf(
+      Set<Pair<UUID, UUID>> programFacilityPairs) {
+    doReturn(Optional.of(programFacilityPairs))
+        .when(permissionService).getViewableProgramFacilityPairs();
+  }
+
+  protected void mockUserViewsAllBottomUpQuantifications() {
+    doReturn(Optional.empty()).when(permissionService).getViewableProgramFacilityPairs();
+  }
+
   /**
    * Denies every permission check, so that a test grants only the exact checks it expects.
    */
@@ -270,6 +282,7 @@ public abstract class BaseWebIntegrationTest {
         .hasPermissionForSupervisoryNode(any(), any(), any());
     doThrow(exception).when(permissionService).hasPermissionForProgram(any(), any());
     doThrow(exception).when(permissionService).hasPermissionForSupervisoryNodes(any(), any());
+    doThrow(exception).when(permissionService).getViewableProgramFacilityPairs();
   }
 
   public static class SaveAnswer<T extends BaseEntity> implements Answer<T> {

@@ -32,6 +32,7 @@ import static org.openlmis.buq.service.role.PermissionService.PREPARE_BUQ;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -330,6 +331,38 @@ public class PermissionServiceTest {
 
     assertEquals(Collections.singletonList(facilityId),
         permissionService.getSupervisedFacilityIds(APPROVE_BUQ, programId));
+  }
+
+  @Test
+  public void shouldReturnProgramFacilityPairsOfBuqSupervisionRights() {
+    UUID otherFacilityId = UUID.randomUUID();
+    UUID otherProgramId = UUID.randomUUID();
+    stubPermissionStrings(PREPARE_BUQ + "|" + facilityId + "|" + programId,
+        APPROVE_BUQ + "|" + otherFacilityId + "|" + programId,
+        MOH_APPROVAL + "|" + facilityId + "|" + otherProgramId,
+        "REQUISITION_VIEW|" + otherFacilityId + "|" + otherProgramId,
+        "FACILITIES_MANAGE");
+
+    Set<Pair<UUID, UUID>> expected = new HashSet<>(Arrays.asList(
+        new ImmutablePair<>(programId, facilityId),
+        new ImmutablePair<>(programId, otherFacilityId),
+        new ImmutablePair<>(otherProgramId, facilityId)));
+    assertEquals(Optional.of(expected), permissionService.getViewableProgramFacilityPairs());
+  }
+
+  @Test
+  public void shouldNotRestrictViewableBuqsForUnscopedManageRight() {
+    stubPermissionStrings(MANAGE_BUQ, PREPARE_BUQ + "|" + facilityId + "|" + programId);
+
+    assertEquals(Optional.empty(), permissionService.getViewableProgramFacilityPairs());
+  }
+
+  @Test
+  public void shouldNotRestrictViewableBuqsForServiceToken() {
+    when(authentication.isClientOnly()).thenReturn(true);
+
+    assertEquals(Optional.empty(), permissionService.getViewableProgramFacilityPairs());
+    verify(authenticationHelper, never()).getCurrentUser();
   }
 
   private void stubPermissionStrings(String... permissionStrings) {

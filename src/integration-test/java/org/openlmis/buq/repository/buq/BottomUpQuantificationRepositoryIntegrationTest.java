@@ -19,14 +19,19 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 import com.google.common.collect.Sets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.openlmis.buq.builder.BottomUpQuantificationDataBuilder;
@@ -34,10 +39,12 @@ import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.repository.BaseCrudRepositoryIntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.CrudRepository;
 
+@SuppressWarnings("PMD.TooManyMethods")
 public class BottomUpQuantificationRepositoryIntegrationTest extends
     BaseCrudRepositoryIntegrationTest<BottomUpQuantification> {
 
@@ -103,6 +110,60 @@ public class BottomUpQuantificationRepositoryIntegrationTest extends
   @Test
   public void shouldFindOnlyBottomUpQuantificationsWithGivenFacilityId() {
     searchAndCheckResults(submittedBuq, 2, facility);
+  }
+
+  @Test
+  public void shouldFindOnlyBottomUpQuantificationsOfGivenProgramFacilityPairs() {
+    UUID program = UUID.randomUUID();
+    UUID otherFacility = UUID.randomUUID();
+    final BottomUpQuantification visible = saveBuq(program, facility);
+    final BottomUpQuantification visibleAtOtherFacility = saveBuq(program, otherFacility);
+    saveBuq(program, UUID.randomUUID());
+    saveBuq(UUID.randomUUID(), facility);
+    Set<Pair<UUID, UUID>> pairs = Sets.newHashSet(
+        new ImmutablePair<>(program, facility), new ImmutablePair<>(program, otherFacility));
+
+    Page<BottomUpQuantification> firstPage = bottomUpQuantificationRepository
+        .search(new TestSearchParams(null), pairs, PageRequest.of(0, 1));
+    List<BottomUpQuantification> all = bottomUpQuantificationRepository
+        .search(new TestSearchParams(null), pairs, pageable)
+        .getContent();
+
+    assertEquals(2, firstPage.getTotalElements());
+    assertThat(firstPage.getContent(), hasSize(1));
+    assertEquals(Sets.newHashSet(visible.getId(), visibleAtOtherFacility.getId()),
+        all.stream().map(BottomUpQuantification::getId).collect(Collectors.toSet()));
+  }
+
+  @Test
+  public void shouldApplySearchParamsWithinProgramFacilityPairs() {
+    UUID program = UUID.randomUUID();
+    saveBuq(program, facility);
+    Set<Pair<UUID, UUID>> pairs = Collections.singleton(new ImmutablePair<>(program, facility));
+
+    List<BottomUpQuantification> found = bottomUpQuantificationRepository
+        .search(new TestSearchParams(facility, BottomUpQuantificationStatus.SUBMITTED), pairs,
+            pageable)
+        .getContent();
+
+    assertThat(found, hasSize(0));
+  }
+
+  @Test
+  public void shouldFindNothingForNoProgramFacilityPairs() {
+    Page<BottomUpQuantification> page = bottomUpQuantificationRepository
+        .search(new TestSearchParams(null), Collections.emptySet(), pageable);
+
+    assertEquals(0, page.getTotalElements());
+    assertThat(page.getContent(), hasSize(0));
+  }
+
+  private BottomUpQuantification saveBuq(UUID program, UUID facilityId) {
+    return bottomUpQuantificationRepository.save(new BottomUpQuantificationDataBuilder()
+        .withProgramId(program)
+        .withFacilityId(facilityId)
+        .withStatus(BottomUpQuantificationStatus.DRAFT)
+        .buildAsNew());
   }
 
   @Override

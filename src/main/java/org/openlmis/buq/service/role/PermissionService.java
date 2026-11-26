@@ -21,9 +21,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
@@ -258,14 +260,47 @@ public class PermissionService {
     return getFacilityIds(getCurrentUserFacilityProgramPermissions(), rightName, program);
   }
 
-  private List<String[]> getCurrentUserFacilityProgramPermissions() {
-    UserDto user = authenticationHelper.getCurrentUser();
+  /**
+   * Returns the (program, facility) pairs whose bottom-up quantifications the current user may
+   * view: those of the user's BUQ supervision rights. Empty when viewing is not restricted: for
+   * a service token, and for MANAGE_BUQ, a general admin right without a program or facility.
+   *
+   * @return pairs of program id (left) and facility id (right), or empty for no restriction.
+   */
+  public Optional<Set<Pair<UUID, UUID>>> getViewableProgramFacilityPairs() {
+    OAuth2Authentication authentication = (OAuth2Authentication) SecurityContextHolder
+            .getContext()
+            .getAuthentication();
+    if (authentication.isClientOnly()) {
+      return Optional.empty();
+    }
 
-    return userReferenceDataService.getPermissionStrings(user.getId())
-        .stream()
-        .map(permission -> permission.split("\\|"))
-        .filter(parts -> parts.length == 3)
+    List<String> permissionStrings = getCurrentUserPermissionStrings();
+    if (permissionStrings.contains(MANAGE_BUQ)) {
+      return Optional.empty();
+    }
+
+    return Optional.of(toFacilityProgramPermissions(permissionStrings)
+        .filter(parts -> BUQ_SUPERVISION_RIGHTS.contains(parts[0]))
+        .map(parts -> (Pair<UUID, UUID>) new ImmutablePair<>(
+            UUID.fromString(parts[2]), UUID.fromString(parts[1])))
+        .collect(Collectors.toSet()));
+  }
+
+  private List<String[]> getCurrentUserFacilityProgramPermissions() {
+    return toFacilityProgramPermissions(getCurrentUserPermissionStrings())
         .collect(Collectors.toList());
+  }
+
+  private List<String> getCurrentUserPermissionStrings() {
+    UserDto user = authenticationHelper.getCurrentUser();
+    return userReferenceDataService.getPermissionStrings(user.getId());
+  }
+
+  private Stream<String[]> toFacilityProgramPermissions(List<String> permissionStrings) {
+    return permissionStrings.stream()
+        .map(permission -> permission.split("\\|"))
+        .filter(parts -> parts.length == 3);
   }
 
   private List<UUID> getFacilityIds(List<String[]> permissions, String rightName,
