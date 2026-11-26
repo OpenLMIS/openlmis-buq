@@ -1,6 +1,9 @@
 1.2.2-SNAPSHOT (WIP)
 ==================
 
+New functionality:
+* [OLMIS-8467](https://openlmis.atlassian.net/browse/OLMIS-8467): Added the schema for population-based vaccine forecasting: population segments, forecasting settings per program and product (doses per target, coverage, wastage, buffer months), supply ratios, and forecasts with their line items, status changes and rejections, each in its own table. Demo data adds three population segments. No endpoints yet.
+
 1.2.1 / 2026-10-16
 ==================
 
