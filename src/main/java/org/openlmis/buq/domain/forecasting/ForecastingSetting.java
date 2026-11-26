@@ -59,6 +59,6 @@ public class ForecastingSetting extends BaseTimestampedEntity {
   private BigDecimal wastagePercentage;
 
   @NotNull
-  private BigDecimal bufferMonths = BigDecimal.ONE;
+  private BigDecimal bufferMonths = new BigDecimal("1.00");
 
 }

@@ -31,6 +31,7 @@ import org.openlmis.buq.repository.BaseCrudRepositoryIntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 public class ForecastRejectionRepositoryIntegrationTest extends
     BaseCrudRepositoryIntegrationTest<ForecastRejection> {
@@ -43,6 +44,11 @@ public class ForecastRejectionRepositoryIntegrationTest extends
 
   @Autowired
   private EntityManager entityManager;
+
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
+
+  private Forecast forecast;
 
   private ForecastStatusChange statusChange;
 
@@ -60,7 +66,7 @@ public class ForecastRejectionRepositoryIntegrationTest extends
 
   @Before
   public void setUp() {
-    Forecast forecast = new ForecastDataBuilder()
+    forecast = new ForecastDataBuilder()
         .withStatus(ForecastStatus.REJECTED)
         .buildAsNew();
     statusChange = forecast.addStatusChange(UUID.randomUUID());
@@ -79,6 +85,34 @@ public class ForecastRejectionRepositoryIntegrationTest extends
         .containsExactlyInAnyOrderElementsOf(rejection.getRejectionReasonIds());
     assertThat(found.getGeneralComments()).isEqualTo(rejection.getGeneralComments());
     assertThat(found.getStatusChange().getId()).isEqualTo(statusChange.getId());
+  }
+
+  @Test
+  public void shouldDeleteRejectionWithItsForecast() {
+    final UUID rejectionId = forecastRejectionRepository.saveAndFlush(generateInstance()).getId();
+    entityManager.clear();
+
+    forecastRepository.deleteById(forecast.getId());
+    forecastRepository.flush();
+
+    assertThat(jdbcTemplate.queryForObject(
+        "SELECT count(*) FROM buq.forecast_rejections WHERE id = ?", Integer.class, rejectionId))
+        .isZero();
+    assertThat(jdbcTemplate.queryForObject(
+        "SELECT count(*) FROM buq.forecast_rejection_reasons WHERE rejectionId = ?",
+        Integer.class, rejectionId))
+        .isZero();
+  }
+
+  @Test
+  public void shouldPrintAndHashDetachedRejection() {
+    UUID id = forecastRejectionRepository.saveAndFlush(generateInstance()).getId();
+    entityManager.clear();
+    ForecastRejection found = forecastRejectionRepository.findById(id).get();
+    entityManager.detach(found);
+
+    assertThat(found.toString()).contains(id.toString());
+    assertThat(found.hashCode()).isEqualTo(found.hashCode());
   }
 
   @Test(expected = DataIntegrityViolationException.class)

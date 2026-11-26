@@ -17,6 +17,7 @@ package org.openlmis.buq.domain.forecasting;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigDecimal;
 import org.junit.Test;
 import org.openlmis.buq.builder.ForecastingSettingDataBuilder;
 
@@ -25,6 +26,11 @@ public class ForecastingSettingTest {
   @Test
   public void shouldDefaultBufferMonthsToOne() {
     assertThat(new ForecastingSetting().getBufferMonths()).isEqualByComparingTo("1");
+  }
+
+  @Test
+  public void shouldDefaultBufferMonthsAtTheColumnScale() {
+    assertThat(new ForecastingSetting().getBufferMonths()).isEqualTo(new BigDecimal("1.00"));
   }
 
   @Test

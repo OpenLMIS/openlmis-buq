@@ -49,6 +49,8 @@ public class ForecastRejection extends BaseTimestampedEntity {
   @CollectionTable(name = "forecast_rejection_reasons",
       joinColumns = @JoinColumn(name = "rejectionId"))
   @Column(name = "rejectionReasonId")
+  @EqualsAndHashCode.Exclude
+  @ToString.Exclude
   private List<UUID> rejectionReasonIds = new ArrayList<>();
 
   private String generalComments;

@@ -17,7 +17,11 @@ package org.openlmis.buq.domain.forecasting;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import org.openlmis.buq.builder.ForecastDataBuilder;
 import org.openlmis.buq.builder.ForecastLineItemDataBuilder;
@@ -57,6 +61,15 @@ public class ForecastTest {
     assertThat(statusChange.getAuthorId()).isEqualTo(authorId);
     assertThat(statusChange.getForecast()).isSameAs(forecast);
     assertThat(forecast.getStatusChanges()).containsExactly(statusChange);
+  }
+
+  @Test
+  public void shouldNotExposeCollectionSetters() {
+    List<String> methodNames = Arrays.stream(Forecast.class.getMethods())
+        .map(Method::getName)
+        .collect(Collectors.toList());
+
+    assertThat(methodNames).doesNotContain("setLineItems", "setStatusChanges");
   }
 
   @Test

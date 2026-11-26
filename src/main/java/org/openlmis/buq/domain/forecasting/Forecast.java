@@ -25,6 +25,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -62,9 +63,15 @@ public class Forecast extends BaseTimestampedEntity {
   private UUID supervisoryNodeId;
 
   @OneToMany(mappedBy = "forecast", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Setter(AccessLevel.NONE)
+  @EqualsAndHashCode.Exclude
+  @ToString.Exclude
   private List<ForecastLineItem> lineItems = new ArrayList<>();
 
   @OneToMany(mappedBy = "forecast", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Setter(AccessLevel.NONE)
+  @EqualsAndHashCode.Exclude
+  @ToString.Exclude
   private List<ForecastStatusChange> statusChanges = new ArrayList<>();
 
   /**

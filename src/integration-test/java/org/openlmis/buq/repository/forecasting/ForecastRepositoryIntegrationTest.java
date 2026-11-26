@@ -216,6 +216,32 @@ public class ForecastRepositoryIntegrationTest extends
     assertThat(ids).contains(unaudited).doesNotContain(audited.getId());
   }
 
+  @Test
+  public void shouldPrintAndHashDetachedForecast() {
+    Forecast forecast = new ForecastDataBuilder()
+        .withLineItem(vaccineLineItem())
+        .buildAsNew();
+    forecast.addStatusChange(UUID.randomUUID());
+    UUID id = forecastRepository.saveAndFlush(forecast).getId();
+    entityManager.clear();
+    Forecast found = forecastRepository.findById(id).get();
+    entityManager.detach(found);
+
+    assertThat(found.toString()).contains(id.toString());
+    assertThat(found.hashCode()).isEqualTo(found.hashCode());
+  }
+
+  @Test
+  public void shouldIndexForeignKeyColumns() {
+    List<String> indexes = jdbcTemplate.queryForList(
+        "SELECT tablename || '(' || substring(indexdef from '\\((.*)\\)') || ')' "
+            + "FROM pg_indexes WHERE schemaname = 'buq'", String.class);
+
+    assertThat(indexes).contains(
+        "forecast_status_changes(forecastid)",
+        "forecast_rejection_reasons(rejectionid)");
+  }
+
   private ForecastLineItem vaccineLineItem() {
     return new ForecastLineItemDataBuilder()
         .withPopulationSegment(segment)

@@ -139,7 +139,7 @@ CREATE TABLE forecast_rejections (
 
     CONSTRAINT forecast_rejections_pkey PRIMARY KEY (id),
     CONSTRAINT fkey_forecast_status_changes FOREIGN KEY (statusChangeId)
-        REFERENCES forecast_status_changes(id),
+        REFERENCES forecast_status_changes(id) ON DELETE CASCADE,
     CONSTRAINT forecast_rejections_status_change_unique UNIQUE (statusChangeId)
 );
 
@@ -148,5 +148,8 @@ CREATE TABLE forecast_rejection_reasons (
     rejectionReasonId uuid NOT NULL,
 
     CONSTRAINT fkey_forecast_rejections FOREIGN KEY (rejectionId)
-        REFERENCES forecast_rejections(id)
+        REFERENCES forecast_rejections(id) ON DELETE CASCADE
 );
+
+CREATE INDEX forecast_status_changes_forecastid_idx ON forecast_status_changes (forecastId);
+CREATE INDEX forecast_rejection_reasons_rejectionid_idx ON forecast_rejection_reasons (rejectionId);
