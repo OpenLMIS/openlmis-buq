@@ -700,7 +700,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantificationDto.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(ID_URL, null).get(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
+    requestBuq(null).get(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
@@ -754,7 +754,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(ID_URL, body).put(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
+    requestBuq(body).put(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
@@ -765,7 +765,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(ID_URL, null).delete(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
+    requestBuq(null).delete(ID_URL).then().statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
@@ -776,7 +776,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(DOWNLOAD_URL, null).get(DOWNLOAD_URL).then()
+    requestBuq(null).get(DOWNLOAD_URL).then()
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
@@ -794,7 +794,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(AUTHORIZE_URL, body).post(AUTHORIZE_URL).then()
+    requestBuq(body).post(AUTHORIZE_URL).then()
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
@@ -806,7 +806,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(SUBMIT_URL, bottomUpQuantificationDto).post(SUBMIT_URL).then()
+    requestBuq(bottomUpQuantificationDto).post(SUBMIT_URL).then()
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
@@ -818,7 +818,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(MOST_RECENT_REJECTION_URL, null).get(MOST_RECENT_REJECTION_URL).then()
+    requestBuq(null).get(MOST_RECENT_REJECTION_URL).then()
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
@@ -832,7 +832,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(APPROVE_URL, bottomUpQuantificationDto).post(APPROVE_URL).then()
+    requestBuq(bottomUpQuantificationDto).post(APPROVE_URL).then()
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
     verify(bottomUpQuantificationService, never()).approve(any(), any());
@@ -849,7 +849,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationService.reject(eq(bottomUpQuantification.getId()), any()))
         .willReturn(bottomUpQuantification);
 
-    requestBuq(REJECT_URL, null)
+    requestBuq(null)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .body(rejectionBody())
         .post(REJECT_URL)
@@ -867,7 +867,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     given(bottomUpQuantificationRepository.findById(bottomUpQuantification.getId()))
         .willReturn(Optional.of(bottomUpQuantification));
 
-    requestBuq(REJECT_URL, null)
+    requestBuq(null)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .body(rejectionBody())
         .post(REJECT_URL)
@@ -1029,7 +1029,7 @@ public class BottomUpQuantificationControllerIntegrationTest extends BaseWebInte
     return body;
   }
 
-  private RequestSpecification requestBuq(String url, BottomUpQuantificationDto body) {
+  private RequestSpecification requestBuq(BottomUpQuantificationDto body) {
     RequestSpecification request = restAssured.given()
         .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
         .pathParam(ID, bottomUpQuantification.getId().toString());

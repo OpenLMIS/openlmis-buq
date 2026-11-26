@@ -62,7 +62,7 @@ public class PermissionService {
           CREATE_FORECASTING, AUTHORIZE_FORECASTING, APPROVE_BUQ, PREPARE_BUQ,
           PORALG_APPROVAL, MOH_APPROVAL, MANAGE_BUQ);
 
-  public static final List<String> BUQ_SUPERVISION_RIGHTS = Arrays.asList(
+  private static final List<String> BUQ_SUPERVISION_RIGHTS = Arrays.asList(
           CREATE_FORECASTING, AUTHORIZE_FORECASTING, APPROVE_BUQ, PREPARE_BUQ,
           PORALG_APPROVAL, MOH_APPROVAL);
 
