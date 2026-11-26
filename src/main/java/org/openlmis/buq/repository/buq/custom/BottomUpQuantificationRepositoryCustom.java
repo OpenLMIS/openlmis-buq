@@ -28,6 +28,9 @@ public interface BottomUpQuantificationRepositoryCustom {
   Page<BottomUpQuantification> search(BottomUpQuantificationSearchParams searchParams,
       Pageable pageable);
 
+  Page<BottomUpQuantification> search(BottomUpQuantificationSearchParams searchParams,
+      Set<Pair<UUID, UUID>> programFacilityPairs, Pageable pageable);
+
   Page<BottomUpQuantification> searchApprovableByProgramSupervisoryNodePairs(
       Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable);
 

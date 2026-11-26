@@ -17,11 +17,15 @@ package org.openlmis.buq.web.buq;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.ApproveFacilityForecastingStats;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
 import org.openlmis.buq.domain.buq.Rejection;
@@ -97,7 +101,8 @@ public class BottomUpQuantificationController extends BaseController {
   private PermissionService permissionService;
 
   /**
-   * Retrieves all BottomUpQuantifications that match the parameters passed.
+   * Retrieves the BottomUpQuantifications that match the parameters passed, among those of the
+   * programs and facilities the user holds a BUQ right for.
    *
    * @param queryParams {@link BottomUpQuantificationSearchParams} request parameters.
    * @param pageable object used to encapsulate the pagination related values: page, size and sort.
@@ -113,7 +118,11 @@ public class BottomUpQuantificationController extends BaseController {
     BottomUpQuantificationSearchParams params =
         new QueryBottomUpQuantificationSearchParams(queryParams);
 
-    Page<BottomUpQuantification> page = bottomUpQuantificationRepository.search(params, pageable);
+    Optional<Set<Pair<UUID, UUID>>> programFacilityPairs =
+        permissionService.getViewableProgramFacilityPairs();
+    Page<BottomUpQuantification> page = programFacilityPairs.isPresent()
+        ? bottomUpQuantificationRepository.search(params, programFacilityPairs.get(), pageable)
+        : bottomUpQuantificationRepository.search(params, pageable);
     List<BottomUpQuantificationDto> content = page
         .getContent()
         .stream()
@@ -131,9 +140,8 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto getSpecifiedBottomUpQuantification(
       @PathVariable("id") UUID id) {
-    permissionService.hasAtLeastOnePermission(PermissionService.ALL_BUQ_RIGHTS);
-    BottomUpQuantification buq = bottomUpQuantificationRepository.findById(id).orElseThrow(
-        () -> new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
+    BottomUpQuantification buq = findBottomUpQuantification(id);
+    permissionService.canViewBottomUpQuantification(buq);
 
     return bottomUpQuantificationDtoBuilder.buildDto(buq);
   }
@@ -144,9 +152,9 @@ public class BottomUpQuantificationController extends BaseController {
   @DeleteMapping(value = "/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteBottomUpQuantification(@PathVariable("id") UUID id) {
-    permissionService.hasPermission(PermissionService.PREPARE_BUQ);
-    BottomUpQuantification buq = bottomUpQuantificationRepository.findById(id).orElseThrow(
-        () -> new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
+    BottomUpQuantification buq = findBottomUpQuantification(id);
+    permissionService.hasPermission(PermissionService.PREPARE_BUQ, buq.getProgramId(),
+        buq.getFacilityId());
 
     bottomUpQuantificationService.delete(buq);
   }
@@ -166,7 +174,7 @@ public class BottomUpQuantificationController extends BaseController {
       @RequestParam(value = FACILITY_ID) UUID facilityId,
       @RequestParam(value = PROGRAM_ID) UUID programId,
       @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId) {
-    permissionService.hasPermission(PermissionService.PREPARE_BUQ);
+    permissionService.hasPermission(PermissionService.PREPARE_BUQ, programId, facilityId);
     BottomUpQuantification bottomUpQuantification = bottomUpQuantificationService
         .prepare(facilityId, programId, processingPeriodId);
 
@@ -185,12 +193,11 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto save(@PathVariable("id") UUID bottomUpQuantificationId,
       @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
+    BottomUpQuantification buq = findBottomUpQuantification(bottomUpQuantificationId);
     List<String> rightNames = Arrays.asList(PermissionService.CREATE_FORECASTING,
             PermissionService.AUTHORIZE_FORECASTING);
-    permissionService.hasAtLeastOnePermission(rightNames);
-    if (!bottomUpQuantificationRepository.existsById(bottomUpQuantificationId)) {
-      throw new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND);
-    }
+    permissionService.hasAtLeastOnePermission(rightNames, buq.getProgramId(),
+        buq.getFacilityId());
 
     BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
         .save(bottomUpQuantificationDto, bottomUpQuantificationId);
@@ -208,10 +215,9 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<byte[]> download(@PathVariable("id") UUID bottomUpQuantificationId)
       throws IOException {
-    permissionService.hasPermission(PermissionService.PREPARE_BUQ);
-    BottomUpQuantification buq = bottomUpQuantificationRepository
-        .findById(bottomUpQuantificationId).orElseThrow(
-          () -> new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
+    BottomUpQuantification buq = findBottomUpQuantification(bottomUpQuantificationId);
+    permissionService.hasPermission(PermissionService.PREPARE_BUQ, buq.getProgramId(),
+        buq.getFacilityId());
 
     return ResponseEntity.ok()
         .contentType(MediaType.valueOf(TEXT_CSV_MEDIA_TYPE))
@@ -231,22 +237,17 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto authorize(@PathVariable("id") UUID bottomUpQuantificationId,
       @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
-    if (!bottomUpQuantificationRepository.existsById(bottomUpQuantificationId)) {
-      throw new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND);
-    }
-
-    ProgramDto program = programReferenceDataService
-            .findOne(bottomUpQuantificationDto.getProgramId());
+    BottomUpQuantification buq = findBottomUpQuantification(bottomUpQuantificationId);
+    ProgramDto program = programReferenceDataService.findOne(buq.getProgramId());
 
     if (program == null) {
       throw new NotFoundException(MessageKeys.ERROR_PROGRAM_NOT_FOUND);
     }
 
-    if (program.getSkipAuthorization()) {
-      permissionService.hasPermission(PermissionService.CREATE_FORECASTING);
-    } else {
-      permissionService.hasPermission(PermissionService.AUTHORIZE_FORECASTING);
-    }
+    String rightName = program.getSkipAuthorization()
+        ? PermissionService.CREATE_FORECASTING
+        : PermissionService.AUTHORIZE_FORECASTING;
+    permissionService.hasPermission(rightName, buq.getProgramId(), buq.getFacilityId());
 
     BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
         .authorize(bottomUpQuantificationDto, bottomUpQuantificationId);
@@ -265,10 +266,10 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto approve(@PathVariable("id") UUID bottomUpQuantificationId,
       @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
-    permissionService.hasPermission(PermissionService.APPROVE_BUQ);
-    if (!bottomUpQuantificationRepository.existsById(bottomUpQuantificationId)) {
-      throw new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND);
-    }
+    BottomUpQuantification buq = findBottomUpQuantification(bottomUpQuantificationId);
+    permissionService.hasPermissionForSupervisoryNode(
+        Collections.singletonList(PermissionService.APPROVE_BUQ), buq.getProgramId(),
+        buq.getSupervisoryNodeId());
 
     BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
         .approve(bottomUpQuantificationDto, bottomUpQuantificationId);
@@ -290,7 +291,8 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public ApproveFacilityForecastingStats getApproveFacilityForecastingStats(
       @RequestParam(value = PROGRAM_ID) UUID programId) {
-    permissionService.hasPermission(PermissionService.APPROVE_BUQ);
+    permissionService.hasPermissionForProgram(
+        Collections.singletonList(PermissionService.APPROVE_BUQ), programId);
     return bottomUpQuantificationService.getApproveFacilityForecastingStats(programId);
   }
 
@@ -305,7 +307,8 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public Page<BottomUpQuantificationDto> getForApproval(Pageable pageable,
       @RequestParam(value = PROGRAM_ID) UUID programId) {
-    permissionService.hasPermission(PermissionService.APPROVE_BUQ);
+    permissionService.hasPermissionForProgram(
+        Collections.singletonList(PermissionService.APPROVE_BUQ), programId);
     Page<BottomUpQuantification> bottomUpQuantificationsForApproval =
         bottomUpQuantificationService.getBottomUpQuantificationsForApproval(programId, pageable);
 
@@ -333,7 +336,7 @@ public class BottomUpQuantificationController extends BaseController {
       @RequestParam(value = PROGRAM_ID) UUID programId,
       @RequestParam(value = PROCESSING_PERIOD_ID) UUID processingPeriodId,
       @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    permissionService.hasPermissionForProgram(PermissionService.MOH_PORALG_RIGHTS, programId);
     List<BottomUpQuantificationGroupCostsData> content =
         bottomUpQuantificationService.getBottomUpQuantificationsForFinalApprovalWithGroupCosts(
             programId, processingPeriodId, geographicZoneId, pageable);
@@ -354,7 +357,9 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public BottomUpQuantificationDto reject(@PathVariable("id") UUID bottomUpQuantificationId,
       @RequestBody RejectionDto rejectionDto) {
-    permissionService.hasAtLeastOnePermission(PermissionService.APPROVE_RIGHTS);
+    BottomUpQuantification buq = findBottomUpQuantification(bottomUpQuantificationId);
+    permissionService.hasPermissionForSupervisoryNode(PermissionService.APPROVE_RIGHTS,
+        buq.getProgramId(), buq.getSupervisoryNodeId());
     BottomUpQuantification updatedBottomUpQuantification = bottomUpQuantificationService
             .reject(bottomUpQuantificationId, rejectionDto);
     return bottomUpQuantificationDtoBuilder.buildDto(updatedBottomUpQuantification);
@@ -370,7 +375,9 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public RejectionDto getMostRecentRejection(@PathVariable("id") UUID bottomUpQuantificationId) {
-    permissionService.hasAtLeastOnePermission(PermissionService.RECENT_REJECTION_RIGHTS);
+    BottomUpQuantification buq = findBottomUpQuantification(bottomUpQuantificationId);
+    permissionService.hasAtLeastOnePermission(PermissionService.RECENT_REJECTION_RIGHTS,
+        buq.getProgramId(), buq.getFacilityId());
     Rejection latestRejection = rejectionService.getLatestRejection(bottomUpQuantificationId);
     return RejectionDto.newInstance(latestRejection);
   }
@@ -380,7 +387,7 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> getSupervisedGeographicZones(
       @RequestParam(value = PROGRAM_ID) UUID programId) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    permissionService.hasPermissionForProgram(PermissionService.MOH_PORALG_RIGHTS, programId);
     return bottomUpQuantificationService.getSupervisedGeographicZones(programId);
   }
 
@@ -425,7 +432,9 @@ public class BottomUpQuantificationController extends BaseController {
   public BottomUpQuantificationDto submitBottomUpQuantification(
           @PathVariable("id") UUID id,
           @RequestBody BottomUpQuantificationDto bottomUpQuantificationDto) {
-    permissionService.hasPermission(PermissionService.CREATE_FORECASTING);
+    BottomUpQuantification buq = findBottomUpQuantification(id);
+    permissionService.hasPermission(PermissionService.CREATE_FORECASTING, buq.getProgramId(),
+        buq.getFacilityId());
     return bottomUpQuantificationService
             .submitBottomUpQuantification(bottomUpQuantificationDto, id);
   }
@@ -449,7 +458,7 @@ public class BottomUpQuantificationController extends BaseController {
       @RequestParam(value = PROGRAM_ID) UUID programId,
       @RequestParam(value = GEOGRAPHIC_ZONE_ID) UUID geographicZoneId,
       @RequestBody Map<UUID, Map<UUID, Map<UUID, Set<UUID>>>> geographicZones) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    permissionService.hasPermissionForProgram(PermissionService.MOH_PORALG_RIGHTS, programId);
     return bottomUpQuantificationService.getProductsCostData(processingPeriodId, programId,
         geographicZoneId, geographicZones, pageable);
   }
@@ -465,13 +474,23 @@ public class BottomUpQuantificationController extends BaseController {
   @ResponseBody
   public List<BottomUpQuantificationDto> finalApproveBottomUpQuantification(
           @RequestParam("id") List<UUID> ids) {
-    permissionService.hasAtLeastOnePermission(PermissionService.MOH_PORALG_RIGHTS);
+    Set<Pair<UUID, UUID>> programNodePairs = ids.stream()
+        .map(this::findBottomUpQuantification)
+        .map(buq -> new ImmutablePair<>(buq.getProgramId(), buq.getSupervisoryNodeId()))
+        .collect(Collectors.toSet());
+    permissionService.hasPermissionForSupervisoryNodes(PermissionService.MOH_PORALG_RIGHTS,
+        programNodePairs);
     List<BottomUpQuantification> updatedBottomUpQuantifications =
             bottomUpQuantificationService.finalApproveBottomUpQuantification(ids);
     return updatedBottomUpQuantifications
             .stream()
             .map(bottomUpQuantificationDtoBuilder::buildDto)
             .collect(Collectors.toList());
+  }
+
+  private BottomUpQuantification findBottomUpQuantification(UUID id) {
+    return bottomUpQuantificationRepository.findById(id).orElseThrow(
+        () -> new NotFoundException(MessageKeys.ERROR_BOTTOM_UP_QUANTIFICATION_NOT_FOUND));
   }
 
 }

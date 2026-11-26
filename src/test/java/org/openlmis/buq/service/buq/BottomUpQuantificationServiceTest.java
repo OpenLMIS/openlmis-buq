@@ -31,10 +31,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +53,7 @@ import org.openlmis.buq.builder.BottomUpQuantificationLineItemDataBuilder;
 import org.openlmis.buq.builder.FacilityDtoDataBuilder;
 import org.openlmis.buq.builder.ProcessingPeriodDtoDataBuilder;
 import org.openlmis.buq.builder.ProgramDtoDataBuilder;
+import org.openlmis.buq.builder.RightDtoDataBuilder;
 import org.openlmis.buq.builder.UserDtoDataBuilder;
 import org.openlmis.buq.domain.BaseEntity;
 import org.openlmis.buq.domain.buq.BottomUpQuantification;
@@ -56,14 +61,18 @@ import org.openlmis.buq.domain.buq.BottomUpQuantificationLineItem;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatus;
 import org.openlmis.buq.domain.buq.BottomUpQuantificationStatusChange;
 import org.openlmis.buq.domain.buq.Rejection;
+import org.openlmis.buq.dto.BottomUpQuantificationGroupCostsData;
+import org.openlmis.buq.dto.ResultDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationDto;
 import org.openlmis.buq.dto.buq.BottomUpQuantificationLineItemDto;
 import org.openlmis.buq.dto.buq.RejectionDto;
 import org.openlmis.buq.dto.csv.BottomUpQuantificationLineItemCsv;
 import org.openlmis.buq.dto.referencedata.BasicOrderableDto;
 import org.openlmis.buq.dto.referencedata.FacilityDto;
+import org.openlmis.buq.dto.referencedata.FacilityTypeDto;
 import org.openlmis.buq.dto.referencedata.ProcessingPeriodDto;
 import org.openlmis.buq.dto.referencedata.ProgramDto;
+import org.openlmis.buq.dto.referencedata.RightDto;
 import org.openlmis.buq.dto.referencedata.SupervisoryNodeDto;
 import org.openlmis.buq.dto.referencedata.SupportedProgramDto;
 import org.openlmis.buq.dto.referencedata.UserDto;
@@ -74,19 +83,26 @@ import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationLineItemRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationStatusChangeRepository;
+import org.openlmis.buq.repository.productgroup.ProductGroupRepository;
 import org.openlmis.buq.service.CsvService;
 import org.openlmis.buq.service.RequestParameters;
 import org.openlmis.buq.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.buq.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.buq.service.referencedata.RightReferenceDataService;
 import org.openlmis.buq.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.buq.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.buq.service.referencedata.UserReferenceDataService;
 import org.openlmis.buq.service.remark.RemarkService;
+import org.openlmis.buq.service.role.PermissionService;
 import org.openlmis.buq.util.AuthenticationHelper;
 import org.openlmis.buq.util.FacilitySupportsProgramHelper;
 import org.openlmis.buq.validate.BottomUpQuantificationValidator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.Errors;
 
 @SuppressWarnings("PMD.TooManyMethods")
@@ -143,6 +159,18 @@ public class BottomUpQuantificationServiceTest {
 
   @Mock
   private BottomUpQuantificationLineItemRepository bottomUpQuantificationLineItemRepository;
+
+  @Mock
+  private PermissionService permissionService;
+
+  @Mock
+  private RightReferenceDataService rightReferenceDataService;
+
+  @Mock
+  private ProductGroupRepository productGroupRepository;
+
+  @Mock
+  private BottomUpQuantificationDtoBuilder bottomUpQuantificationDtoBuilder;
 
   public UUID facilityId = UUID.randomUUID();
   public UUID programId = UUID.randomUUID();
@@ -253,6 +281,7 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationDto.setBottomUpQuantificationLineItems(
         Arrays.asList(lineItemDto1, lineItemDto2));
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setFacilityId(bottomUpQuantificationDto.getFacilityId());
     bottomUpQuantification.setStatus(BottomUpQuantificationStatus.DRAFT);
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     when(bottomUpQuantificationLineItemRepository.saveAll(any()))
@@ -272,6 +301,11 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationDto.setId(UUID.randomUUID());
     mockUserHomeFacilityPermission(bottomUpQuantificationDto);
     UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .withId(bottomUpQuantificationId)
+        .withFacilityId(bottomUpQuantificationDto.getFacilityId())
+        .build();
+    mockUpdateBottomUpQuantification(bottomUpQuantificationId, bottomUpQuantification);
 
     bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
   }
@@ -299,6 +333,7 @@ public class BottomUpQuantificationServiceTest {
     );
 
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setFacilityId(bottomUpQuantificationDto.getFacilityId());
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
         .thenReturn(Optional.of(bottomUpQuantification));
@@ -325,6 +360,7 @@ public class BottomUpQuantificationServiceTest {
     );
 
     BottomUpQuantification bottomUpQuantification = new BottomUpQuantification();
+    bottomUpQuantification.setFacilityId(bottomUpQuantificationDto.getFacilityId());
     bottomUpQuantification.setBottomUpQuantificationLineItems(new ArrayList<>());
     when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
         .thenReturn(Optional.of(bottomUpQuantification));
@@ -441,6 +477,7 @@ public class BottomUpQuantificationServiceTest {
     BottomUpQuantificationDto invalidBottomUpQuantificationDto = BottomUpQuantificationDto
         .newInstance(bottomUpQuantification);
     mockUserHomeFacilityPermission(invalidBottomUpQuantificationDto);
+    mockUpdateBottomUpQuantification(invalidBottomUpQuantificationId, bottomUpQuantification);
 
     doThrow(ValidationMessageException.class).when(validator)
         .validateCanBeAuthorized(invalidBottomUpQuantificationDto,
@@ -507,6 +544,32 @@ public class BottomUpQuantificationServiceTest {
     bottomUpQuantificationService.delete(bottomUpQuantification);
   }
 
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowValidationMessageExceptionIfUserHasNoHomeFacility() {
+    BottomUpQuantification bottomUpQuantification = new BottomUpQuantificationDataBuilder()
+        .build();
+    UserDto userDto = new UserDtoDataBuilder().withHomeFacilityId(null).buildAsDto();
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+
+    bottomUpQuantificationService.delete(bottomUpQuantification);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldCheckHomeFacilityAgainstStoredBuqFacilityOnSave() {
+    UUID bottomUpQuantificationId = UUID.randomUUID();
+    BottomUpQuantification stored = new BottomUpQuantificationDataBuilder()
+        .withId(bottomUpQuantificationId)
+        .build();
+    BottomUpQuantificationDto bottomUpQuantificationDto = BottomUpQuantificationDto
+        .newInstance(stored);
+    bottomUpQuantificationDto.setFacilityId(UUID.randomUUID());
+    mockUserHomeFacilityPermission(bottomUpQuantificationDto);
+    when(bottomUpQuantificationRepository.findById(bottomUpQuantificationId))
+        .thenReturn(Optional.of(stored));
+
+    bottomUpQuantificationService.save(bottomUpQuantificationDto, bottomUpQuantificationId);
+  }
+
   @Test
   public void shouldApproveBottomUpQuantification() {
     UUID bottomUpQuantificationId = UUID.randomUUID();
@@ -565,21 +628,8 @@ public class BottomUpQuantificationServiceTest {
 
   @Test
   public void shouldReturnApproveFacilityForecastingStatsWithCalculatedValues() {
-    UserDto user = new UserDtoDataBuilder().buildAsDto();
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
-    List<String> permissionStrings = Arrays.asList(
-        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID() + "|" + programId,
-        APPROVE_BUQ_RIGHT_NAME + "|" + user.getHomeFacilityId() + "|" + programId,
-        APPROVE_BUQ_RIGHT_NAME + "|" + user.getHomeFacilityId() + "|" + UUID.randomUUID(),
-        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID() + "|" + programId,
-        "SOME_RIGHT|" + user.getHomeFacilityId() + "|" + programId,
-        "SOME_RIGHT|" + user.getHomeFacilityId(),
-        APPROVE_BUQ_RIGHT_NAME + "|" + UUID.randomUUID(),
-        APPROVE_BUQ_RIGHT_NAME,
-        "SOME_RIGHT"
-    );
-    when(userReferenceDataService.getPermissionStrings(user.getId()))
-        .thenReturn(permissionStrings);
+    when(permissionService.getSupervisedFacilityIds(APPROVE_BUQ_RIGHT_NAME, programId))
+        .thenReturn(Arrays.asList(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
     List<BottomUpQuantification> bottomUpQuantifications = Arrays.asList(
         new BottomUpQuantificationDataBuilder()
             .withStatus(BottomUpQuantificationStatus.DRAFT).buildAsNew(),
@@ -599,9 +649,7 @@ public class BottomUpQuantificationServiceTest {
 
   @Test
   public void shouldReturnApproveFacilityForecastingStatsWithZeroValues() {
-    UserDto user = new UserDtoDataBuilder().buildAsDto();
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
-    when(userReferenceDataService.getPermissionStrings(user.getId()))
+    when(permissionService.getSupervisedFacilityIds(APPROVE_BUQ_RIGHT_NAME, programId))
         .thenReturn(Collections.emptyList());
     when(bottomUpQuantificationRepository.findByFacilityIdIn(any()))
         .thenReturn(Collections.emptyList());
@@ -633,6 +681,67 @@ public class BottomUpQuantificationServiceTest {
     when(lineItem.getPackRoundingThreshold()).thenReturn(packRoundingThreshold);
     when(lineItem.getRoundToZero()).thenReturn(roundToZero);
     return lineItem;
+  }
+
+  @Test
+  public void shouldListForApprovalOnlyAtUsersNodesForTheProgram() {
+    UUID nodeId = UUID.randomUUID();
+    Set<Pair<UUID, UUID>> pairs = new HashSet<>(Arrays.asList(
+        new ImmutablePair<>(programId, nodeId),
+        new ImmutablePair<>(UUID.randomUUID(), UUID.randomUUID())));
+    when(permissionService.getProgramNodePairs(
+        Collections.singletonList(PermissionService.APPROVE_BUQ))).thenReturn(pairs);
+    Pageable pageable = PageRequest.of(0, 10);
+    Page<BottomUpQuantification> page = new PageImpl<>(Collections.singletonList(
+        new BottomUpQuantificationDataBuilder().build()));
+    when(bottomUpQuantificationRepository.searchApprovableByProgramSupervisoryNodePairs(
+        Collections.singleton(new ImmutablePair<>(programId, nodeId)), pageable))
+        .thenReturn(page);
+
+    assertEquals(page,
+        bottomUpQuantificationService.getBottomUpQuantificationsForApproval(programId, pageable));
+  }
+
+  @Test
+  public void shouldCheckFinalApprovalFacilityTypeRightsForBuqProgramAndFacility() {
+    UUID nodeId = UUID.randomUUID();
+    Set<Pair<UUID, UUID>> pairs = Collections.singleton(new ImmutablePair<>(programId, nodeId));
+    when(permissionService.getProgramNodePairs(PermissionService.MOH_PORALG_RIGHTS))
+        .thenReturn(pairs);
+    BottomUpQuantification buq = new BottomUpQuantificationDataBuilder()
+        .withProgramId(programId)
+        .withFacilityId(facilityId)
+        .withLineItems(new ArrayList<>())
+        .build();
+    Pageable pageable = PageRequest.of(0, 10);
+    when(bottomUpQuantificationRepository.searchForFinalApproval(processingPeriodId, pairs,
+        pageable)).thenReturn(new PageImpl<>(Collections.singletonList(buq)));
+    when(productGroupRepository.findAll()).thenReturn(new ArrayList<>());
+    FacilityTypeDto hospital = new FacilityTypeDto();
+    hospital.setPrimaryHealthCare(false);
+    when(facilityReferenceDataService.findOne(facilityId))
+        .thenReturn(new FacilityDtoDataBuilder().withId(facilityId).withType(hospital)
+            .buildAsDto());
+    UserDto user = new UserDtoDataBuilder().buildAsDto();
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    RightDto moh = new RightDtoDataBuilder().buildAsDto();
+    moh.setId(UUID.randomUUID());
+    RightDto poralg = new RightDtoDataBuilder().buildAsDto();
+    poralg.setId(UUID.randomUUID());
+    when(rightReferenceDataService.findRight(PermissionService.MOH_APPROVAL)).thenReturn(moh);
+    when(rightReferenceDataService.findRight(PermissionService.PORALG_APPROVAL))
+        .thenReturn(poralg);
+    when(userReferenceDataService.hasRight(user.getId(), moh.getId(), programId, facilityId, null))
+        .thenReturn(new ResultDto<>(true));
+    when(userReferenceDataService.hasRight(user.getId(), poralg.getId(), programId, facilityId,
+        null)).thenReturn(new ResultDto<>(false));
+
+    List<BottomUpQuantificationGroupCostsData> result = bottomUpQuantificationService
+        .getBottomUpQuantificationsForFinalApprovalWithGroupCosts(programId, processingPeriodId,
+            null, pageable);
+
+    assertEquals(1, result.size());
+    verify(bottomUpQuantificationDtoBuilder).buildDto(buq);
   }
 
   private void mockUserHomeFacilityPermission(
