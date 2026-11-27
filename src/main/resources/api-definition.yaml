@@ -1547,7 +1547,7 @@ resourceTypes:
               schema: localizedErrorResponse
     post:
       is: [ secured ]
-      description: Creates a supply ratio. An id in the body is ignored.
+      description: Creates a supply ratio. An id in the body is ignored. Refused when the supply product has no commodity type.
       body:
         application/json:
           schema: supplyRatio
@@ -1609,7 +1609,7 @@ resourceTypes:
                 schema: localizedErrorResponse
       put:
         is: [ secured ]
-        description: Updates an existing supply ratio.
+        description: Updates an existing supply ratio, with the same commodity type rule as creation.
         body:
           application/json:
             schema: supplyRatio

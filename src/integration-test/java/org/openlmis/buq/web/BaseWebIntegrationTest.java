@@ -52,6 +52,7 @@ import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
 import org.openlmis.buq.service.forecasting.ForecastingSettingService;
+import org.openlmis.buq.service.forecasting.SupplyRatioService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.service.role.PermissionService;
 import org.openlmis.buq.util.Message;
@@ -163,6 +164,9 @@ public abstract class BaseWebIntegrationTest {
 
   @MockBean
   public ForecastingSettingService forecastingSettingService;
+
+  @MockBean
+  public SupplyRatioService supplyRatioService;
 
   /**
    * Constructor for test.

@@ -26,6 +26,7 @@ import org.openlmis.buq.exception.NotFoundException;
 import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.forecasting.SupplyRatioRepository;
+import org.openlmis.buq.service.forecasting.SupplyRatioService;
 import org.openlmis.buq.service.role.ForecastingRights;
 import org.openlmis.buq.service.role.PermissionService;
 import org.openlmis.buq.util.Pagination;
@@ -63,6 +64,9 @@ public class SupplyRatioController extends BaseController {
   @Autowired
   private SupplyRatioRepository supplyRatioRepository;
 
+  @Autowired
+  private SupplyRatioService supplyRatioService;
+
   /**
    * Creates a new supply ratio. An id in the body is ignored.
    */
@@ -71,12 +75,8 @@ public class SupplyRatioController extends BaseController {
   @ResponseBody
   public SupplyRatioDto createSupplyRatio(@RequestBody @Valid SupplyRatioDto supplyRatioDto) {
     permissionService.hasPermission(ForecastingRights.MANAGE);
-    validateDistinctOrderables(supplyRatioDto);
 
-    SupplyRatio supplyRatio = SupplyRatio.newInstance(supplyRatioDto);
-    supplyRatio.setId(null);
-
-    return SupplyRatioDto.newInstance(supplyRatioRepository.saveAndFlush(supplyRatio));
+    return SupplyRatioDto.newInstance(supplyRatioService.create(supplyRatioDto));
   }
 
   /**
@@ -93,11 +93,7 @@ public class SupplyRatioController extends BaseController {
       throw new ValidationMessageException(MessageKeys.ERROR_SUPPLY_RATIO_ID_MISMATCH);
     }
 
-    SupplyRatio supplyRatio = findSupplyRatio(id);
-    validateDistinctOrderables(supplyRatioDto);
-    supplyRatio.updateFrom(supplyRatioDto);
-
-    return SupplyRatioDto.newInstance(supplyRatioRepository.saveAndFlush(supplyRatio));
+    return SupplyRatioDto.newInstance(supplyRatioService.update(id, supplyRatioDto));
   }
 
   /**
@@ -147,19 +143,10 @@ public class SupplyRatioController extends BaseController {
   public SupplyRatioDto getSupplyRatio(@PathVariable("id") UUID id) {
     permissionService.hasPermission(ForecastingRights.MANAGE);
 
-    return SupplyRatioDto.newInstance(findSupplyRatio(id));
-  }
-
-  private SupplyRatio findSupplyRatio(UUID id) {
-    return supplyRatioRepository.findById(id)
+    SupplyRatio supplyRatio = supplyRatioRepository.findById(id)
         .orElseThrow(() -> new NotFoundException(MessageKeys.ERROR_SUPPLY_RATIO_NOT_FOUND));
-  }
 
-  private void validateDistinctOrderables(SupplyRatioDto supplyRatioDto) {
-    if (Objects.equals(supplyRatioDto.getVaccineOrderableId(),
-        supplyRatioDto.getSupplyOrderableId())) {
-      throw new ValidationMessageException(MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE);
-    }
+    return SupplyRatioDto.newInstance(supplyRatio);
   }
 
 }

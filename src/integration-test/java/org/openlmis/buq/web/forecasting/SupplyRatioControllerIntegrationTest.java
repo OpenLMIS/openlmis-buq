@@ -18,7 +18,6 @@ package org.openlmis.buq.web.forecasting;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,13 +33,15 @@ import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.hibernate.exception.ConstraintViolationException;
-import org.junit.Before;
 import org.junit.Test;
 import org.openlmis.buq.builder.SupplyRatioDataBuilder;
 import org.openlmis.buq.domain.forecasting.SupplyRatio;
 import org.openlmis.buq.dto.forecasting.SupplyRatioDto;
+import org.openlmis.buq.exception.NotFoundException;
+import org.openlmis.buq.exception.ValidationMessageException;
 import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.service.role.ForecastingRights;
+import org.openlmis.buq.util.Message;
 import org.openlmis.buq.web.BaseWebIntegrationTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageImpl;
@@ -60,12 +61,6 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
 
   private final SupplyRatio ratio = new SupplyRatioDataBuilder().build();
   private final SupplyRatioDto ratioDto = SupplyRatioDto.newInstance(ratio);
-
-  @Before
-  public void setUp() {
-    given(supplyRatioRepository.saveAndFlush(any(SupplyRatio.class)))
-        .willAnswer(new SaveAnswer<>());
-  }
 
   @Test
   public void shouldSearchRatiosByVaccineAndSupply() {
@@ -134,10 +129,11 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
   @Test
   public void shouldCreateRatio() {
     mockUserHasRight(ForecastingRights.MANAGE);
+    given(supplyRatioService.create(any(SupplyRatioDto.class))).willReturn(ratio);
 
     post(ratioDto)
         .statusCode(HttpStatus.SC_CREATED)
-        .body(ID, is(notNullValue()))
+        .body(ID, is(ratio.getId().toString()))
         .body(VACCINE_ORDERABLE_ID, is(ratioDto.getVaccineOrderableId().toString()))
         .body("ratio", is(1.11f));
 
@@ -154,20 +150,34 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
         .body(MESSAGE_KEY, is(MessageKeys.ERROR_VALIDATION_FIELD_INVALID))
         .body(MESSAGE, containsString("ratio"));
 
-    verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
+    verify(supplyRatioService, never()).create(any(SupplyRatioDto.class));
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
   public void shouldReturnBadRequestWhenVaccineAndSupplyAreTheSameProduct() {
     mockUserHasRight(ForecastingRights.MANAGE);
-    ratioDto.setSupplyOrderableId(ratioDto.getVaccineOrderableId());
+    given(supplyRatioService.create(any(SupplyRatioDto.class)))
+        .willThrow(new ValidationMessageException(MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE));
 
     post(ratioDto)
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .body(MESSAGE_KEY, is(MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE));
 
-    verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldReturnBadRequestWhenSupplyHasNoCommodityType() {
+    mockUserHasRight(ForecastingRights.MANAGE);
+    given(supplyRatioService.create(any(SupplyRatioDto.class)))
+        .willThrow(new ValidationMessageException(new Message(
+            MessageKeys.ERROR_SUPPLY_RATIO_COMMODITY_TYPE_MISSING, "C100")));
+
+    post(ratioDto)
+        .statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(MESSAGE_KEY, is(MessageKeys.ERROR_SUPPLY_RATIO_COMMODITY_TYPE_MISSING));
+
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
@@ -195,7 +205,7 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
   @Test
   public void shouldReturnBadRequestWhenRatioIsDuplicated() {
     mockUserHasRight(ForecastingRights.MANAGE);
-    given(supplyRatioRepository.saveAndFlush(any(SupplyRatio.class)))
+    given(supplyRatioService.create(any(SupplyRatioDto.class)))
         .willThrow(new DataIntegrityViolationException(null, new ConstraintViolationException(
             null, null, "supply_ratios_vaccine_supply_unique")));
 
@@ -213,7 +223,7 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
     post(ratioDto)
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
-    verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
+    verify(supplyRatioService, never()).create(any(SupplyRatioDto.class));
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
@@ -281,8 +291,9 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
   @Test
   public void shouldUpdateRatio() {
     mockUserHasRight(ForecastingRights.MANAGE);
-    given(supplyRatioRepository.findById(ratio.getId())).willReturn(Optional.of(ratio));
-    ratioDto.setRatio(new BigDecimal("2.5"));
+    ratio.setRatio(new BigDecimal("2.5"));
+    given(supplyRatioService.update(eq(ratio.getId()), any(SupplyRatioDto.class)))
+        .willReturn(ratio);
 
     put(ratio.getId(), ratioDto)
         .statusCode(HttpStatus.SC_OK)
@@ -295,27 +306,26 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
   @Test
   public void shouldReturnBadRequestWhenUpdatingToSameProduct() {
     mockUserHasRight(ForecastingRights.MANAGE);
-    given(supplyRatioRepository.findById(ratio.getId())).willReturn(Optional.of(ratio));
-    ratioDto.setSupplyOrderableId(ratioDto.getVaccineOrderableId());
+    given(supplyRatioService.update(eq(ratio.getId()), any(SupplyRatioDto.class)))
+        .willThrow(new ValidationMessageException(MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE));
 
     put(ratio.getId(), ratioDto)
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .body(MESSAGE_KEY, is(MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE));
 
-    verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
   @Test
   public void shouldReturnNotFoundWhenUpdatingMissingRatio() {
     mockUserHasRight(ForecastingRights.MANAGE);
-    given(supplyRatioRepository.findById(ratio.getId())).willReturn(Optional.empty());
+    given(supplyRatioService.update(eq(ratio.getId()), any(SupplyRatioDto.class)))
+        .willThrow(new NotFoundException(MessageKeys.ERROR_SUPPLY_RATIO_NOT_FOUND));
 
     put(ratio.getId(), ratioDto)
         .statusCode(HttpStatus.SC_NOT_FOUND)
         .body(MESSAGE_KEY, is(MessageKeys.ERROR_SUPPLY_RATIO_NOT_FOUND));
 
-    verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
@@ -327,6 +337,7 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .body(MESSAGE_KEY, is(MessageKeys.ERROR_SUPPLY_RATIO_ID_MISMATCH));
 
+    verify(supplyRatioService, never()).update(any(UUID.class), any(SupplyRatioDto.class));
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 
@@ -337,7 +348,7 @@ public class SupplyRatioControllerIntegrationTest extends BaseWebIntegrationTest
     put(ratio.getId(), ratioDto)
         .statusCode(HttpStatus.SC_FORBIDDEN);
 
-    verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
+    verify(supplyRatioService, never()).update(any(UUID.class), any(SupplyRatioDto.class));
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 

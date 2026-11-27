@@ -101,6 +101,10 @@ public abstract class MessageKeys {
       DUPLICATED);
   public static final String ERROR_SUPPLY_RATIO_SAME_ORDERABLE = join(ERROR_PREFIX, SUPPLY_RATIO,
       "sameOrderable");
+  public static final String ERROR_SUPPLY_RATIO_ORDERABLE_NOT_FOUND = join(ERROR_PREFIX,
+      SUPPLY_RATIO, ORDERABLE, NOT_FOUND);
+  public static final String ERROR_SUPPLY_RATIO_COMMODITY_TYPE_MISSING = join(ERROR_PREFIX,
+      SUPPLY_RATIO, COMMODITY_TYPE, "missing");
   public static final String ERROR_FORECASTING_SETTING_NOT_FOUND = join(ERROR_PREFIX,
       FORECASTING_SETTING, NOT_FOUND);
   public static final String ERROR_FORECASTING_SETTING_ID_MISMATCH = join(ERROR_PREFIX,
