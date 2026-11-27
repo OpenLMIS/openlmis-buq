@@ -16,12 +16,16 @@
 package org.openlmis.buq.service.role;
 
 /**
- * Names the rights the forecasting endpoints check, so that forecasting-specific rights can
- * replace the BUQ ones in one place.
+ * Names the rights the forecasting endpoints check. The rights themselves are defined by the
+ * referencedata service, and a check on a name it doesn't know fails for every user.
  */
 public final class ForecastingRights {
 
-  public static final String MANAGE = PermissionService.MANAGE_BUQ;
+  public static final String PREPARE = "VACCINE_FORECAST_PREPARE";
+  public static final String SUBMIT = "VACCINE_FORECAST_SUBMIT";
+  public static final String AUTHORIZE = "VACCINE_FORECAST_AUTHORIZE";
+  public static final String APPROVE = "VACCINE_FORECAST_APPROVE";
+  public static final String MANAGE = "VACCINE_FORECAST_MANAGE";
 
   private ForecastingRights() {
   }
