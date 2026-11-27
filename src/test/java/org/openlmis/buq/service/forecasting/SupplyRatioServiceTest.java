@@ -43,6 +43,7 @@ import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.forecasting.SupplyRatioRepository;
 import org.openlmis.buq.service.referencedata.OrderableReferenceDataService;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class SupplyRatioServiceTest {
 
@@ -134,6 +135,30 @@ public class SupplyRatioServiceTest {
     assertThatThrownBy(() -> supplyRatioService.update(existing.getId(), dto))
         .isInstanceOf(ValidationMessageException.class)
         .hasMessageContaining(MessageKeys.ERROR_SUPPLY_RATIO_COMMODITY_TYPE_MISSING);
+    verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
+  }
+
+  @Test
+  public void shouldRefuseUpdateToSameVaccineAndSupply() {
+    SupplyRatio existing = new SupplyRatioDataBuilder().build();
+    when(supplyRatioRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
+    dto.setVaccineOrderableId(dto.getSupplyOrderableId());
+
+    assertThatThrownBy(() -> supplyRatioService.update(existing.getId(), dto))
+        .isInstanceOf(ValidationMessageException.class)
+        .hasMessageContaining(MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE);
+    verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
+  }
+
+  @Test
+  public void shouldRefuseUpdateToUnknownSupplyOrderable() {
+    SupplyRatio existing = new SupplyRatioDataBuilder().build();
+    when(supplyRatioRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
+    when(orderableReferenceDataService.findOne(syringe.getId())).thenReturn(null);
+
+    assertThatThrownBy(() -> supplyRatioService.update(existing.getId(), dto))
+        .isInstanceOf(ValidationMessageException.class)
+        .hasMessageContaining(MessageKeys.ERROR_SUPPLY_RATIO_ORDERABLE_NOT_FOUND);
     verify(supplyRatioRepository, never()).saveAndFlush(any(SupplyRatio.class));
   }
 
