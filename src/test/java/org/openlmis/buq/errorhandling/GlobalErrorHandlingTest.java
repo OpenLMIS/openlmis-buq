@@ -87,6 +87,22 @@ public class GlobalErrorHandlingTest {
   }
 
   @Test
+  public void shouldReportSegmentInUseOnSegmentForeignKeyViolation() {
+    // given
+    ConstraintViolationException constraintViolation = new ConstraintViolationException(
+        null, null, "fkey_population_segments");
+    DataIntegrityViolationException exp = new DataIntegrityViolationException(
+        null, constraintViolation);
+
+    // when
+    mockMessage(MessageKeys.ERROR_POPULATION_SEGMENT_IN_USE);
+    LocalizedMessage message = errorHandler.handleDataIntegrityViolation(exp);
+
+    // then
+    assertMessage(message, MessageKeys.ERROR_POPULATION_SEGMENT_IN_USE);
+  }
+
+  @Test
   public void shouldHandleDataIntegrityViolationEvenIfMessageKeyNotExist() {
     // given
     String constraintName = "unq_source_of_fund_name_def";

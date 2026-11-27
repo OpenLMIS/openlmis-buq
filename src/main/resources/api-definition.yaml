@@ -33,6 +33,8 @@ schemas:
 - approveFacilityForecastingStats: !include schemas/approveFacilityForecastingStats.json
 - productGroup: !include schemas/productGroup.json
 - productGroupPage: !include schemas/productGroupPage.json
+- populationSegment: !include schemas/populationSegment.json
+- populationSegmentPage: !include schemas/populationSegmentPage.json
 
 - remarkArray: |
     {
@@ -1358,3 +1360,150 @@ resourceTypes:
                 Keep-Alive:
               body:
                 application/json:
+  /populationSegments:
+    displayName: populationSegments
+    get:
+      is: [ secured, paginated, sorted ]
+      description: Get a page of population segments, sorted by code unless sort is given.
+      responses:
+        200:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: populationSegmentPage
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+    post:
+      is: [ secured ]
+      description: Creates a population segment. An id in the body is ignored.
+      body:
+        application/json:
+          schema: populationSegment
+      responses:
+        201:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: populationSegment
+        400:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+    /{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get the chosen population segment.
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: populationSegment
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      put:
+        is: [ secured ]
+        description: Updates an existing population segment.
+        body:
+          application/json:
+            schema: populationSegment
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: populationSegment
+          400:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      delete:
+        is: [ secured ]
+        description: Removes a population segment. Refused while a forecasting setting or a forecast refers to it.
+        responses:
+          204:
+            headers:
+              Keep-Alive:
+          400:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse

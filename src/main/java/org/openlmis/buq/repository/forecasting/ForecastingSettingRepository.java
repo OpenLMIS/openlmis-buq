@@ -20,4 +20,6 @@ import org.openlmis.buq.domain.forecasting.ForecastingSetting;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ForecastingSettingRepository extends JpaRepository<ForecastingSetting, UUID> {
+
+  boolean existsByPopulationSegmentId(UUID segmentId);
 }

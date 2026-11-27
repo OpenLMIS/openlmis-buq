@@ -49,4 +49,60 @@ public class PopulationSegment extends BaseEntity {
   @NotNull
   private BigDecimal populationPercentage;
 
+  /**
+   * Creates new instance based on data from the importer.
+   */
+  public static PopulationSegment newInstance(Importer importer) {
+    PopulationSegment segment = new PopulationSegment();
+    segment.setId(importer.getId());
+    segment.updateFrom(importer);
+
+    return segment;
+  }
+
+  /**
+   * Copies every field except the id from the importer.
+   */
+  public void updateFrom(Importer importer) {
+    code = importer.getCode();
+    name = importer.getName();
+    description = importer.getDescription();
+    populationPercentage = importer.getPopulationPercentage();
+  }
+
+  /**
+   * Exports data to the exporter.
+   */
+  public void export(Exporter exporter) {
+    exporter.setId(getId());
+    exporter.setCode(code);
+    exporter.setName(name);
+    exporter.setDescription(description);
+    exporter.setPopulationPercentage(populationPercentage);
+  }
+
+  public interface Exporter extends BaseExporter {
+
+    void setCode(String code);
+
+    void setName(String name);
+
+    void setDescription(String description);
+
+    void setPopulationPercentage(BigDecimal populationPercentage);
+
+  }
+
+  public interface Importer extends BaseImporter {
+
+    String getCode();
+
+    String getName();
+
+    String getDescription();
+
+    BigDecimal getPopulationPercentage();
+
+  }
+
 }

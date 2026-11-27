@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.util.UUID;
 import org.junit.Test;
+import org.openlmis.buq.builder.PopulationSegmentDataBuilder;
+import org.openlmis.buq.dto.forecasting.PopulationSegmentDto;
 
 public class PopulationSegmentTest {
 
@@ -46,6 +48,46 @@ public class PopulationSegmentTest {
 
     assertThat(segment1).isEqualTo(segment2);
     assertThat(segment1.hashCode()).isEqualTo(segment2.hashCode());
+  }
+
+  @Test
+  public void shouldCreateNewInstance() {
+    PopulationSegment segment = new PopulationSegmentDataBuilder().build();
+    PopulationSegmentDto dto = PopulationSegmentDto.newInstance(segment);
+
+    PopulationSegment newSegment = PopulationSegment.newInstance(dto);
+
+    assertThat(newSegment).isEqualTo(segment);
+  }
+
+  @Test
+  public void shouldUpdateFromKeepingId() {
+    PopulationSegment segment = new PopulationSegmentDataBuilder().build();
+    final UUID id = segment.getId();
+    PopulationSegmentDto dto = PopulationSegmentDto.newInstance(segment);
+    dto.setId(UUID.randomUUID());
+    dto.setName("Pregnant women");
+    dto.setPopulationPercentage(new BigDecimal("3.60"));
+
+    segment.updateFrom(dto);
+
+    assertThat(segment.getId()).isEqualTo(id);
+    assertThat(segment.getName()).isEqualTo("Pregnant women");
+    assertThat(segment.getPopulationPercentage()).isEqualByComparingTo("3.60");
+  }
+
+  @Test
+  public void shouldExportData() {
+    PopulationSegment segment = new PopulationSegmentDataBuilder().build();
+    PopulationSegmentDto dto = new PopulationSegmentDto();
+
+    segment.export(dto);
+
+    assertThat(dto.getId()).isEqualTo(segment.getId());
+    assertThat(dto.getCode()).isEqualTo(segment.getCode());
+    assertThat(dto.getName()).isEqualTo(segment.getName());
+    assertThat(dto.getDescription()).isEqualTo(segment.getDescription());
+    assertThat(dto.getPopulationPercentage()).isEqualTo(segment.getPopulationPercentage());
   }
 
 }

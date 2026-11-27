@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.repository.CrudRepository;
 
+@SuppressWarnings("PMD.TooManyMethods")
 public class ForecastingSettingRepositoryIntegrationTest extends
     BaseCrudRepositoryIntegrationTest<ForecastingSetting> {
 
@@ -141,6 +142,24 @@ public class ForecastingSettingRepositoryIntegrationTest extends
 
     populationSegmentRepository.delete(segment);
     populationSegmentRepository.flush();
+  }
+
+  @Test
+  public void shouldReportSegmentUsedBySetting() {
+    forecastingSettingRepository.saveAndFlush(generateInstance());
+
+    assertThat(forecastingSettingRepository.existsByPopulationSegmentId(segment.getId()))
+        .isTrue();
+  }
+
+  @Test
+  public void shouldReportSegmentWithoutSettingsAsUnused() {
+    PopulationSegment unused = populationSegmentRepository.saveAndFlush(
+        new PopulationSegmentDataBuilder().buildAsNew());
+    forecastingSettingRepository.saveAndFlush(generateInstance());
+
+    assertThat(forecastingSettingRepository.existsByPopulationSegmentId(unused.getId()))
+        .isFalse();
   }
 
 }

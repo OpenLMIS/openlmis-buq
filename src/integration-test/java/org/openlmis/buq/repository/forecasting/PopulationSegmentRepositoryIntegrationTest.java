@@ -15,9 +15,13 @@
 
 package org.openlmis.buq.repository.forecasting;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 import org.junit.Test;
+import org.openlmis.buq.builder.ForecastDataBuilder;
+import org.openlmis.buq.builder.ForecastLineItemDataBuilder;
 import org.openlmis.buq.builder.PopulationSegmentDataBuilder;
 import org.openlmis.buq.domain.forecasting.PopulationSegment;
 import org.openlmis.buq.repository.BaseCrudRepositoryIntegrationTest;
@@ -30,6 +34,9 @@ public class PopulationSegmentRepositoryIntegrationTest extends
 
   @Autowired
   private PopulationSegmentRepository populationSegmentRepository;
+
+  @Autowired
+  private ForecastRepository forecastRepository;
 
   @Override
   public CrudRepository<PopulationSegment, UUID> getRepository() {
@@ -64,6 +71,33 @@ public class PopulationSegmentRepositoryIntegrationTest extends
     populationSegmentRepository.saveAndFlush(new PopulationSegmentDataBuilder()
         .withPopulationPercentage(new BigDecimal("-0.01"))
         .buildAsNew());
+  }
+
+  @Test
+  public void shouldReportSegmentReferencedOnlyByForecastLineItem() {
+    PopulationSegment segment = populationSegmentRepository.saveAndFlush(generateInstance());
+    forecastRepository.saveAndFlush(new ForecastDataBuilder()
+        .withLineItem(new ForecastLineItemDataBuilder()
+            .withPopulationSegment(segment)
+            .buildAsNew())
+        .buildAsNew());
+
+    assertThat(populationSegmentRepository.isReferencedByForecastLineItem(segment.getId()))
+        .isTrue();
+  }
+
+  @Test
+  public void shouldReportSegmentWithoutLineItemsAsNotReferenced() {
+    PopulationSegment segment = populationSegmentRepository.saveAndFlush(generateInstance());
+    PopulationSegment other = populationSegmentRepository.saveAndFlush(generateInstance());
+    forecastRepository.saveAndFlush(new ForecastDataBuilder()
+        .withLineItem(new ForecastLineItemDataBuilder()
+            .withPopulationSegment(other)
+            .buildAsNew())
+        .buildAsNew());
+
+    assertThat(populationSegmentRepository.isReferencedByForecastLineItem(segment.getId()))
+        .isFalse();
   }
 
 }

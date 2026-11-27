@@ -18,6 +18,12 @@ package org.openlmis.buq.repository.forecasting;
 import java.util.UUID;
 import org.openlmis.buq.domain.forecasting.PopulationSegment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PopulationSegmentRepository extends JpaRepository<PopulationSegment, UUID> {
+
+  @Query("SELECT CASE WHEN COUNT(li) > 0 THEN true ELSE false END"
+      + " FROM ForecastLineItem li WHERE li.populationSegment.id = :segmentId")
+  boolean isReferencedByForecastLineItem(@Param("segmentId") UUID segmentId);
 }
