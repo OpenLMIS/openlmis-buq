@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
@@ -200,7 +200,7 @@ public class SupplyRatioRepositoryIntegrationTest extends
   // Postgres compares uuids byte by byte, which is the order of their lowercase hex strings.
   private List<String> sortedAsPostgresOrdersUuids(List<String> ids) {
     List<String> sorted = new ArrayList<>(ids);
-    Collections.sort(sorted);
+    sorted.sort(Comparator.naturalOrder());
     return sorted;
   }
 
