@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "SupplyRatio",
+  "description": "Single supply ratio instance: how much of a supply product one unit of a vaccine needs",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "vaccineOrderableId": {
+      "type": "string",
+      "title": "vaccineOrderableId"
+    },
+    "supplyOrderableId": {
+      "type": "string",
+      "title": "supplyOrderableId"
+    },
+    "type": {
+      "type": "string",
+      "title": "type",
+      "description": "The vaccine unit the ratio applies to: DOSE, VIAL or BOX"
+    },
+    "ratio": {
+      "type": "number",
+      "title": "ratio"
+    }
+  },
+  "required": [
+    "vaccineOrderableId",
+    "supplyOrderableId",
+    "type",
+    "ratio"
+  ]
+}

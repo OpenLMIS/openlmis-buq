@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -361,7 +362,7 @@ public class BottomUpQuantificationServiceTest {
         .withLineItems(Collections.singletonList(lineItem)).build();
     when(orderableReferenceDataService.findOne(any(UUID.class))).thenReturn(
         new BasicOrderableDto(lineItem.getOrderableId(), "test-code", "test-full-name",
-            0, 0, false, null));
+            0, 0, false, null, new HashMap<>()));
     final String resultBytes = "result-bytes";
     when(csvService.generateCsv(any(), eq(BottomUpQuantificationLineItemCsv.class)))
         .thenReturn(resultBytes.getBytes());

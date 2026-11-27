@@ -15,8 +15,11 @@
 
 package org.openlmis.buq.errorhandling;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.hibernate.exception.ConstraintViolationException;
 import org.openlmis.buq.exception.AuthenticationMessageException;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
@@ -28,6 +31,10 @@ import org.openlmis.buq.service.DataRetrievalException;
 import org.openlmis.buq.util.Message;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -46,6 +53,15 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
   static {
     CONSTRAINT_MAP.put("unq_source_of_fund_name", MessageKeys.ERROR_SOURCE_OF_FUND_NAME_DUPLICATED);
     CONSTRAINT_MAP.put("remarks_unique_name", MessageKeys.ERROR_REMARK_NAME_DUPLICATED);
+    CONSTRAINT_MAP.put("population_segments_code_unique",
+        MessageKeys.ERROR_POPULATION_SEGMENT_CODE_DUPLICATED);
+    CONSTRAINT_MAP.put("fkey_population_segments", MessageKeys.ERROR_POPULATION_SEGMENT_IN_USE);
+    CONSTRAINT_MAP.put("supply_ratios_vaccine_supply_unique",
+        MessageKeys.ERROR_SUPPLY_RATIO_DUPLICATED);
+    CONSTRAINT_MAP.put("supply_ratios_distinct_orderables_check",
+        MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE);
+    CONSTRAINT_MAP.put("forecasting_settings_program_orderable_unique",
+        MessageKeys.ERROR_FORECASTING_SETTING_DUPLICATED);
   }
 
   @ExceptionHandler(NotFoundException.class)
@@ -117,7 +133,9 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
   }
 
   /**
-   * Handles validation exceptions.
+   * Handles validation exceptions. Names one invalid field: the first by name when several are
+   * invalid, and its first constraint by code when it breaks several, since the validator reports
+   * them in no fixed order.
    * @param ex the validation exception.
    * @return the user-oriented error message.
    */
@@ -126,7 +144,34 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
   @ResponseBody
   public Message.LocalizedMessage handleValidationExceptions(
           MethodArgumentNotValidException ex) {
-    return getLocalizedMessage(new Message(ex.getMessage()));
+    BindingResult bindingResult = ex.getBindingResult();
+    Optional<FieldError> fieldError = bindingResult.getFieldErrors().stream()
+        .min(Comparator.comparing(FieldError::getField)
+            .thenComparing(FieldError::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
+    if (fieldError.isPresent()) {
+      return getLocalizedMessage(new Message(MessageKeys.ERROR_VALIDATION_FIELD_INVALID,
+          fieldError.get().getField(), fieldError.get().getDefaultMessage()));
+    }
+
+    ObjectError globalError = bindingResult.getGlobalError();
+    return getLocalizedMessage(new Message(MessageKeys.ERROR_VALIDATION_FIELD_INVALID,
+        bindingResult.getObjectName(),
+        null == globalError ? null : globalError.getDefaultMessage()));
+  }
+
+  /**
+   * Handles request bodies Jackson cannot map, such as an unknown enum constant or a malformed
+   * UUID. These fail before bean validation runs.
+   */
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  @ResponseBody
+  public Message.LocalizedMessage handleMessageNotReadable(HttpMessageNotReadableException ex) {
+    Throwable cause = ex.getMostSpecificCause();
+    String detail = cause instanceof JsonProcessingException
+        ? ((JsonProcessingException) cause).getOriginalMessage()
+        : cause.getMessage();
+    return getLocalizedMessage(new Message(MessageKeys.ERROR_REQUEST_BODY_UNREADABLE, detail));
   }
 
   @ExceptionHandler(PermissionMessageException.class)

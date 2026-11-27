@@ -15,6 +15,10 @@
 
 package org.openlmis.buq.dto.referencedata;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.Test;
+import org.openlmis.buq.builder.OrderableDtoDataBuilder;
 import org.openlmis.buq.dto.EqualsContractTest;
 
 public class BasicOrderableDtoTest extends EqualsContractTest<BasicOrderableDto> {
@@ -22,6 +26,31 @@ public class BasicOrderableDtoTest extends EqualsContractTest<BasicOrderableDto>
   @Override
   protected Class<BasicOrderableDto> getTestClass() {
     return BasicOrderableDto.class;
+  }
+
+  @Test
+  public void shouldReadCommodityTypeFromIdentifiers() {
+    BasicOrderableDto orderable = new OrderableDtoDataBuilder()
+        .withCommodityType("bcg")
+        .buildAsDto();
+
+    assertThat(orderable.getCommodityType()).isEqualTo("bcg");
+  }
+
+  @Test
+  public void shouldHaveNoCommodityTypeForTradeItemOnlyOrderable() {
+    BasicOrderableDto orderable = new OrderableDtoDataBuilder().buildAsDto();
+    orderable.getIdentifiers().put("tradeItem", "trade-item-id");
+
+    assertThat(orderable.getCommodityType()).isNull();
+  }
+
+  @Test
+  public void shouldHaveNoCommodityTypeWhenIdentifiersAreNull() {
+    BasicOrderableDto orderable = new OrderableDtoDataBuilder().buildAsDto();
+    orderable.setIdentifiers(null);
+
+    assertThat(orderable.getCommodityType()).isNull();
   }
 
 }

@@ -16,22 +16,31 @@
 package org.openlmis.buq.repository;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.buq.util.PageableUtil;
+import org.openlmis.buq.util.Pagination;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.query.QueryUtils;
 
 public abstract class BaseCustomRepository<T> {
+
+  private static final String ID = "id";
 
   @PersistenceContext
   private EntityManager entityManager;
@@ -121,6 +130,53 @@ public abstract class BaseCustomRepository<T> {
 
     if (null != endDate) {
       return builder.and(predicate, builder.lessThanOrEqualTo(getField(root, field), endDate));
+    }
+
+    return predicate;
+  }
+
+  /**
+   * Retrieve a page of entities whose fields equal the given values, ordered by the pageable's
+   * sort and then by id. A filter with a null value matches any value.
+   *
+   * @param entityClass   The entity type to query.
+   * @param filters       Field names mapped to the values they must equal.
+   * @param pageable      The Pageable object specifying pagination and sort.
+   * @return              A page of matching entities.
+   */
+  public Page<T> searchByEqualFilters(Class<T> entityClass, Map<String, Object> filters,
+      Pageable pageable) {
+    CriteriaBuilder builder = getCriteriaBuilder();
+
+    CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+    Root<T> countRoot = countQuery.from(entityClass);
+    countQuery.select(builder.count(countRoot))
+        .where(equalFilters(builder, countRoot, filters));
+    Long count = countEntities(countQuery);
+
+    if (isZeroEntities(count)) {
+      return Pagination.getPage(Collections.emptyList(), pageable, count);
+    }
+
+    CriteriaQuery<T> query = builder.createQuery(entityClass);
+    Root<T> root = query.from(entityClass);
+    // The id ends every ordering, so that LIMIT/OFFSET pages neither repeat nor skip rows.
+    List<Order> orders = new ArrayList<>(QueryUtils.toOrders(pageable.getSort(), root, builder));
+    if (null == pageable.getSort().getOrderFor(ID)) {
+      orders.add(builder.asc(root.get(ID)));
+    }
+    query.select(root)
+        .where(equalFilters(builder, root, filters))
+        .orderBy(orders);
+
+    return Pagination.getPage(getEntities(query, pageable), pageable, count);
+  }
+
+  private Predicate equalFilters(CriteriaBuilder builder, Root<T> root,
+      Map<String, Object> filters) {
+    Predicate predicate = builder.conjunction();
+    for (Map.Entry<String, Object> filter : filters.entrySet()) {
+      predicate = addEqualFilter(predicate, builder, root, filter.getKey(), filter.getValue());
     }
 
     return predicate;

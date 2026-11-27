@@ -1,6 +1,14 @@
 1.2.2-SNAPSHOT (WIP)
 ==================
 
+New functionality:
+* [OLMIS-8467](https://openlmis.atlassian.net/browse/OLMIS-8467): Added the schema for population-based vaccine forecasting: population segments, forecasting settings per program and product (doses per target, coverage, wastage, buffer months), supply ratios, and forecasts with their line items, status changes and rejections, each in its own table. Demo data adds three population segments. No endpoints yet.
+* [OLMIS-8468](https://openlmis.atlassian.net/browse/OLMIS-8468): Added the forecasting configuration API: `/api/populationSegments`, `/api/forecastingSettings` and `/api/supplyRatios`, each with create, update, delete, get and search (settings by program and product, supply ratios by vaccine and supply), all requiring VACCINE_FORECAST_MANAGE. Request bodies are checked against the same limits as the database. A population segment used by a forecasting setting or a forecast can't be deleted. A forecasting setting needs a product with a commodity type, and a program can forecast only one product per commodity type, because requisitions take the ideal stock amount per commodity type. The supply product of a supply ratio needs a commodity type too.
+* [OLMIS-8478](https://openlmis.atlassian.net/browse/OLMIS-8478): The forecasting rights are defined by the referencedata service: VACCINE_FORECAST_MANAGE for the configuration endpoints, and VACCINE_FORECAST_PREPARE, VACCINE_FORECAST_SUBMIT, VACCINE_FORECAST_AUTHORIZE and VACCINE_FORECAST_APPROVE for the forecast endpoints to come. Deploy a referencedata release that includes OLMIS-8478 first: until then, every user request to these endpoints fails, because the right can't be found.
+
+Improvements:
+* [OLMIS-8468](https://openlmis.atlassian.net/browse/OLMIS-8468): A request body that fails validation returns 400 `buq.error.validation.field.invalid` naming the invalid field, instead of Spring's exception text. A body that can't be read, such as an unknown enum value, returns 400 `buq.error.request.body.unreadable` in the usual error format.
+
 1.2.1 / 2026-10-16
 ==================
 

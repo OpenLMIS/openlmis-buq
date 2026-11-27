@@ -39,6 +39,9 @@ public class TestDataInitializer implements CommandLineRunner {
   @Value(value = DEMO_DATA_PATH + "buq.source_of_fund.csv")
   private Resource sourceOfFundResource;
 
+  @Value(value = DEMO_DATA_PATH + "buq.population_segments.csv")
+  private Resource populationSegmentResource;
+
   private Resource2Db loader;
 
   @Autowired
@@ -58,6 +61,7 @@ public class TestDataInitializer implements CommandLineRunner {
     XLOGGER.entry();
 
     loader.insertToDbFromCsv("buq.sources_of_funds", sourceOfFundResource);
+    loader.insertToDbFromCsv("buq.population_segments", populationSegmentResource);
 
     XLOGGER.exit();
   }

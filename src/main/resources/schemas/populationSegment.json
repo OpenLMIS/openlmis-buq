@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "PopulationSegment",
+  "description": "Single population segment instance",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "title": "description"
+    },
+    "populationPercentage": {
+      "type": "number",
+      "title": "populationPercentage"
+    }
+  },
+  "required": [
+    "code",
+    "name",
+    "populationPercentage"
+  ]
+}

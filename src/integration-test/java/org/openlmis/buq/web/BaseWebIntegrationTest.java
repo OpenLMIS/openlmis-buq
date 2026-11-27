@@ -21,6 +21,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -39,14 +40,22 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openlmis.buq.domain.BaseEntity;
+import org.openlmis.buq.exception.PermissionMessageException;
+import org.openlmis.buq.i18n.MessageKeys;
 import org.openlmis.buq.repository.RemarkRepository;
 import org.openlmis.buq.repository.buq.BottomUpQuantificationRepository;
+import org.openlmis.buq.repository.forecasting.ForecastingSettingRepository;
+import org.openlmis.buq.repository.forecasting.PopulationSegmentRepository;
+import org.openlmis.buq.repository.forecasting.SupplyRatioRepository;
 import org.openlmis.buq.repository.productgroup.ProductGroupRepository;
 import org.openlmis.buq.repository.sourceoffund.SourceOfFundRepository;
 import org.openlmis.buq.service.buq.BottomUpQuantificationDtoBuilder;
 import org.openlmis.buq.service.buq.BottomUpQuantificationService;
+import org.openlmis.buq.service.forecasting.ForecastingSettingService;
+import org.openlmis.buq.service.forecasting.SupplyRatioService;
 import org.openlmis.buq.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.buq.service.role.PermissionService;
+import org.openlmis.buq.util.Message;
 import org.openlmis.buq.util.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -144,6 +153,21 @@ public abstract class BaseWebIntegrationTest {
   @MockBean
   public ProductGroupRepository productGroupRepository;
 
+  @MockBean
+  public PopulationSegmentRepository populationSegmentRepository;
+
+  @MockBean
+  public ForecastingSettingRepository forecastingSettingRepository;
+
+  @MockBean
+  public SupplyRatioRepository supplyRatioRepository;
+
+  @MockBean
+  public ForecastingSettingService forecastingSettingService;
+
+  @MockBean
+  public SupplyRatioService supplyRatioService;
+
   /**
    * Constructor for test.
    */
@@ -215,6 +239,12 @@ public abstract class BaseWebIntegrationTest {
 
   protected void mockUserHasAtLeastOneOfFollowingRights(List<String> rightNames) {
     doNothing().when(permissionService).hasAtLeastOnePermission(rightNames);
+  }
+
+  protected void mockUserHasNoRight(String rightName) {
+    doThrow(new PermissionMessageException(
+        new Message(MessageKeys.ERROR_NO_FOLLOWING_PERMISSION, rightName)))
+        .when(permissionService).hasPermission(rightName);
   }
 
   public static class SaveAnswer<T extends BaseEntity> implements Answer<T> {
