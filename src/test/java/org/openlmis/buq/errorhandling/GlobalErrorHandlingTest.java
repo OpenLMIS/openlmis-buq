@@ -103,6 +103,22 @@ public class GlobalErrorHandlingTest {
   }
 
   @Test
+  public void shouldReportSameOrderableOnSupplyRatioCheckViolation() {
+    // given
+    ConstraintViolationException constraintViolation = new ConstraintViolationException(
+        null, null, "supply_ratios_distinct_orderables_check");
+    DataIntegrityViolationException exp = new DataIntegrityViolationException(
+        null, constraintViolation);
+
+    // when
+    mockMessage(MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE);
+    LocalizedMessage message = errorHandler.handleDataIntegrityViolation(exp);
+
+    // then
+    assertMessage(message, MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE);
+  }
+
+  @Test
   public void shouldHandleDataIntegrityViolationEvenIfMessageKeyNotExist() {
     // given
     String constraintName = "unq_source_of_fund_name_def";

@@ -17,7 +17,11 @@ package org.openlmis.buq.domain.forecasting;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigDecimal;
+import java.util.UUID;
 import org.junit.Test;
+import org.openlmis.buq.builder.SupplyRatioDataBuilder;
+import org.openlmis.buq.dto.forecasting.SupplyRatioDto;
 
 public class SupplyRatioTest {
 
@@ -28,6 +32,46 @@ public class SupplyRatioTest {
     for (SupplyRatioType type : SupplyRatioType.values()) {
       assertThat(SupplyRatioType.valueOf(type.name())).isEqualTo(type);
     }
+  }
+
+  @Test
+  public void shouldCreateNewInstance() {
+    SupplyRatio ratio = new SupplyRatioDataBuilder().build();
+    SupplyRatioDto dto = SupplyRatioDto.newInstance(ratio);
+
+    SupplyRatio newRatio = SupplyRatio.newInstance(dto);
+
+    assertThat(newRatio).isEqualTo(ratio);
+  }
+
+  @Test
+  public void shouldUpdateFromKeepingId() {
+    SupplyRatio ratio = new SupplyRatioDataBuilder().build();
+    final UUID id = ratio.getId();
+    SupplyRatioDto dto = SupplyRatioDto.newInstance(ratio);
+    dto.setId(UUID.randomUUID());
+    dto.setType(SupplyRatioType.BOX);
+    dto.setRatio(new BigDecimal("0.0100"));
+
+    ratio.updateFrom(dto);
+
+    assertThat(ratio.getId()).isEqualTo(id);
+    assertThat(ratio.getType()).isEqualTo(SupplyRatioType.BOX);
+    assertThat(ratio.getRatio()).isEqualByComparingTo("0.01");
+  }
+
+  @Test
+  public void shouldExportData() {
+    SupplyRatio ratio = new SupplyRatioDataBuilder().build();
+    SupplyRatioDto dto = new SupplyRatioDto();
+
+    ratio.export(dto);
+
+    assertThat(dto.getId()).isEqualTo(ratio.getId());
+    assertThat(dto.getVaccineOrderableId()).isEqualTo(ratio.getVaccineOrderableId());
+    assertThat(dto.getSupplyOrderableId()).isEqualTo(ratio.getSupplyOrderableId());
+    assertThat(dto.getType()).isEqualTo(ratio.getType());
+    assertThat(dto.getRatio()).isEqualTo(ratio.getRatio());
   }
 
 }

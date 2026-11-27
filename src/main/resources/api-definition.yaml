@@ -35,6 +35,8 @@ schemas:
 - productGroupPage: !include schemas/productGroupPage.json
 - populationSegment: !include schemas/populationSegment.json
 - populationSegmentPage: !include schemas/populationSegmentPage.json
+- supplyRatio: !include schemas/supplyRatio.json
+- supplyRatioPage: !include schemas/supplyRatioPage.json
 
 - remarkArray: |
     {
@@ -1490,6 +1492,160 @@ resourceTypes:
             body:
               application/json:
                 schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+  /supplyRatios:
+    displayName: supplyRatios
+    get:
+      is: [ secured, paginated, sorted ]
+      description: Get a page of supply ratios, optionally limited to a vaccine and a supply product.
+      queryParameters:
+        vaccineOrderableId:
+          displayName: vaccineOrderableId
+          type: string
+          required: false
+          repeat: false
+        supplyOrderableId:
+          displayName: supplyOrderableId
+          type: string
+          required: false
+          repeat: false
+      responses:
+        200:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: supplyRatioPage
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+    post:
+      is: [ secured ]
+      description: Creates a supply ratio. An id in the body is ignored.
+      body:
+        application/json:
+          schema: supplyRatio
+      responses:
+        201:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: supplyRatio
+        400:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+    /{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get the chosen supply ratio.
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: supplyRatio
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      put:
+        is: [ secured ]
+        description: Updates an existing supply ratio.
+        body:
+          application/json:
+            schema: supplyRatio
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: supplyRatio
+          400:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      delete:
+        is: [ secured ]
+        description: Removes a supply ratio. Forecasts keep the amounts computed from it.
+        responses:
+          204:
+            headers:
+              Keep-Alive:
           401:
             headers:
               Keep-Alive:

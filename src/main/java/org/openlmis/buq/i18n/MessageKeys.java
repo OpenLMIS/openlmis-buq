@@ -33,6 +33,7 @@ public abstract class MessageKeys {
   private static final String POPULATION_SEGMENT = "populationSegment";
   private static final String CODE = "code";
   private static final String IN_USE = "inUse";
+  private static final String SUPPLY_RATIO = "supplyRatio";
 
   private static final String REJECTION = "rejection";
 
@@ -90,6 +91,14 @@ public abstract class MessageKeys {
       POPULATION_SEGMENT, CODE, DUPLICATED);
   public static final String ERROR_POPULATION_SEGMENT_IN_USE = join(ERROR_PREFIX,
       POPULATION_SEGMENT, IN_USE);
+  public static final String ERROR_SUPPLY_RATIO_NOT_FOUND = join(ERROR_PREFIX, SUPPLY_RATIO,
+      NOT_FOUND);
+  public static final String ERROR_SUPPLY_RATIO_ID_MISMATCH = join(ERROR_PREFIX, SUPPLY_RATIO,
+      ID, MISMATCH);
+  public static final String ERROR_SUPPLY_RATIO_DUPLICATED = join(ERROR_PREFIX, SUPPLY_RATIO,
+      DUPLICATED);
+  public static final String ERROR_SUPPLY_RATIO_SAME_ORDERABLE = join(ERROR_PREFIX, SUPPLY_RATIO,
+      "sameOrderable");
   public static final String ERROR_REJECTION_NOT_FOUND = join(ERROR_PREFIX, REJECTION, NOT_FOUND);
   public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION, USER,
       "canNotBeFound");

@@ -51,4 +51,60 @@ public class SupplyRatio extends BaseTimestampedEntity {
   @NotNull
   private BigDecimal ratio;
 
+  /**
+   * Creates new instance based on data from the importer.
+   */
+  public static SupplyRatio newInstance(Importer importer) {
+    SupplyRatio supplyRatio = new SupplyRatio();
+    supplyRatio.setId(importer.getId());
+    supplyRatio.updateFrom(importer);
+
+    return supplyRatio;
+  }
+
+  /**
+   * Copies every field except the id from the importer.
+   */
+  public void updateFrom(Importer importer) {
+    vaccineOrderableId = importer.getVaccineOrderableId();
+    supplyOrderableId = importer.getSupplyOrderableId();
+    type = importer.getType();
+    ratio = importer.getRatio();
+  }
+
+  /**
+   * Exports data to the exporter.
+   */
+  public void export(Exporter exporter) {
+    exporter.setId(getId());
+    exporter.setVaccineOrderableId(vaccineOrderableId);
+    exporter.setSupplyOrderableId(supplyOrderableId);
+    exporter.setType(type);
+    exporter.setRatio(ratio);
+  }
+
+  public interface Exporter extends BaseExporter {
+
+    void setVaccineOrderableId(UUID vaccineOrderableId);
+
+    void setSupplyOrderableId(UUID supplyOrderableId);
+
+    void setType(SupplyRatioType type);
+
+    void setRatio(BigDecimal ratio);
+
+  }
+
+  public interface Importer extends BaseImporter {
+
+    UUID getVaccineOrderableId();
+
+    UUID getSupplyOrderableId();
+
+    SupplyRatioType getType();
+
+    BigDecimal getRatio();
+
+  }
+
 }

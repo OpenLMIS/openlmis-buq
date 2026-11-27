@@ -17,7 +17,9 @@ package org.openlmis.buq.repository.forecasting;
 
 import java.util.UUID;
 import org.openlmis.buq.domain.forecasting.SupplyRatio;
+import org.openlmis.buq.repository.forecasting.custom.SupplyRatioRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SupplyRatioRepository extends JpaRepository<SupplyRatio, UUID> {
+public interface SupplyRatioRepository extends JpaRepository<SupplyRatio, UUID>,
+    SupplyRatioRepositoryCustom {
 }

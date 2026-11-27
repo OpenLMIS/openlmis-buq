@@ -56,6 +56,10 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
     CONSTRAINT_MAP.put("population_segments_code_unique",
         MessageKeys.ERROR_POPULATION_SEGMENT_CODE_DUPLICATED);
     CONSTRAINT_MAP.put("fkey_population_segments", MessageKeys.ERROR_POPULATION_SEGMENT_IN_USE);
+    CONSTRAINT_MAP.put("supply_ratios_vaccine_supply_unique",
+        MessageKeys.ERROR_SUPPLY_RATIO_DUPLICATED);
+    CONSTRAINT_MAP.put("supply_ratios_distinct_orderables_check",
+        MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE);
   }
 
   @ExceptionHandler(NotFoundException.class)
