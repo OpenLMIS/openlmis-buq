@@ -17,7 +17,7 @@ package org.openlmis.buq.service.role;
 
 /**
  * Names the rights the forecasting endpoints check. The rights themselves are defined by the
- * referencedata service, and a check on a name it doesn't know fails for every user.
+ * referencedata service, and a check on a name it doesn't know fails for every user token.
  */
 public final class ForecastingRights {
 
