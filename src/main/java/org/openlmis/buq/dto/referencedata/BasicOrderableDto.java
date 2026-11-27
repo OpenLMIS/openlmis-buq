@@ -46,7 +46,7 @@ public final class BasicOrderableDto implements Versionable {
 
   @JsonIgnore
   public String getCommodityType() {
-    return identifiers.get(COMMODITY_TYPE);
+    return null == identifiers ? null : identifiers.get(COMMODITY_TYPE);
   }
 
   @JsonIgnore

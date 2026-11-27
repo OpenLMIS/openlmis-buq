@@ -18,6 +18,9 @@ package org.openlmis.buq.repository.forecasting;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import org.openlmis.buq.builder.SupplyRatioDataBuilder;
@@ -154,6 +157,51 @@ public class SupplyRatioRepositoryIntegrationTest extends
 
     assertThat(page.getContent()).containsExactly(small);
     assertThat(page.getTotalElements()).isEqualTo(2);
+  }
+
+  @Test
+  public void shouldPageUnsortedSearchInIdOrder() {
+    UUID vaccineId = UUID.randomUUID();
+    List<String> savedIds = saveRatiosFor(vaccineId, 5);
+
+    assertThat(pageThroughOneByOne(vaccineId, Sort.unsorted()))
+        .containsExactlyElementsOf(sortedAsPostgresOrdersUuids(savedIds));
+  }
+
+  @Test
+  public void shouldBreakSortTiesById() {
+    UUID vaccineId = UUID.randomUUID();
+    List<String> savedIds = saveRatiosFor(vaccineId, 5);
+
+    assertThat(pageThroughOneByOne(vaccineId, Sort.by("type")))
+        .containsExactlyElementsOf(sortedAsPostgresOrdersUuids(savedIds));
+  }
+
+  private List<String> saveRatiosFor(UUID vaccineId, int count) {
+    List<String> ids = new ArrayList<>();
+    for (int i = 0; i < count; i++) {
+      ids.add(supplyRatioRepository.save(new SupplyRatioDataBuilder()
+          .withVaccineOrderableId(vaccineId).buildAsNew()).getId().toString());
+    }
+    return ids;
+  }
+
+  private List<String> pageThroughOneByOne(UUID vaccineId, Sort sort) {
+    List<String> ids = new ArrayList<>();
+    Page<SupplyRatio> page;
+    int number = 0;
+    do {
+      page = supplyRatioRepository.search(vaccineId, null, PageRequest.of(number++, 1, sort));
+      page.getContent().forEach(ratio -> ids.add(ratio.getId().toString()));
+    } while (page.hasNext());
+    return ids;
+  }
+
+  // Postgres compares uuids byte by byte, which is the order of their lowercase hex strings.
+  private List<String> sortedAsPostgresOrdersUuids(List<String> ids) {
+    List<String> sorted = new ArrayList<>(ids);
+    Collections.sort(sorted);
+    return sorted;
   }
 
 }

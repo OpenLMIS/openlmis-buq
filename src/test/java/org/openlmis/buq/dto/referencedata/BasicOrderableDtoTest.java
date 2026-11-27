@@ -45,4 +45,12 @@ public class BasicOrderableDtoTest extends EqualsContractTest<BasicOrderableDto>
     assertThat(orderable.getCommodityType()).isNull();
   }
 
+  @Test
+  public void shouldHaveNoCommodityTypeWhenIdentifiersAreNull() {
+    BasicOrderableDto orderable = new OrderableDtoDataBuilder().buildAsDto();
+    orderable.setIdentifiers(null);
+
+    assertThat(orderable.getCommodityType()).isNull();
+  }
+
 }
