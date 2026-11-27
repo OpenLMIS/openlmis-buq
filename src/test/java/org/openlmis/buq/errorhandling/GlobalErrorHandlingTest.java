@@ -217,6 +217,23 @@ public class GlobalErrorHandlingTest {
   }
 
   @Test
+  public void shouldPickTheSameConstraintWhateverOrderOneFieldBreaksTwo() {
+    // given
+    FieldError digits = constraintError("Digits", "numeric value out of bounds");
+    FieldError decimalMax = constraintError("DecimalMax", "must be less than 100");
+
+    // when
+    mockMessageWithParameters(MessageKeys.ERROR_VALIDATION_FIELD_INVALID);
+    LocalizedMessage first = errorHandler.handleValidationExceptions(invalid(digits, decimalMax));
+    LocalizedMessage second = errorHandler.handleValidationExceptions(invalid(decimalMax, digits));
+
+    // then
+    assertThat(first.asMessage())
+        .isEqualTo(second.asMessage())
+        .contains("must be less than 100");
+  }
+
+  @Test
   public void shouldNameObjectWhenOnlyGlobalErrorExists() {
     // given
     BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), DTO);
@@ -255,6 +272,19 @@ public class GlobalErrorHandlingTest {
         .hasFieldOrPropertyWithValue("messageKey", key);
     assertThat(localized)
         .hasFieldOrPropertyWithValue("message", ERROR_MESSAGE);
+  }
+
+  private FieldError constraintError(String code, String defaultMessage) {
+    return new FieldError(DTO, "wastagePercentage", "100.001", false, new String[]{code}, null,
+        defaultMessage);
+  }
+
+  private MethodArgumentNotValidException invalid(FieldError... errors) {
+    BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), DTO);
+    for (FieldError error : errors) {
+      bindingResult.addError(error);
+    }
+    return new MethodArgumentNotValidException(null, bindingResult);
   }
 
   private void mockMessageWithParameters(String key) {

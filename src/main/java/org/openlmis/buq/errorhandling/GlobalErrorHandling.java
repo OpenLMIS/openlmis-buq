@@ -133,8 +133,9 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
   }
 
   /**
-   * Handles validation exceptions. Names one invalid field, the first by name when several are
-   * invalid, since the validator reports them in no fixed order.
+   * Handles validation exceptions. Names one invalid field: the first by name when several are
+   * invalid, and its first constraint by code when it breaks several, since the validator reports
+   * them in no fixed order.
    * @param ex the validation exception.
    * @return the user-oriented error message.
    */
@@ -145,7 +146,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
           MethodArgumentNotValidException ex) {
     BindingResult bindingResult = ex.getBindingResult();
     Optional<FieldError> fieldError = bindingResult.getFieldErrors().stream()
-        .min(Comparator.comparing(FieldError::getField));
+        .min(Comparator.comparing(FieldError::getField)
+            .thenComparing(FieldError::getCode, Comparator.nullsFirst(Comparator.naturalOrder())));
     if (fieldError.isPresent()) {
       return getLocalizedMessage(new Message(MessageKeys.ERROR_VALIDATION_FIELD_INVALID,
           fieldError.get().getField(), fieldError.get().getDefaultMessage()));
