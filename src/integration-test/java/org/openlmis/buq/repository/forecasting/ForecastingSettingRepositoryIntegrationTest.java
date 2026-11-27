@@ -28,11 +28,16 @@ import org.openlmis.buq.domain.forecasting.PopulationSegment;
 import org.openlmis.buq.repository.BaseCrudRepositoryIntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 
 @SuppressWarnings("PMD.TooManyMethods")
 public class ForecastingSettingRepositoryIntegrationTest extends
     BaseCrudRepositoryIntegrationTest<ForecastingSetting> {
+
+  private static final Pageable PAGEABLE = PageRequest.of(0, 10);
 
   @Autowired
   private ForecastingSettingRepository forecastingSettingRepository;
@@ -160,6 +165,59 @@ public class ForecastingSettingRepositoryIntegrationTest extends
 
     assertThat(forecastingSettingRepository.existsByPopulationSegmentId(unused.getId()))
         .isFalse();
+  }
+
+  @Test
+  public void shouldFindSettingsOfProgram() {
+    ForecastingSetting match = forecastingSettingRepository.save(generateInstance());
+    forecastingSettingRepository.save(generateInstance());
+
+    assertThat(forecastingSettingRepository.findByProgramId(match.getProgramId()))
+        .containsExactly(match);
+  }
+
+  @Test
+  public void shouldSearchByProgram() {
+    UUID programId = UUID.randomUUID();
+    ForecastingSetting first = forecastingSettingRepository.save(settingInProgram(programId));
+    ForecastingSetting second = forecastingSettingRepository.save(settingInProgram(programId));
+    forecastingSettingRepository.save(generateInstance());
+
+    Page<ForecastingSetting> page = forecastingSettingRepository.search(programId, null,
+        PAGEABLE);
+
+    assertThat(page.getContent()).containsExactlyInAnyOrder(first, second);
+  }
+
+  @Test
+  public void shouldSearchByOrderable() {
+    ForecastingSetting match = forecastingSettingRepository.save(generateInstance());
+    forecastingSettingRepository.save(generateInstance());
+
+    Page<ForecastingSetting> page = forecastingSettingRepository.search(null,
+        match.getOrderableId(), PAGEABLE);
+
+    assertThat(page.getContent()).containsExactly(match);
+  }
+
+  @Test
+  public void shouldSearchByProgramAndOrderable() {
+    UUID programId = UUID.randomUUID();
+    ForecastingSetting match = forecastingSettingRepository.save(settingInProgram(programId));
+    forecastingSettingRepository.save(settingInProgram(programId));
+
+    Page<ForecastingSetting> page = forecastingSettingRepository.search(programId,
+        match.getOrderableId(), PAGEABLE);
+
+    assertThat(page.getContent()).containsExactly(match);
+    assertThat(page.getTotalElements()).isEqualTo(1);
+  }
+
+  private ForecastingSetting settingInProgram(UUID programId) {
+    return new ForecastingSettingDataBuilder()
+        .withPopulationSegment(segment)
+        .withProgramId(programId)
+        .buildAsNew();
   }
 
 }

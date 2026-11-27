@@ -16,6 +16,8 @@
 package org.openlmis.buq.dto.referencedata;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -31,6 +33,8 @@ import org.openlmis.buq.domain.Versionable;
 @EqualsAndHashCode
 public final class BasicOrderableDto implements Versionable {
 
+  private static final String COMMODITY_TYPE = "commodityType";
+
   private UUID id;
   private String productCode;
   private String fullProductName;
@@ -38,6 +42,12 @@ public final class BasicOrderableDto implements Versionable {
   private long packRoundingThreshold;
   private boolean roundToZero;
   private MetadataDto meta = new MetadataDto();
+  private Map<String, String> identifiers = new HashMap<>();
+
+  @JsonIgnore
+  public String getCommodityType() {
+    return identifiers.get(COMMODITY_TYPE);
+  }
 
   @JsonIgnore
   public Long getVersionNumber() {

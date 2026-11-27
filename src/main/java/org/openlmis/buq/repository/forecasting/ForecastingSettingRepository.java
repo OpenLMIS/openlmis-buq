@@ -15,11 +15,16 @@
 
 package org.openlmis.buq.repository.forecasting;
 
+import java.util.List;
 import java.util.UUID;
 import org.openlmis.buq.domain.forecasting.ForecastingSetting;
+import org.openlmis.buq.repository.forecasting.custom.ForecastingSettingRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ForecastingSettingRepository extends JpaRepository<ForecastingSetting, UUID> {
+public interface ForecastingSettingRepository extends JpaRepository<ForecastingSetting, UUID>,
+    ForecastingSettingRepositoryCustom {
 
   boolean existsByPopulationSegmentId(UUID segmentId);
+
+  List<ForecastingSetting> findByProgramId(UUID programId);
 }

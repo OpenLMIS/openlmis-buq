@@ -60,6 +60,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
         MessageKeys.ERROR_SUPPLY_RATIO_DUPLICATED);
     CONSTRAINT_MAP.put("supply_ratios_distinct_orderables_check",
         MessageKeys.ERROR_SUPPLY_RATIO_SAME_ORDERABLE);
+    CONSTRAINT_MAP.put("forecasting_settings_program_orderable_unique",
+        MessageKeys.ERROR_FORECASTING_SETTING_DUPLICATED);
   }
 
   @ExceptionHandler(NotFoundException.class)

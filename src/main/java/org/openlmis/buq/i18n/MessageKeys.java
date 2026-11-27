@@ -34,6 +34,8 @@ public abstract class MessageKeys {
   private static final String CODE = "code";
   private static final String IN_USE = "inUse";
   private static final String SUPPLY_RATIO = "supplyRatio";
+  private static final String FORECASTING_SETTING = "forecastingSetting";
+  private static final String COMMODITY_TYPE = "commodityType";
 
   private static final String REJECTION = "rejection";
 
@@ -99,6 +101,20 @@ public abstract class MessageKeys {
       DUPLICATED);
   public static final String ERROR_SUPPLY_RATIO_SAME_ORDERABLE = join(ERROR_PREFIX, SUPPLY_RATIO,
       "sameOrderable");
+  public static final String ERROR_FORECASTING_SETTING_NOT_FOUND = join(ERROR_PREFIX,
+      FORECASTING_SETTING, NOT_FOUND);
+  public static final String ERROR_FORECASTING_SETTING_ID_MISMATCH = join(ERROR_PREFIX,
+      FORECASTING_SETTING, ID, MISMATCH);
+  public static final String ERROR_FORECASTING_SETTING_DUPLICATED = join(ERROR_PREFIX,
+      FORECASTING_SETTING, DUPLICATED);
+  public static final String ERROR_FORECASTING_SETTING_SEGMENT_NOT_FOUND = join(ERROR_PREFIX,
+      FORECASTING_SETTING, POPULATION_SEGMENT, NOT_FOUND);
+  public static final String ERROR_FORECASTING_SETTING_ORDERABLE_NOT_FOUND = join(ERROR_PREFIX,
+      FORECASTING_SETTING, ORDERABLE, NOT_FOUND);
+  public static final String ERROR_FORECASTING_SETTING_COMMODITY_TYPE_MISSING = join(
+      ERROR_PREFIX, FORECASTING_SETTING, COMMODITY_TYPE, "missing");
+  public static final String ERROR_FORECASTING_SETTING_COMMODITY_TYPE_TAKEN = join(
+      ERROR_PREFIX, FORECASTING_SETTING, COMMODITY_TYPE, "taken");
   public static final String ERROR_REJECTION_NOT_FOUND = join(ERROR_PREFIX, REJECTION, NOT_FOUND);
   public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION, USER,
       "canNotBeFound");

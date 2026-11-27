@@ -38,6 +38,8 @@ import org.openlmis.buq.domain.BaseTimestampedEntity;
 @ToString(callSuper = true)
 public class ForecastingSetting extends BaseTimestampedEntity {
 
+  private static final String DEFAULT_BUFFER_MONTHS = "1.00";
+
   @NotNull
   private UUID programId;
 
@@ -59,6 +61,84 @@ public class ForecastingSetting extends BaseTimestampedEntity {
   private BigDecimal wastagePercentage;
 
   @NotNull
-  private BigDecimal bufferMonths = new BigDecimal("1.00");
+  private BigDecimal bufferMonths = new BigDecimal(DEFAULT_BUFFER_MONTHS);
+
+  /**
+   * Creates new instance based on data from the importer, with the segment the importer's
+   * populationSegmentId resolves to.
+   */
+  public static ForecastingSetting newInstance(Importer importer, PopulationSegment segment) {
+    ForecastingSetting setting = new ForecastingSetting();
+    setting.setId(importer.getId());
+    setting.updateFrom(importer, segment);
+
+    return setting;
+  }
+
+  /**
+   * Copies every field except the id from the importer. Buffer months default to one when the
+   * importer gives none.
+   */
+  public void updateFrom(Importer importer, PopulationSegment segment) {
+    programId = importer.getProgramId();
+    orderableId = importer.getOrderableId();
+    populationSegment = segment;
+    dosesPerTarget = importer.getDosesPerTarget();
+    coveragePercentage = importer.getCoveragePercentage();
+    wastagePercentage = importer.getWastagePercentage();
+    bufferMonths = null == importer.getBufferMonths()
+        ? new BigDecimal(DEFAULT_BUFFER_MONTHS)
+        : importer.getBufferMonths();
+  }
+
+  /**
+   * Exports data to the exporter, the segment as its id.
+   */
+  public void export(Exporter exporter) {
+    exporter.setId(getId());
+    exporter.setProgramId(programId);
+    exporter.setOrderableId(orderableId);
+    exporter.setPopulationSegmentId(populationSegment.getId());
+    exporter.setDosesPerTarget(dosesPerTarget);
+    exporter.setCoveragePercentage(coveragePercentage);
+    exporter.setWastagePercentage(wastagePercentage);
+    exporter.setBufferMonths(bufferMonths);
+  }
+
+  public interface Exporter extends BaseExporter {
+
+    void setProgramId(UUID programId);
+
+    void setOrderableId(UUID orderableId);
+
+    void setPopulationSegmentId(UUID populationSegmentId);
+
+    void setDosesPerTarget(Integer dosesPerTarget);
+
+    void setCoveragePercentage(BigDecimal coveragePercentage);
+
+    void setWastagePercentage(BigDecimal wastagePercentage);
+
+    void setBufferMonths(BigDecimal bufferMonths);
+
+  }
+
+  public interface Importer extends BaseImporter {
+
+    UUID getProgramId();
+
+    UUID getOrderableId();
+
+    UUID getPopulationSegmentId();
+
+    Integer getDosesPerTarget();
+
+    BigDecimal getCoveragePercentage();
+
+    BigDecimal getWastagePercentage();
+
+    BigDecimal getBufferMonths();
+
+  }
 
 }

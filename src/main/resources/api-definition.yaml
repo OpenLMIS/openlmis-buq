@@ -37,6 +37,8 @@ schemas:
 - populationSegmentPage: !include schemas/populationSegmentPage.json
 - supplyRatio: !include schemas/supplyRatio.json
 - supplyRatioPage: !include schemas/supplyRatioPage.json
+- forecastingSetting: !include schemas/forecastingSetting.json
+- forecastingSettingPage: !include schemas/forecastingSettingPage.json
 
 - remarkArray: |
     {
@@ -1642,6 +1644,160 @@ resourceTypes:
       delete:
         is: [ secured ]
         description: Removes a supply ratio. Forecasts keep the amounts computed from it.
+        responses:
+          204:
+            headers:
+              Keep-Alive:
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+  /forecastingSettings:
+    displayName: forecastingSettings
+    get:
+      is: [ secured, paginated, sorted ]
+      description: Get a page of forecasting settings, optionally limited to a program and a product.
+      queryParameters:
+        programId:
+          displayName: programId
+          type: string
+          required: false
+          repeat: false
+        orderableId:
+          displayName: orderableId
+          type: string
+          required: false
+          repeat: false
+      responses:
+        200:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: forecastingSettingPage
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+    post:
+      is: [ secured ]
+      description: Creates a forecasting setting. An id in the body is ignored. Refused when the product has no commodity type, or when another product of its commodity type is forecast in the program.
+      body:
+        application/json:
+          schema: forecastingSetting
+      responses:
+        201:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: forecastingSetting
+        400:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+        401:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+        403:
+          headers:
+            Keep-Alive:
+          body:
+            application/json:
+              schema: localizedErrorResponse
+    /{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get the chosen forecasting setting.
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: forecastingSetting
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      put:
+        is: [ secured ]
+        description: Updates an existing forecasting setting, with the same commodity type rules as creation.
+        body:
+          application/json:
+            schema: forecastingSetting
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: forecastingSetting
+          400:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      delete:
+        is: [ secured ]
+        description: Removes a forecasting setting. Forecasts keep the values they were computed from.
         responses:
           204:
             headers:

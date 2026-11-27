@@ -18,8 +18,11 @@ package org.openlmis.buq.domain.forecasting;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 import org.junit.Test;
 import org.openlmis.buq.builder.ForecastingSettingDataBuilder;
+import org.openlmis.buq.builder.PopulationSegmentDataBuilder;
+import org.openlmis.buq.dto.forecasting.ForecastingSettingDto;
 
 public class ForecastingSettingTest {
 
@@ -39,6 +42,69 @@ public class ForecastingSettingTest {
 
     assertThat(setting.getId()).isNull();
     assertThat(setting.getPopulationSegment()).isNotNull();
+  }
+
+  @Test
+  public void shouldCreateNewInstanceWithGivenSegment() {
+    ForecastingSetting setting = new ForecastingSettingDataBuilder()
+        .withPopulationSegment(new PopulationSegmentDataBuilder().build())
+        .build();
+    ForecastingSettingDto dto = ForecastingSettingDto.newInstance(setting);
+
+    ForecastingSetting newSetting = ForecastingSetting.newInstance(dto,
+        setting.getPopulationSegment());
+
+    assertThat(newSetting).isEqualTo(setting);
+  }
+
+  @Test
+  public void shouldUpdateFromKeepingId() {
+    ForecastingSetting setting = new ForecastingSettingDataBuilder().build();
+    final UUID id = setting.getId();
+    final PopulationSegment otherSegment = new PopulationSegmentDataBuilder().build();
+    ForecastingSettingDto dto = ForecastingSettingDto.newInstance(setting);
+    dto.setId(UUID.randomUUID());
+    dto.setDosesPerTarget(3);
+    dto.setWastagePercentage(new BigDecimal("10.00"));
+
+    setting.updateFrom(dto, otherSegment);
+
+    assertThat(setting.getId()).isEqualTo(id);
+    assertThat(setting.getDosesPerTarget()).isEqualTo(3);
+    assertThat(setting.getWastagePercentage()).isEqualByComparingTo("10");
+    assertThat(setting.getPopulationSegment()).isSameAs(otherSegment);
+  }
+
+  @Test
+  public void shouldDefaultBufferMonthsToOneWhenImportedAsNull() {
+    ForecastingSetting setting = new ForecastingSettingDataBuilder()
+        .withBufferMonths(new BigDecimal("3.00"))
+        .build();
+    ForecastingSettingDto dto = ForecastingSettingDto.newInstance(setting);
+    dto.setBufferMonths(null);
+
+    setting.updateFrom(dto, setting.getPopulationSegment());
+
+    assertThat(setting.getBufferMonths()).isEqualTo(new BigDecimal("1.00"));
+  }
+
+  @Test
+  public void shouldExportSegmentAsId() {
+    ForecastingSetting setting = new ForecastingSettingDataBuilder()
+        .withPopulationSegment(new PopulationSegmentDataBuilder().build())
+        .build();
+    ForecastingSettingDto dto = new ForecastingSettingDto();
+
+    setting.export(dto);
+
+    assertThat(dto.getId()).isEqualTo(setting.getId());
+    assertThat(dto.getProgramId()).isEqualTo(setting.getProgramId());
+    assertThat(dto.getOrderableId()).isEqualTo(setting.getOrderableId());
+    assertThat(dto.getPopulationSegmentId()).isEqualTo(setting.getPopulationSegment().getId());
+    assertThat(dto.getDosesPerTarget()).isEqualTo(setting.getDosesPerTarget());
+    assertThat(dto.getCoveragePercentage()).isEqualTo(setting.getCoveragePercentage());
+    assertThat(dto.getWastagePercentage()).isEqualTo(setting.getWastagePercentage());
+    assertThat(dto.getBufferMonths()).isEqualTo(setting.getBufferMonths());
   }
 
 }
