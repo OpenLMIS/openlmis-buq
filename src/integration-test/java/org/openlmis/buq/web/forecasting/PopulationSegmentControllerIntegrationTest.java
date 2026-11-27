@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 
 import com.jayway.restassured.response.ValidatableResponse;
 import guru.nidi.ramltester.junit.RamlMatchers;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -88,8 +89,33 @@ public class PopulationSegmentControllerIntegrationTest extends BaseWebIntegrati
 
     ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
     verify(populationSegmentRepository).findAll(pageable.capture());
-    assertEquals(Sort.Direction.ASC, pageable.getValue().getSort().getOrderFor(CODE)
-        .getDirection());
+    assertEquals(Arrays.asList(Sort.Order.asc(CODE), Sort.Order.asc(ID)),
+        pageable.getValue().getSort().toList());
+    assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
+  }
+
+  @Test
+  public void shouldBreakClientSortTiesById() {
+    mockUserHasRight(ForecastingRights.MANAGE);
+    given(populationSegmentRepository.findAll(any(Pageable.class)))
+        .willReturn(new PageImpl<>(Collections.singletonList(segment)));
+
+    restAssured.given()
+        .header(HttpHeaders.AUTHORIZATION, getTokenHeader())
+        .queryParam("page", 1)
+        .queryParam("size", 1)
+        .queryParam("sort", "populationPercentage,desc")
+        .when()
+        .get(RESOURCE_URL)
+        .then()
+        .statusCode(HttpStatus.SC_OK);
+
+    ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+    verify(populationSegmentRepository).findAll(pageable.capture());
+    assertEquals(1, pageable.getValue().getPageNumber());
+    assertEquals(1, pageable.getValue().getPageSize());
+    assertEquals(Arrays.asList(Sort.Order.desc("populationPercentage"), Sort.Order.asc(ID)),
+        pageable.getValue().getSort().toList());
     assertThat(RAML_ASSERT_MESSAGE, restAssured.getLastReport(), RamlMatchers.hasNoViolations());
   }
 

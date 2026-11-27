@@ -33,7 +33,9 @@ import org.openlmis.buq.util.Pagination;
 import org.openlmis.buq.web.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -57,6 +59,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class PopulationSegmentController extends BaseController {
 
   public static final String RESOURCE_PATH = API_PATH + "/populationSegments";
+
+  private static final String ID = "id";
 
   @Autowired
   private PermissionService permissionService;
@@ -126,7 +130,8 @@ public class PopulationSegmentController extends BaseController {
   }
 
   /**
-   * Retrieves a page of population segments, sorted by code unless the request sorts otherwise.
+   * Retrieves a page of population segments, sorted by code unless the request sorts otherwise,
+   * and then by id.
    */
   @GetMapping
   @ResponseStatus(HttpStatus.OK)
@@ -135,7 +140,12 @@ public class PopulationSegmentController extends BaseController {
       @SortDefault(sort = "code") Pageable pageable) {
     permissionService.hasPermission(ForecastingRights.MANAGE);
 
-    Page<PopulationSegment> page = populationSegmentRepository.findAll(pageable);
+    // The id ends every ordering, so that pages neither repeat nor skip segments.
+    Pageable orderedById = null == pageable.getSort().getOrderFor(ID)
+        ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+            pageable.getSort().and(Sort.by(ID)))
+        : pageable;
+    Page<PopulationSegment> page = populationSegmentRepository.findAll(orderedById);
     List<PopulationSegmentDto> content = page.getContent()
         .stream()
         .map(PopulationSegmentDto::newInstance)
