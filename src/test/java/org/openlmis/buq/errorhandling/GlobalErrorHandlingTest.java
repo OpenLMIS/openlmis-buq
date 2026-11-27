@@ -16,9 +16,11 @@
 package org.openlmis.buq.errorhandling;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.Locale;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.Before;
@@ -35,12 +37,19 @@ import org.openlmis.buq.util.Message;
 import org.openlmis.buq.util.Message.LocalizedMessage;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class GlobalErrorHandlingTest {
 
   private static final Locale ENGLISH_LOCALE = Locale.ENGLISH;
   private static final String ERROR_MESSAGE = "error-message";
+  private static final String DTO = "dto";
 
   @Mock
   private MessageService messageService;
@@ -135,11 +144,90 @@ public class GlobalErrorHandlingTest {
     assertMessage(message, messageKey);
   }
 
+  @Test
+  public void shouldNameFieldOnValidationError() {
+    // given
+    BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), DTO);
+    bindingResult.addError(new FieldError(DTO, "dosesPerTarget",
+        "must be greater than or equal to 1"));
+    MethodArgumentNotValidException exp = new MethodArgumentNotValidException(null,
+        bindingResult);
+
+    // when
+    mockMessageWithParameters(MessageKeys.ERROR_VALIDATION_FIELD_INVALID);
+    LocalizedMessage message = errorHandler.handleValidationExceptions(exp);
+
+    // then
+    assertThat(message)
+        .hasFieldOrPropertyWithValue("messageKey", MessageKeys.ERROR_VALIDATION_FIELD_INVALID);
+    assertThat(message.asMessage())
+        .contains("dosesPerTarget")
+        .contains("must be greater than or equal to 1");
+  }
+
+  @Test
+  public void shouldPickFirstFieldAlphabeticallyWhenSeveralAreInvalid() {
+    // given
+    BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), DTO);
+    bindingResult.addError(new FieldError(DTO, "wastagePercentage", "must be less than 100"));
+    bindingResult.addError(new FieldError(DTO, "coveragePercentage", "must not be null"));
+    MethodArgumentNotValidException exp = new MethodArgumentNotValidException(null,
+        bindingResult);
+
+    // when
+    mockMessageWithParameters(MessageKeys.ERROR_VALIDATION_FIELD_INVALID);
+    LocalizedMessage message = errorHandler.handleValidationExceptions(exp);
+
+    // then
+    assertThat(message.asMessage())
+        .contains("coveragePercentage")
+        .doesNotContain("wastagePercentage");
+  }
+
+  @Test
+  public void shouldNameObjectWhenOnlyGlobalErrorExists() {
+    // given
+    BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), DTO);
+    bindingResult.addError(new ObjectError(DTO, "is invalid"));
+    MethodArgumentNotValidException exp = new MethodArgumentNotValidException(null,
+        bindingResult);
+
+    // when
+    mockMessageWithParameters(MessageKeys.ERROR_VALIDATION_FIELD_INVALID);
+    LocalizedMessage message = errorHandler.handleValidationExceptions(exp);
+
+    // then
+    assertThat(message.asMessage())
+        .contains(DTO)
+        .contains("is invalid");
+  }
+
+  @Test
+  public void shouldReturnLocalizedMessageForUnreadableBody() {
+    // given
+    HttpMessageNotReadableException exp = new HttpMessageNotReadableException("JSON parse error",
+        new IllegalArgumentException("Cannot deserialize value from String \"CRATE\""), null);
+
+    // when
+    mockMessageWithParameters(MessageKeys.ERROR_REQUEST_BODY_UNREADABLE);
+    LocalizedMessage message = errorHandler.handleMessageNotReadable(exp);
+
+    // then
+    assertThat(message)
+        .hasFieldOrPropertyWithValue("messageKey", MessageKeys.ERROR_REQUEST_BODY_UNREADABLE);
+    assertThat(message.asMessage()).contains("CRATE");
+  }
+
   private void assertMessage(LocalizedMessage localized, String key) {
     assertThat(localized)
         .hasFieldOrPropertyWithValue("messageKey", key);
     assertThat(localized)
         .hasFieldOrPropertyWithValue("message", ERROR_MESSAGE);
+  }
+
+  private void mockMessageWithParameters(String key) {
+    when(messageSource.getMessage(eq(key), any(Object[].class), eq(ENGLISH_LOCALE)))
+        .thenAnswer(invocation -> Arrays.toString(invocation.getArgument(1, Object[].class)));
   }
 
   private void mockMessage(String key) {

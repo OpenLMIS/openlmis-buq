@@ -15,8 +15,11 @@
 
 package org.openlmis.buq.errorhandling;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.hibernate.exception.ConstraintViolationException;
 import org.openlmis.buq.exception.AuthenticationMessageException;
 import org.openlmis.buq.exception.ContentNotFoundMessageException;
@@ -28,6 +31,10 @@ import org.openlmis.buq.service.DataRetrievalException;
 import org.openlmis.buq.util.Message;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -117,7 +124,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
   }
 
   /**
-   * Handles validation exceptions.
+   * Handles validation exceptions. Names one invalid field, the first by name when several are
+   * invalid, since the validator reports them in no fixed order.
    * @param ex the validation exception.
    * @return the user-oriented error message.
    */
@@ -126,7 +134,33 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
   @ResponseBody
   public Message.LocalizedMessage handleValidationExceptions(
           MethodArgumentNotValidException ex) {
-    return getLocalizedMessage(new Message(ex.getMessage()));
+    BindingResult bindingResult = ex.getBindingResult();
+    Optional<FieldError> fieldError = bindingResult.getFieldErrors().stream()
+        .min(Comparator.comparing(FieldError::getField));
+    if (fieldError.isPresent()) {
+      return getLocalizedMessage(new Message(MessageKeys.ERROR_VALIDATION_FIELD_INVALID,
+          fieldError.get().getField(), fieldError.get().getDefaultMessage()));
+    }
+
+    ObjectError globalError = bindingResult.getGlobalError();
+    return getLocalizedMessage(new Message(MessageKeys.ERROR_VALIDATION_FIELD_INVALID,
+        bindingResult.getObjectName(),
+        null == globalError ? null : globalError.getDefaultMessage()));
+  }
+
+  /**
+   * Handles request bodies Jackson cannot map, such as an unknown enum constant or a malformed
+   * UUID. These fail before bean validation runs.
+   */
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  @ResponseBody
+  public Message.LocalizedMessage handleMessageNotReadable(HttpMessageNotReadableException ex) {
+    Throwable cause = ex.getMostSpecificCause();
+    String detail = cause instanceof JsonProcessingException
+        ? ((JsonProcessingException) cause).getOriginalMessage()
+        : cause.getMessage();
+    return getLocalizedMessage(new Message(MessageKeys.ERROR_REQUEST_BODY_UNREADABLE, detail));
   }
 
   @ExceptionHandler(PermissionMessageException.class)

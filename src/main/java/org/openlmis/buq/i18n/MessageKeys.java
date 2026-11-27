@@ -99,6 +99,10 @@ public abstract class MessageKeys {
   public static final String ERROR_INVALID_FORMAT_DATE = join(ERROR_INVALID_FORMAT, DATE);
   public static final String ERROR_INVALID_FORMAT_UUID = join(ERROR_INVALID_FORMAT, UUID);
   public static final String ERROR_INVALID_FORMAT_BOOLEAN = join(ERROR_INVALID_FORMAT, BOOLEAN);
+  public static final String ERROR_VALIDATION_FIELD_INVALID = join(ERROR_PREFIX, "validation",
+      FIELD, INVALID);
+  public static final String ERROR_REQUEST_BODY_UNREADABLE = join(ERROR_PREFIX, "request", "body",
+      "unreadable");
   public static final String ERROR_INVALID_SEARCH_PARAMS = join(ERROR_PREFIX, INVALID,
       "searchParams");
   public static final String ERROR_INVALID_PARAMETER_BOTTOM_UP_QUANTIFICATION_STATUS =
