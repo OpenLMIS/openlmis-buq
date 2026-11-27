@@ -33,6 +33,7 @@ public class OrderableDtoDataBuilder implements DtoDataBuilder<BasicOrderableDto
   private long netContent;
   private long packRoundingThreshold;
   private boolean roundToZero;
+  private String commodityType;
 
   /**
    * Creates builder for creating new instance of {@link OrderableDtoDataBuilder}.
@@ -94,8 +95,16 @@ public class OrderableDtoDataBuilder implements DtoDataBuilder<BasicOrderableDto
     dto.setPackRoundingThreshold(packRoundingThreshold);
     dto.setRoundToZero(roundToZero);
     dto.setMeta(new MetadataDto(versionNumber, lastUpdated));
+    if (null != commodityType) {
+      dto.getIdentifiers().put("commodityType", commodityType);
+    }
 
     return dto;
+  }
+
+  public OrderableDtoDataBuilder withCommodityType(String commodityType) {
+    this.commodityType = commodityType;
+    return this;
   }
 
   public OrderableDtoDataBuilder withProductCode(String productCode) {

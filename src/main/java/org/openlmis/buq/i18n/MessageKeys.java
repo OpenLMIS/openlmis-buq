@@ -30,6 +30,13 @@ public abstract class MessageKeys {
 
   private static final String REMARK = "remark";
 
+  private static final String POPULATION_SEGMENT = "populationSegment";
+  private static final String CODE = "code";
+  private static final String IN_USE = "inUse";
+  private static final String SUPPLY_RATIO = "supplyRatio";
+  private static final String FORECASTING_SETTING = "forecastingSetting";
+  private static final String COMMODITY_TYPE = "commodityType";
+
   private static final String REJECTION = "rejection";
 
   private static final String ID = "id";
@@ -78,6 +85,40 @@ public abstract class MessageKeys {
   public static final String ERROR_REMARK_NAME_DUPLICATED =
       join(ERROR_PREFIX, REMARK, NAME, DUPLICATED);
   public static final String ERROR_REMARK_NOT_FOUND = join(ERROR_PREFIX, REMARK, NOT_FOUND);
+  public static final String ERROR_POPULATION_SEGMENT_NOT_FOUND = join(ERROR_PREFIX,
+      POPULATION_SEGMENT, NOT_FOUND);
+  public static final String ERROR_POPULATION_SEGMENT_ID_MISMATCH = join(ERROR_PREFIX,
+      POPULATION_SEGMENT, ID, MISMATCH);
+  public static final String ERROR_POPULATION_SEGMENT_CODE_DUPLICATED = join(ERROR_PREFIX,
+      POPULATION_SEGMENT, CODE, DUPLICATED);
+  public static final String ERROR_POPULATION_SEGMENT_IN_USE = join(ERROR_PREFIX,
+      POPULATION_SEGMENT, IN_USE);
+  public static final String ERROR_SUPPLY_RATIO_NOT_FOUND = join(ERROR_PREFIX, SUPPLY_RATIO,
+      NOT_FOUND);
+  public static final String ERROR_SUPPLY_RATIO_ID_MISMATCH = join(ERROR_PREFIX, SUPPLY_RATIO,
+      ID, MISMATCH);
+  public static final String ERROR_SUPPLY_RATIO_DUPLICATED = join(ERROR_PREFIX, SUPPLY_RATIO,
+      DUPLICATED);
+  public static final String ERROR_SUPPLY_RATIO_SAME_ORDERABLE = join(ERROR_PREFIX, SUPPLY_RATIO,
+      "sameOrderable");
+  public static final String ERROR_SUPPLY_RATIO_ORDERABLE_NOT_FOUND = join(ERROR_PREFIX,
+      SUPPLY_RATIO, ORDERABLE, NOT_FOUND);
+  public static final String ERROR_SUPPLY_RATIO_COMMODITY_TYPE_MISSING = join(ERROR_PREFIX,
+      SUPPLY_RATIO, COMMODITY_TYPE, "missing");
+  public static final String ERROR_FORECASTING_SETTING_NOT_FOUND = join(ERROR_PREFIX,
+      FORECASTING_SETTING, NOT_FOUND);
+  public static final String ERROR_FORECASTING_SETTING_ID_MISMATCH = join(ERROR_PREFIX,
+      FORECASTING_SETTING, ID, MISMATCH);
+  public static final String ERROR_FORECASTING_SETTING_DUPLICATED = join(ERROR_PREFIX,
+      FORECASTING_SETTING, DUPLICATED);
+  public static final String ERROR_FORECASTING_SETTING_SEGMENT_NOT_FOUND = join(ERROR_PREFIX,
+      FORECASTING_SETTING, POPULATION_SEGMENT, NOT_FOUND);
+  public static final String ERROR_FORECASTING_SETTING_ORDERABLE_NOT_FOUND = join(ERROR_PREFIX,
+      FORECASTING_SETTING, ORDERABLE, NOT_FOUND);
+  public static final String ERROR_FORECASTING_SETTING_COMMODITY_TYPE_MISSING = join(
+      ERROR_PREFIX, FORECASTING_SETTING, COMMODITY_TYPE, "missing");
+  public static final String ERROR_FORECASTING_SETTING_COMMODITY_TYPE_TAKEN = join(
+      ERROR_PREFIX, FORECASTING_SETTING, COMMODITY_TYPE, "taken");
   public static final String ERROR_REJECTION_NOT_FOUND = join(ERROR_PREFIX, REJECTION, NOT_FOUND);
   public static final String ERROR_USER_NOT_FOUND = join(ERROR_PREFIX, AUTHENTICATION, USER,
       "canNotBeFound");
@@ -99,6 +140,10 @@ public abstract class MessageKeys {
   public static final String ERROR_INVALID_FORMAT_DATE = join(ERROR_INVALID_FORMAT, DATE);
   public static final String ERROR_INVALID_FORMAT_UUID = join(ERROR_INVALID_FORMAT, UUID);
   public static final String ERROR_INVALID_FORMAT_BOOLEAN = join(ERROR_INVALID_FORMAT, BOOLEAN);
+  public static final String ERROR_VALIDATION_FIELD_INVALID = join(ERROR_PREFIX, "validation",
+      FIELD, INVALID);
+  public static final String ERROR_REQUEST_BODY_UNREADABLE = join(ERROR_PREFIX, "request", "body",
+      "unreadable");
   public static final String ERROR_INVALID_SEARCH_PARAMS = join(ERROR_PREFIX, INVALID,
       "searchParams");
   public static final String ERROR_INVALID_PARAMETER_BOTTOM_UP_QUANTIFICATION_STATUS =

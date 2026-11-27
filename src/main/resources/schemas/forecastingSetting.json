@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ForecastingSetting",
+  "description": "Single forecasting setting instance: how one product is forecast in one program",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "programId": {
+      "type": "string",
+      "title": "programId"
+    },
+    "orderableId": {
+      "type": "string",
+      "title": "orderableId",
+      "description": "Must have a commodity type, and no other product of that commodity type may be forecast in the program"
+    },
+    "populationSegmentId": {
+      "type": "string",
+      "title": "populationSegmentId"
+    },
+    "dosesPerTarget": {
+      "type": "integer",
+      "title": "dosesPerTarget"
+    },
+    "coveragePercentage": {
+      "type": "number",
+      "title": "coveragePercentage"
+    },
+    "wastagePercentage": {
+      "type": "number",
+      "title": "wastagePercentage"
+    },
+    "bufferMonths": {
+      "type": ["number", "null"],
+      "title": "bufferMonths",
+      "description": "From 0 to 12; 1 when not given"
+    }
+  },
+  "required": [
+    "programId",
+    "orderableId",
+    "populationSegmentId",
+    "dosesPerTarget",
+    "coveragePercentage",
+    "wastagePercentage"
+  ]
+}

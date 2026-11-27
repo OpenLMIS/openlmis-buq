@@ -33,6 +33,9 @@ public class TestDataInitializerTest {
   private Resource sourceOfFundResource;
 
   @Mock
+  private Resource populationSegmentResource;
+
+  @Mock
   private Resource2Db loader;
 
   @InjectMocks
@@ -43,6 +46,7 @@ public class TestDataInitializerTest {
     initializer.run();
 
     verify(loader).insertToDbFromCsv("buq.sources_of_funds", sourceOfFundResource);
+    verify(loader).insertToDbFromCsv("buq.population_segments", populationSegmentResource);
   }
 
 }
